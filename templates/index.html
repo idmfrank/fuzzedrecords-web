@@ -8,11 +8,28 @@
     <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.6.1/dist/nostr-tools.umd.min.js"></script>
     <script src="/static/scripts/profile.js" defer></script>
     <style>
-        /* Additional inline styles for centering */
+        /* Reset default margins and padding */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Remove margins for headings and paragraphs */
+        h1, p {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Center content and add spacing */
+        .profile-container {
+            text-align: center; /* Center horizontally */
+            padding-top: 10px;  /* Add a small top margin */
+        }
+
         .profile-container img {
-            width: 200px;   /* Adjust image width as needed */
+            width: 200px;   /* Adjust image width */
             height: auto;   /* Maintain aspect ratio */
-            margin-bottom: 20px; /* Add spacing below the image */
+            margin-bottom: 20px; /* Space between image and text */
         }
     </style>
 </head>
