@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+    authenticateWithNostr();
     // NOSTR Authentication
     async function authenticateWithNostr() {
         if (!window.nostr) {
@@ -113,6 +114,4 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
-
-    authenticateWithNostr();
 });
