@@ -43,6 +43,16 @@
             border: none;
             margin-bottom: 20px;
         }
+
+        .debug-section {
+            background-color: #e7e7e7;
+            padding: 10px;
+            margin: 20px;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            text-align: left;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -57,12 +67,27 @@
         </section>
     </div>
 
-    <div class="song-section">
-        <h2>Listen to Our Latest Songs</h2>
-        {% for song in songs %}
-            <iframe src="{{ song.url }}" title="{{ song.title }}"></iframe>
-        {% endfor %}
+    <!-- Debugging Section -->
+    <div class="debug-section">
+        <h3>Debugging: Songs Data</h3>
+        {{ songs }}
     </div>
 
+    <!-- Songs Section -->
+    <div class="song-section">
+        <h2>Listen to Our Latest Songs</h2>
+        {% if songs %}
+            {% for song in songs %}
+                <p>{{ song.title }}</p>
+                <!-- Attempt to embed, fallback to hyperlink if iframe fails -->
+                <iframe src="{{ song.url }}" title="{{ song.title }}"></iframe>
+                <p>
+                    If the song does not load, <a href="{{ song.url }}" target="_blank">click here to listen to "{{ song.title }}"</a>.
+                </p>
+            {% endfor %}
+        {% else %}
+            <p>No songs available at this time.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
