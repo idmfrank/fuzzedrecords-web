@@ -24,11 +24,13 @@ jobs:
 
       - name: Create and start virtual environment
         run: |
-          python -m venv venv
-          source venv/bin/activate
-      
+          python -m venv antenv
+          source antenv/bin/activate
+          echo "PYTHONPATH=$(pwd)/antenv/lib/python3.9/site-packages" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: |
+          source antenv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
         
@@ -41,6 +43,8 @@ jobs:
           path: |
             . 
             !venv/
+            !antenv/
+            !__pycache__/
 
   deploy:
     runs-on: ubuntu-latest
