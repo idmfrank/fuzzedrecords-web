@@ -22,6 +22,13 @@ def index():
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
     json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
     jsonData = json.load(open(json_url))
+    
+    # Wavlake song URLs
+    songs = [
+        {"title": "Stranded", "url": "https://wavlake.com/stranded-by-fuzzed-records"},
+        {"title": "The Popes", "url": "https://wavlake.com/the-popes-by-fuzzed-records"}
+    ]
+
     return render_template('index.html', nostrJson=jsonData)
 
 @app.route('/favicon.ico')
