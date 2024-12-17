@@ -29,23 +29,6 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-# Endpoint to handle profile updates
-@app.route('/update-profile', methods=['POST'])
-def update_profile():
-    profile_data = request.json
-
-    # Process and store the updated profile data (e.g., save to a database or file)
-    # For simplicity, let's store it in a temporary dictionary (you should replace this with actual storage)
-    user_profile = {
-        'display_name': profile_data['display_name'],
-        'about': profile_data['about'],
-        'website': profile_data['website'],
-        'picture': profile_data['picture']
-    }
-
-    # Return success response
-    return jsonify({'success': True, 'profile': user_profile})
-
 @app.route('/fetch-profile', methods=['POST'])
 def fetch_profile():
     try:
@@ -157,7 +140,7 @@ def validate_nip05(pubkey, nip05_address):
 
 class Main(Resource):
     def post(self):
-        return jsonify({'message': 'Welcome to the PinKanki Flask REST App'})
+        return jsonify({'message': 'Welcome to the Fuzzed Records Flask REST App'})
 
 class NostrJson(Resource):
     print('::: In NostrJson :::')
