@@ -28,6 +28,7 @@ def index():
         {"title": "Stranded", "url": "https://wavlake.com/stranded-by-fuzzed-records"},
         {"title": "The Popes", "url": "https://wavlake.com/the-popes-by-fuzzed-records"}
     ]
+    print(f'Songs being passed: {songs}')  # Debugging line
 
     return render_template('index.html', nostrJson=jsonData)
 
