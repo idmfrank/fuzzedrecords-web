@@ -7,13 +7,30 @@
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.6.1/dist/nostr-tools.umd.min.js"></script>
     <script src="/static/scripts/profile.js" defer></script>
+    <style>
+        /* Additional inline styles for centering */
+        .profile-container {
+            text-align: center; /* Center content horizontally */
+            margin-top: 50px;   /* Add spacing from the top */
+        }
+
+        .profile-container img {
+            width: 200px;   /* Adjust image width as needed */
+            height: auto;   /* Maintain aspect ratio */
+            margin-bottom: 20px; /* Add spacing below the image */
+        }
+    </style>
 </head>
 <body>
     <div class="profile-container">
+        <!-- Image -->
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo">
+
         <!-- Intro Section -->
         <section id="intro-section" class="intro-section">
             <h1>Welcome to Fuzzed Records</h1>
             <p>An independent record label.</p>
         </section>
+    </div>
 </body>
 </html>
