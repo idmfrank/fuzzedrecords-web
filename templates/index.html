@@ -8,34 +8,46 @@
     <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.6.1/dist/nostr-tools.umd.min.js"></script>
     <script src="/static/scripts/profile.js" defer></script>
     <style>
-        /* Reset default margins and padding */
         body {
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
         }
 
-        /* Remove margins for headings and paragraphs */
-        h1, p {
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Center content and add spacing */
         .profile-container {
-            text-align: center; /* Center horizontally */
-            padding-top: 10px;  /* Add a small top margin */
+            text-align: center;
+            padding: 20px;
         }
 
         .profile-container img {
-            width: 200px;   /* Adjust image width */
-            height: auto;   /* Maintain aspect ratio */
-            margin-bottom: 20px; /* Space between image and text */
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .song-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .song-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .song-section iframe {
+            width: 80%;
+            height: 160px;
+            max-width: 600px;
+            border: none;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <div class="profile-container">
-        <!-- Image -->
+        <!-- Logo -->
         <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo">
 
         <!-- Intro Section -->
@@ -44,5 +56,13 @@
             <p>An independent record label.</p>
         </section>
     </div>
+
+    <div class="song-section">
+        <h2>Listen to Our Latest Songs</h2>
+        {% for song in songs %}
+            <iframe src="{{ song.url }}" title="{{ song.title }}"></iframe>
+        {% endfor %}
+    </div>
+
 </body>
 </html>
