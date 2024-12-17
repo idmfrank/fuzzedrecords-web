@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'fuzzedrecords-web'
           slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_570dc7c6004249fea49ff8a66e4c6ee7 }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_570dc7c6004249fea49ff8a66e4c6ee7 }}
