@@ -206,7 +206,8 @@ def fetch_tracks(album_id):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             logger.info(f"Received response: {response.text}")
-            tracks = response.json()
+            album_data = response.json()
+            tracks = album_data.get("tracks", [])
             logger.info(f"Fetched {len(tracks)} track(s) for album {album_id}.")
             return [
                 {
