@@ -186,7 +186,8 @@ def fetch_albums(artist_id):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             logger.info(f"Received response: {response.text}")
-            albums = response.json()
+            artist_data = response.json()
+            albums = artist_data.get("albums", [])
             logger.info(f"Fetched {len(albums)} album(s) for artist {artist_id}.")
             return [{"id": album["id"], "title": album["title"]} for album in albums]
         else:
