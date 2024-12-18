@@ -9,7 +9,7 @@ import os, json, time, uuid, requests
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
-WAVLAKE_BASE_URL = "https://api.wavlake.com/v1"
+WAVLAKE_BASE_URL = "https://api.wavlake.com/v1/content"
 
 # In-memory cache (simple dictionary)
 cache = {}
