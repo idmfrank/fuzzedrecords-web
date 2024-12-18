@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script>
         // Fetch and display tracks dynamically
         document.addEventListener("DOMContentLoaded", () => {
@@ -60,7 +61,7 @@
 <body>
     <div class="profile-container">
         <!-- Image -->
-        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" style="width: 200px; margin: 20px auto; display: block;">
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" style="width: 50%; max-width: 500px; margin: 20px auto; display: block;">
 
         <!-- Intro Section -->
         <section id="intro-section" class="intro-section">
@@ -70,7 +71,13 @@
 
         <!-- Songs Section -->
         <section class="songs-container">
-            <h2>Songs in our Library at <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit;">Wavlake.com</a></h2>
+            <h2>
+                Songs in our Library at 
+                <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
+                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" style="width: 20px; height: 20px; margin-right: 5px;">
+                    Wavlake.com
+                </a>
+            </h2>
             <div id="songs-section">
                 <!-- Songs will be dynamically loaded here -->
                 <p>Loading songs...</p>
