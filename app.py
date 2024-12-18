@@ -9,6 +9,7 @@ import os, json, time, uuid, requests
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
+WAVLAKE_BASE_URL = "https://api.wavlake.com/v1"
 
 # In-memory cache (simple dictionary)
 cache = {}
@@ -22,14 +23,6 @@ def index():
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
     json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
     jsonData = json.load(open(json_url))
-    
-    # Wavlake song URLs
-    songs = [
-        {"title": "Stranded", "url": "https://wavlake.com/stranded-by-fuzzed-records"},
-        {"title": "The Popes", "url": "https://wavlake.com/the-popes-by-fuzzed-records"}
-    ]
-    print(f'Songs being passed: {songs}')  # Debugging line
-
     return render_template('index.html', nostrJson=jsonData)
 
 @app.route('/favicon.ico')
@@ -108,6 +101,16 @@ def fetch_profile():
         print(f'Error occurred in fetch-profile: {e}')
         return jsonify({"error": str(e)})
 
+@app.route('/tracks', methods=['GET'])
+def get_fuzzed_records_tracks():
+    """Fetch and return all tracks from artists signed to Fuzzed Records."""
+    try:
+        tracks = build_fuzzed_records_library()
+        return jsonify({"tracks": tracks})
+    except Exception as e:
+        print(f"Error fetching track library: {e}")
+        return jsonify({"error": "Unable to fetch track library"}), 500
+
 def validate_nip05(pubkey, nip05_address):
     print(f"In validate_nip05 with variables: {pubkey}, {nip05_address}")
     try:
@@ -145,6 +148,66 @@ def validate_nip05(pubkey, nip05_address):
     except Exception as e:
         print(f"Error during NIP-05 validation: {e}")
         return False
+
+def search_artists_by_name(query):
+    """Search for artists whose names include a specific query."""
+    url = f"{WAVLAKE_BASE_URL}/search"
+    params = {"q": query, "type": "artist"}
+    try:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            artists = response.json().get("artists", [])
+            return [{"id": artist["id"], "name": artist["name"]} for artist in artists]
+        else:
+            print(f"Error fetching artists: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"An error occurred while searching for artists: {e}")
+        return []
+
+def fetch_tracks_for_artist(artist_id):
+    """Fetch all tracks for a given artist ID."""
+    url = f"{WAVLAKE_BASE_URL}/artists/{artist_id}/tracks"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            tracks = response.json().get("tracks", [])
+            return [{"title": track["title"], "audio_url": track["audio_url"]} for track in tracks]
+        else:
+            print(f"Error fetching tracks for artist {artist_id}: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"An error occurred while fetching tracks: {e}")
+        return []
+
+def build_fuzzed_records_library():
+    """Build a track library for all artists signed to Fuzzed Records."""
+    query = "by Fuzzed Records"
+    print("Searching for artists ending with 'by Fuzzed Records'...")
+    artists = search_artists_by_name(query)
+    
+    if not artists:
+        print("No artists found.")
+        return []
+
+    print(f"Found {len(artists)} artist(s):")
+    for artist in artists:
+        print(f" - {artist['name']} (ID: {artist['id']})")
+
+    # Fetch all tracks for each artist
+    all_tracks = []
+    for artist in artists:
+        print(f"\nFetching tracks for artist: {artist['name']}")
+        tracks = fetch_tracks_for_artist(artist["id"])
+        for track in tracks:
+            print(f"  - {track['title']}")
+            all_tracks.append({
+                "artist": artist["name"],
+                "title": track["title"],
+                "audio_url": track["audio_url"]
+            })
+    
+    return all_tracks
 
 class Main(Resource):
     def post(self):

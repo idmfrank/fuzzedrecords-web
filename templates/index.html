@@ -5,89 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.6.1/dist/nostr-tools.umd.min.js"></script>
-    <script src="/static/scripts/profile.js" defer></script>
+    <script>
+        // Fetch and display tracks dynamically
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("/tracks")
+                .then(response => response.json())
+                .then(data => {
+                    const songsSection = document.getElementById("songs-section");
+                    if (data.tracks && data.tracks.length > 0) {
+                        data.tracks.forEach(track => {
+                            const trackElement = document.createElement("div");
+                            trackElement.classList.add("song-item");
+                            trackElement.innerHTML = `
+                                <h3>${track.title} by ${track.artist}</h3>
+                                <audio controls>
+                                    <source src="${track.audio_url}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            `;
+                            songsSection.appendChild(trackElement);
+                        });
+                    } else {
+                        songsSection.innerHTML = "<p>No songs available at this time.</p>";
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching tracks:", err);
+                    document.getElementById("songs-section").innerHTML = "<p>Error loading songs.</p>";
+                });
+        });
+    </script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-        }
-
-        .profile-container {
+        .songs-container {
             text-align: center;
-            padding: 20px;
+            margin: 20px auto;
         }
-
-        .profile-container img {
-            width: 200px;
-            height: auto;
-            margin-bottom: 20px;
-        }
-
-        .song-section {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .song-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-
-        .song-section iframe {
-            width: 80%;
-            height: 160px;
-            max-width: 600px;
-            border: none;
-            margin-bottom: 20px;
-        }
-
-        .debug-section {
-            background-color: #e7e7e7;
+        .song-item {
+            margin: 20px auto;
             padding: 10px;
-            margin: 20px;
-            border: 1px solid #ccc;
-            font-family: monospace;
-            text-align: left;
-            white-space: pre-wrap;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-width: 500px;
+            background: #f9f9f9;
+        }
+        .song-item h3 {
+            margin: 0 0 10px;
+        }
+        audio {
+            width: 100%;
         }
     </style>
 </head>
 <body>
     <div class="profile-container">
-        <!-- Logo -->
-        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo">
+        <!-- Image -->
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" style="width: 200px; margin: 20px auto; display: block;">
 
         <!-- Intro Section -->
         <section id="intro-section" class="intro-section">
             <h1>Welcome to Fuzzed Records</h1>
             <p>An independent record label.</p>
         </section>
-    </div>
 
-    <!-- Debugging Section -->
-    <div class="debug-section">
-        <h3>Debugging: Songs Data</h3>
-        {{ songs }}
-    </div>
-
-    <!-- Songs Section -->
-    <div class="song-section">
-        <h2>Listen to Our Latest Songs</h2>
-        {% if songs %}
-            {% for song in songs %}
-                <p>{{ song.title }}</p>
-                <!-- Attempt to embed, fallback to hyperlink if iframe fails -->
-                <iframe src="{{ song.url }}" title="{{ song.title }}"></iframe>
-                <p>
-                    If the song does not load, <a href="{{ song.url }}" target="_blank">click here to listen to "{{ song.title }}"</a>.
-                </p>
-            {% endfor %}
-        {% else %}
-            <p>No songs available at this time.</p>
-        {% endif %}
+        <!-- Songs Section -->
+        <section class="songs-container">
+            <h2>Listen to Our Latest Songs</h2>
+            <div id="songs-section">
+                <!-- Songs will be dynamically loaded here -->
+                <p>Loading songs...</p>
+            </div>
+        </section>
     </div>
 </body>
 </html>
