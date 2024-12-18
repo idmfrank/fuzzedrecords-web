@@ -189,7 +189,7 @@ def fetch_albums(artist_id):
             artist_data = response.json()
             albums = artist_data.get("albums", [])
             logger.info(f"Fetched {len(albums)} album(s) for artist {artist_id}.")
-            return [{"id": album["id"], "title": album["title"]} for album in albums]
+            return [{"id": album["id"], "title": album["title"], "albumArtUrl": album["albumArtUrl"]} for album in albums]
         else:
             logger.info(f"Error fetching albums for {artist_id}: {response.status_code}")
             return []
@@ -244,6 +244,7 @@ def build_music_library():
         for album in albums:
             album_title = album["title"]
             album_id = album["id"]
+            albumArtUrl = album["albumArtUrl"]
             logger.info(f" - Processing album: {album_title}")
 
             tracks = fetch_tracks(album_id)
@@ -251,8 +252,10 @@ def build_music_library():
                 track_info = {
                     "artist": artist_name,
                     "album": album_title,
+                    "albumArtUrl": albumArtUrl,
                     "title": track["title"],
                     "media_url": track["media_url"],
+                    "track_id": track["track_id"],
                     "nostr_npub": track["nostr_npub"]
                 }
                 music_library.append(track_info)
