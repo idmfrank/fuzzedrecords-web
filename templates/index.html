@@ -13,6 +13,7 @@
             .then(response => response.json())
             .then(data => {
                 const songsSection = document.getElementById("songs-section");
+                songsSection.innerHTML = ""; // Clear the "Loading songs..." message
                 if (data.tracks && data.tracks.length > 0) {
                     data.tracks.forEach(track => {
                         const trackElement = document.createElement("div");
