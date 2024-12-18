@@ -166,6 +166,7 @@ def fetch_artists():
     try:
         response = requests.get(url, params=params, headers=headers)
         if response.status_code == 200:
+            logger.info(f"Received response: {response.text}")
             artists = response.json().get("data", [])
             logger.info(f"Fetched {len(artists)} artist(s).")
             return [{"id": artist["id"], "name": artist["name"]} for artist in artists if artist["type"] == "artist"]
