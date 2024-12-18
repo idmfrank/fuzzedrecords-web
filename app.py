@@ -167,9 +167,9 @@ def fetch_artists():
         response = requests.get(url, params=params, headers=headers)
         if response.status_code == 200:
             logger.info(f"Received response: {response.text}")
-            artists = response.json().get("data", [])
+            artists = response.json()
             logger.info(f"Fetched {len(artists)} artist(s).")
-            return [{"id": artist["id"], "name": artist["name"]} for artist in artists if artist["type"] == "artist"]
+            return [{"id": artist["id"], "name": artist["name"], "art_url": artist.get("artistArtUrl", "")} for artist in artists]
         else:
             logger.info(f"Error fetching artists: {response.status_code}")
             return []
@@ -185,7 +185,7 @@ def fetch_albums(artist_id):
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            albums = response.json().get("albums", [])
+            albums = response.json()
             logger.info(f"Fetched {len(albums)} album(s) for artist {artist_id}.")
             return [{"id": album["id"], "title": album["title"]} for album in albums]
         else:
@@ -203,7 +203,7 @@ def fetch_tracks(album_id):
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            tracks = response.json().get("tracks", [])
+            tracks = response.json()
             logger.info(f"Fetched {len(tracks)} track(s) for album {album_id}.")
             return [
                 {
@@ -232,6 +232,7 @@ def build_music_library():
     for artist in artists:
         artist_name = artist["name"]
         artist_id = artist["id"]
+        artist_art_url = artist["art_url"]
         logger.info(f"Processing artist: {artist_name}")
 
         albums = fetch_albums(artist_id)
