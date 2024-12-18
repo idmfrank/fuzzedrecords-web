@@ -215,6 +215,7 @@ def fetch_tracks(album_id):
                     "media_url": track["mediaUrl"],
                     "album": track.get("albumTitle", ""),
                     "artist": track.get("artist", ""),
+                    "track_id": track["id"],  # Include track_id for embedding
                     "nostr_npub": track.get("artistNpub", "")
                 }
                 for track in tracks
