@@ -5,12 +5,19 @@ from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
 from pynostr.event import EventKind
 import os, json, time, uuid, requests
+import logging
 
+# Initialize Flask App
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
 WAVLAKE_API_BASE = "https://wavlake.com/api/v1"
 SEARCH_TERM = " by Fuzzed Records"
+
+# Set up basic logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.debug("Flask app has started.")
 
 # In-memory cache (simple dictionary)
 cache = {}
@@ -20,7 +27,7 @@ CACHE_TIMEOUT = 300  # Cache timeout in seconds (e.g., 5 minutes)
 
 @app.route('/')
 def index():
-    print('Request for index page received')
+    logger.info("Request for index page received")
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
     json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
     jsonData = json.load(open(json_url))
@@ -36,13 +43,13 @@ def fetch_profile():
     try:
         data = request.json
         pubkey_hex = data['pubkey']
-        print(f'Received request to fetch profile for pubkey: {pubkey_hex}')
+        logger.info(f'Received request to fetch profile for pubkey: {pubkey_hex}')
 
         # Check if the profile is already cached
         if pubkey_hex in cache:
             cached_profile, timestamp = cache[pubkey_hex]
             if time.time() - timestamp < CACHE_TIMEOUT:
-                print(f'Profile for {pubkey_hex} returned from cache.')
+                logger.info(f'Profile for {pubkey_hex} returned from cache.')
                 return jsonify(cached_profile)
             else:
                 # Remove the stale cache entry
@@ -80,7 +87,7 @@ def fetch_profile():
                     "content": profile_content,  # Decoded JSON content
                     "sig": event_msg.event.sig
                 }
-                print(f'Received profile event: {profile_data}')
+                logger.info(f'Received profile event: {profile_data}')
                 break
 
         # Close all relay connections
@@ -99,7 +106,7 @@ def fetch_profile():
         else:
             return jsonify({"error": "Profile not found or relay did not respond in time"})
     except Exception as e:
-        print(f'Error occurred in fetch-profile: {e}')
+        logger.error(f'Error occurred in fetch-profile: {e}')
         return jsonify({"error": str(e)})
 
 @app.route('/tracks', methods=['GET'])
@@ -109,14 +116,14 @@ def get_tracks():
         library = build_music_library()
         return jsonify({"tracks": library})
     except Exception as e:
-        print(f"Error building library: {e}")
+        logger.error(f"Error building library: {e}")
         return jsonify({"error": "Unable to build music library"}), 500
 
 def validate_nip05(pubkey, nip05_address):
-    print(f"In validate_nip05 with variables: {pubkey}, {nip05_address}")
+    logger.info(f"In validate_nip05 with variables: {pubkey}, {nip05_address}")
     try:
         domain = nip05_address.split('@')[-1]
-        print(f"In validate_nip05 domain: {domain}")
+        logger.info(f"In validate_nip05 domain: {domain}")
 
         if domain == "pinkanki.org":
             # Directly access the nostr.json file for internal domain
@@ -124,7 +131,7 @@ def validate_nip05(pubkey, nip05_address):
             json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
             with open(json_url, 'r') as f:
                 data = json.load(f)
-            print(f"NIP-05 Check response from local file: {data}")
+            logger.info(f"NIP-05 Check response from local file: {data}")
 
             # Check if the pubkey matches the one in the NIP-05 record
             if 'names' in data and nip05_address.split('@')[0] in data['names']:
@@ -133,12 +140,12 @@ def validate_nip05(pubkey, nip05_address):
         else:
             # Perform NIP-05 lookup to find the well-known NOSTR JSON file
             well_known_url = f"https://{domain}/.well-known/nostr.json?name={nip05_address.split('@')[0]}"
-            print(f"In validate_nip05 well_known_url: {well_known_url}")
+            logger.info(f"In validate_nip05 well_known_url: {well_known_url}")
             response = requests.get(well_known_url, timeout=10)
 
             if response.status_code == 200:
                 data = response.json()
-                print(f"NIP-05 Check response: {data}")
+                logger.info(f"NIP-05 Check response: {data}")
 
                 # Check if the pubkey matches the one in the NIP-05 record
                 if 'names' in data and nip05_address.split('@')[0] in data['names']:
@@ -147,7 +154,7 @@ def validate_nip05(pubkey, nip05_address):
 
         return False
     except Exception as e:
-        print(f"Error during NIP-05 validation: {e}")
+        logger.error(f"Error during NIP-05 validation: {e}")
         return False
 
 # Fetch Artists by Search Term
@@ -160,13 +167,13 @@ def fetch_artists():
         response = requests.get(url, params=params, headers=headers)
         if response.status_code == 200:
             artists = response.json().get("data", [])
-            print(f"Fetched {len(artists)} artist(s).")
+            logger.info(f"Fetched {len(artists)} artist(s).")
             return [{"id": artist["id"], "name": artist["name"]} for artist in artists if artist["type"] == "artist"]
         else:
-            print(f"Error fetching artists: {response.status_code}")
+            logger.info(f"Error fetching artists: {response.status_code}")
             return []
     except Exception as e:
-        print(f"Error in fetch_artists: {e}")
+        logger.error(f"Error in fetch_artists: {e}")
         return []
 
 # Fetch Albums for an Artist
@@ -178,13 +185,13 @@ def fetch_albums(artist_id):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             albums = response.json().get("albums", [])
-            print(f"Fetched {len(albums)} album(s) for artist {artist_id}.")
+            logger.info(f"Fetched {len(albums)} album(s) for artist {artist_id}.")
             return [{"id": album["id"], "title": album["title"]} for album in albums]
         else:
-            print(f"Error fetching albums for {artist_id}: {response.status_code}")
+            logger.info(f"Error fetching albums for {artist_id}: {response.status_code}")
             return []
     except Exception as e:
-        print(f"Error in fetch_albums: {e}")
+        logger.error(f"Error in fetch_albums: {e}")
         return []
 
 # Fetch Tracks for an Album
@@ -196,7 +203,7 @@ def fetch_tracks(album_id):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             tracks = response.json().get("tracks", [])
-            print(f"Fetched {len(tracks)} track(s) for album {album_id}.")
+            logger.info(f"Fetched {len(tracks)} track(s) for album {album_id}.")
             return [
                 {
                     "title": track["title"],
@@ -208,10 +215,10 @@ def fetch_tracks(album_id):
                 for track in tracks
             ]
         else:
-            print(f"Error fetching tracks for {album_id}: {response.status_code}")
+            logger.info(f"Error fetching tracks for {album_id}: {response.status_code}")
             return []
     except Exception as e:
-        print(f"Error in fetch_tracks: {e}")
+        logger.error(f"Error in fetch_tracks: {e}")
         return []
 
 # Build Complete Library
@@ -224,13 +231,13 @@ def build_music_library():
     for artist in artists:
         artist_name = artist["name"]
         artist_id = artist["id"]
-        print(f"Processing artist: {artist_name}")
+        logger.info(f"Processing artist: {artist_name}")
 
         albums = fetch_albums(artist_id)
         for album in albums:
             album_title = album["title"]
             album_id = album["id"]
-            print(f" - Processing album: {album_title}")
+            logger.info(f" - Processing album: {album_title}")
 
             tracks = fetch_tracks(album_id)
             for track in tracks:
@@ -243,7 +250,7 @@ def build_music_library():
                 }
                 music_library.append(track_info)
     
-    print(f"Total tracks found: {len(music_library)}")
+    logger.info(f"Total tracks found: {len(music_library)}")
     return music_library
 
 class Main(Resource):
@@ -251,9 +258,9 @@ class Main(Resource):
         return jsonify({'message': 'Welcome to the Fuzzed Records Flask REST App'})
 
 class NostrJson(Resource):
-    print('::: In NostrJson :::')
+    logger.info('::: In NostrJson :::')
     def get(self):
-        print('::: We now have a GET In NostrJson :::')
+        logger.info('::: We now have a GET In NostrJson :::')
         SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
         json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
         jsonData = json.load(open(json_url))
@@ -261,13 +268,13 @@ class NostrJson(Resource):
         relayList = jsonData['relays']
 
         if 'name' not in request.args:
-            print('::: No name variable in request...returning whole nostr.json :::')
+            logger.info('::: No name variable in request...returning whole nostr.json :::')
             nostrJsonResponse = jsonData
             return nostrJsonResponse
         else:
             nostrName = request.args.get('name')
             nostrName = nostrName.lower()
-            print('::: Found name variable in request... :::', nostrName)
+            logger.info('::: Found name variable in request... :::', nostrName)
             if nostrName in namesList:
                 pubKey = namesList[nostrName]
                 if pubKey in relayList:
@@ -278,26 +285,26 @@ class NostrJson(Resource):
                     nostrJsonResponse = { "names" : { nostrName : pubKey } }
                     return nostrJsonResponse
             else:
-                print('::: No name variable found :::')
+                logger.info('::: No name variable found :::')
                 nostrJsonResponse = { "names" : {} }
                 return nostrJsonResponse
 
 class LnURLp(Resource):
-    print('::: In LnURLp :::')
+    logger.info('::: In LnURLp :::')
     def get(self, resource_name):
-        print('::: We now have a GET In LnURLp :::')
+        logger.info('::: We now have a GET In LnURLp :::')
         try:
             # Attempt to read the JSON file
             SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
             with open(os.path.join(SITE_ROOT, "static", resource_name), 'r') as f:
                 data = json.load(f)
-            print(f'Returning data for resource: {resource_name}')
+            logger.info(f'Returning data for resource: {resource_name}')
             return jsonify(data)
         except FileNotFoundError:
-            print(f'File not found: {resource_name}')
+            logger.info(f'File not found: {resource_name}')
             return {"error": "File not found"}, 404
         except json.JSONDecodeError:
-            print(f'Error decoding JSON file: {resource_name}')
+            logger.info(f'Error decoding JSON file: {resource_name}')
             return {"error": "Error decoding JSON file"}, 500
 
 # adding the defined resources along with their corresponding urls
