@@ -7,36 +7,32 @@
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script>
-        // Fetch and display tracks dynamically
-        document.addEventListener("DOMContentLoaded", () => {
-    fetch("/tracks")
-        .then(response => response.json())
-        .then(data => {
-            const songsSection = document.getElementById("songs-section");
-            if (data.tracks && data.tracks.length > 0) {
-                songsSection.innerHTML = ""; // Clear the loading message
-                data.tracks.forEach(track => {
-                    const trackElement = document.createElement("div");
-                    trackElement.classList.add("song-item");
-                    trackElement.innerHTML = `
-                        <h3>${track.title} by ${track.artist}</h3>
-                        <audio controls>
-                            <source src="${track.media_url}" type="audio/mpeg">
-                            Your browser does not support the audio element.
-                        </audio>
-                    `;
-                    songsSection.appendChild(trackElement);
-                });
-            } else {
-                songsSection.innerHTML = "<p>No songs available at this time.</p>";
-            }
-        })
-        .catch(err => {
-            console.error("Error fetching tracks:", err);
-            document.getElementById("songs-section").innerHTML = "<p>Error loading songs.</p>";
-        });
-});
-    </script>
+    // Fetch and display tracks dynamically
+    document.addEventListener("DOMContentLoaded", () => {
+        fetch("/tracks")
+            .then(response => response.json())
+            .then(data => {
+                const songsSection = document.getElementById("songs-section");
+                if (data.tracks && data.tracks.length > 0) {
+                    data.tracks.forEach(track => {
+                        const trackElement = document.createElement("div");
+                        trackElement.classList.add("song-item");
+                        trackElement.innerHTML = `
+                            <h3>${track.title} by ${track.artist}</h3>
+                            <iframe src="https://embed.wavlake.com/track/${track.track_id}" width="100%" height="380" frameborder="0"></iframe>
+                        `;
+                        songsSection.appendChild(trackElement);
+                    });
+                } else {
+                    songsSection.innerHTML = "<p>No songs available at this time.</p>";
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching tracks:", err);
+                document.getElementById("songs-section").innerHTML = "<p>Error loading songs.</p>";
+            });
+    });
+</script>
     <style>
         .songs-container {
             text-align: center;
