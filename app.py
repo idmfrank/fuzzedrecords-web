@@ -234,9 +234,9 @@ def build_music_library():
 
     music_library = []
     for artist in artists:
-        artist_name = artist["name"]
+        full_artist_name = artist["name"]
+        artist_name = full_artist_name.replace(" by Fuzzed Records", "").strip()
         artist_id = artist["id"]
-        artist_art_url = artist["art_url"]
         logger.info(f"Processing artist: {artist_name}")
 
         albums = fetch_albums(artist_id)
