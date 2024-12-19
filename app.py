@@ -119,6 +119,31 @@ def get_tracks():
         logger.error(f"Error building library: {e}")
         return jsonify({"error": "Unable to build music library"}), 500
 
+@app.route('/validate-profile', methods=['POST'])
+def validate_profile():
+    """
+    Validate the NIP-05 for a given pubkey and ensure it's within the fuzzedrecords.com domain.
+    """
+    try:
+        data = request.json
+        pubkey = data.get("pubkey")
+
+        if not pubkey:
+            return jsonify({"error": "Missing pubkey"}), 400
+
+        # Fetch and validate profile
+        is_valid = fetch_and_validate_profile(pubkey, "fuzzedrecords.com")
+
+        if is_valid:
+            return jsonify({"message": "Profile is valid and verified."})
+        else:
+            return jsonify({"error": "Profile validation failed."}), 403
+
+    except Exception as e:
+        logger.error(f"Error in validate_profile: {e}")
+        return jsonify({"error": "An internal error occurred"}), 500
+
+
 def validate_nip05(pubkey, nip05_address):
     logger.info(f"In validate_nip05 with variables: {pubkey}, {nip05_address}")
     try:
