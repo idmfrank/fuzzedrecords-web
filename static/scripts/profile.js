@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     authenticateWithNostr();
-    // NOSTR Authentication
+
     async function authenticateWithNostr() {
         if (!window.nostr) {
             console.error("NOSTR wallet not available.");
@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const pubkey = await window.nostr.getPublicKey();
             console.log("Public Key (hex) returned by NOSTR wallet:", pubkey);
 
-            // Fetch the profile data from the server
-            const response = await fetch('/fetch-profile', {
+            // Fetch and validate the profile
+            const response = await fetch('/validate-profile', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -20,16 +20,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ pubkey: pubkey })
             });
 
-            const profileData = await response.json();
+            const validationResult = await response.json();
 
-            if (profileData.error) {
-                console.error("Error fetching profile:", profileData.error);
-                return;
+            if (response.ok) {
+                console.log("Profile is valid and verified:", validationResult);
+                displayProfile(validationResult); // Use the validated data to display
+            } else {
+                console.error("Profile validation failed:", validationResult.error);
+                alert("Your profile could not be validated. Please ensure you are NIP-05 verified.");
             }
-
-            console.log("Profile Data:", profileData);
-            displayProfile(profileData);
-
         } catch (error) {
             console.error("An error occurred during authentication:", error);
         }
@@ -44,18 +43,15 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Clear the container to ensure no stale content
         profileContainer.innerHTML = "";
 
         if (profileData.content) {
-            // Hide the intro section when a profile is found
             if (introSection) {
                 introSection.style.display = 'none';
             }
 
             const content = profileData.content;
 
-            // Display profile picture
             if (content.picture) {
                 const img = document.createElement('img');
                 img.src = content.picture;
@@ -64,14 +60,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 profileContainer.appendChild(img);
             }
 
-            // Display profile name
             if (content.display_name) {
                 const nameElement = document.createElement('h2');
                 nameElement.textContent = content.display_name;
                 profileContainer.appendChild(nameElement);
             }
 
-            // Create and populate the details table
             const table = document.createElement('table');
             table.classList.add('profile-table');
 
@@ -108,7 +102,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             profileContainer.appendChild(table);
         } else {
-            // Show the intro section if no profile is found
             if (introSection) {
                 introSection.style.display = 'block';
             }
