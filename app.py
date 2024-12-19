@@ -141,7 +141,7 @@ def validate_profile():
 
     except Exception as e:
         logger.error(f"Error in validate_profile: {e}")
-        return jsonify({"error": "An internal error occurred"}), 500
+        return jsonify({"error": f"An internal error occurred: {e}"}), 500
 
 
 def validate_nip05(pubkey, nip05_address):
