@@ -143,6 +143,56 @@ def validate_profile():
         logger.error(f"Error in validate_profile: {e}")
         return jsonify({"error": f"An internal error occurred: {e}"}), 500
 
+def fetch_and_validate_profile(pubkey, required_domain):
+    """
+    Fetch the profile for a given pubkey and validate that it matches the required domain.
+    """
+    try:
+        # Fetch profile using existing `fetch_profile` logic
+        relay_manager = RelayManager(timeout=2)
+        relay_manager.add_relay("wss://relay.damus.io")
+        relay_manager.add_relay("wss://relay.primal.net")
+        relay_manager.add_relay("wss://relay.getalby.com/v1")
+
+        filters = FiltersList([Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)])
+        subscription_id = uuid.uuid1().hex
+        relay_manager.add_subscription_on_all_relays(subscription_id, filters)
+        relay_manager.run_sync()
+
+        profile_data = None
+        while relay_manager.message_pool.has_events():
+            event_msg = relay_manager.message_pool.get_event()
+            if event_msg.event.kind == EventKind.SET_METADATA:
+                profile_content = json.loads(event_msg.event.content)
+                profile_data = {
+                    "id": event_msg.event.id,
+                    "pubkey": event_msg.event.pubkey,
+                    "content": profile_content,
+                }
+                break
+
+        relay_manager.close_all_relay_connections()
+
+        if not profile_data:
+            logger.warning(f"No profile found for pubkey: {pubkey}")
+            return False
+
+        # Validate NIP-05 if available
+        nip05 = profile_data["content"].get("nip05")
+        if not nip05:
+            logger.warning(f"Profile does not have NIP-05 for pubkey: {pubkey}")
+            return False
+
+        # Ensure the domain matches
+        domain = nip05.split("@")[-1]
+        if domain != required_domain:
+            logger.warning(f"NIP-05 domain mismatch. Expected {required_domain}, got {domain}")
+            return False
+
+        return True
+    except Exception as e:
+        logger.error(f"Error in fetch_and_validate_profile: {e}")
+        return False
 
 def validate_nip05(pubkey, nip05_address):
     logger.info(f"In validate_nip05 with variables: {pubkey}, {nip05_address}")
