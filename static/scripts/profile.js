@@ -34,6 +34,59 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    async function createEvent(eventData) {
+        if (!window.nostr) {
+            console.error("NOSTR wallet not available.");
+            return;
+        }
+    
+        try {
+            const pubkey = await window.nostr.getPublicKey();
+    
+            // Construct event to be signed
+            const unsignedEvent = {
+                kind: 52,
+                pubkey: pubkey,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ["title", eventData.title],
+                    ["venue", eventData.venue],
+                    ["date", eventData.date],
+                    ["price", eventData.price]
+                ],
+                content: eventData.description
+            };
+    
+            // Sign the event with the user's wallet
+            const signature = await window.nostr.signEvent(unsignedEvent);
+    
+            // Include signature and pubkey in the payload
+            const payload = {
+                ...eventData,
+                pubkey: pubkey,
+                sig: signature
+            };
+    
+            // Send the signed event to the server
+            const response = await fetch('/create_event', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+    
+            const result = await response.json();
+            if (response.ok) {
+                console.log("Event created successfully:", result);
+            } else {
+                console.error("Error creating event:", result.error);
+            }
+        } catch (error) {
+            console.error("An error occurred during event creation:", error);
+        }
+    }
+
     function displayProfile(profileData) {
         const profileContainer = document.getElementById('profile-container');
         const introSection = document.getElementById('intro-section');
