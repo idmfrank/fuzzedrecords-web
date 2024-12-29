@@ -3,7 +3,9 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
-from pynostr.event import EventKind
+from pynostr.event import EventKind, Event
+from functools import wraps
+from datetime import datetime, timezone
 import os, json, time, uuid, requests
 import logging
 
@@ -142,6 +144,60 @@ def validate_profile():
     except Exception as e:
         logger.error(f"Error in validate_profile: {e}")
         return jsonify({"error": f"An internal error occurred: {e}"}), 500
+
+@app.route('/create_event', methods=['POST'])
+@require_nip05_verification("fuzzedrecords.com")
+def create_event():
+    try:
+        # Parse event data from request
+        data = request.json
+        title = data.get("title")
+        venue = data.get("venue")
+        date = data.get("date")
+        price = data.get("price")
+        description = data.get("description")
+        pubkey = data.get("pubkey")
+        sig = data.get("sig")
+
+        if not all([title, venue, date, price, description, pubkey, sig]):
+            return jsonify({"error": "Missing required fields"}), 400
+            
+        # Validate and normalize the date
+        try:
+            # Parse date and convert to UTC
+            parsed_date = datetime.fromisoformat(date.replace("Z", "+00:00")).astimezone(timezone.utc)
+            iso_date = parsed_date.isoformat()  # Format back to ISO 8601 (UTC)
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use ISO 8601 (e.g., 2024-12-24T18:30:00Z)."}), 400
+
+        # Construct the event
+        tags = [
+            ["title", title],
+            ["venue", venue],
+            ["date", iso_date],
+            ["price", str(price)]
+        ]
+        event = Event(
+            kind=52,
+            pubkey=pubkey,
+            content=description,
+            tags=tags
+        )
+
+        # Verify the signature using the provided public key
+        if not event.verify(sig):
+            return jsonify({"error": "Invalid signature"}), 403
+
+        # Publish the event to NOSTR relays
+        relays = ["wss://relay.damus.io", "wss://relay.primal.net", "wss://relay.getalby.com/v1"]
+        for relay in relays:
+            requests.post(f"{relay}/publish", json=event.to_dict())
+
+        return jsonify({"message": "Event created successfully", "event_id": event.id})
+
+    except Exception as e:
+        logger.error(f"Error in create_event: {e}")
+        return jsonify({"error": "An internal error occurred"}), 500
 
 def fetch_and_validate_profile(pubkey, required_domain):
     """
