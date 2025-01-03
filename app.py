@@ -145,6 +145,39 @@ def validate_profile():
         logger.error(f"Error in validate_profile: {e}")
         return jsonify({"error": f"An internal error occurred: {e}"}), 500
 
+# Validate nip05 domain.
+def require_nip05_verification(required_domain):
+    """
+    Decorator to enforce NIP-05 verification for a specific domain.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                # Extract the public key (pubkey) from the request data
+                data = request.json
+                pubkey = data.get("pubkey")
+
+                if not pubkey:
+                    return jsonify({"error": "Missing pubkey"}), 400
+
+                # Validate the profile for the given pubkey and domain
+                is_valid = fetch_and_validate_profile(pubkey, required_domain)
+
+                if not is_valid:
+                    logger.warning(f"NIP-05 verification failed for pubkey: {pubkey}")
+                    return jsonify({"error": "NIP-05 verification failed"}), 403
+
+                # Proceed with the original function
+                return func(*args, **kwargs)
+
+            except Exception as e:
+                logger.error(f"Error in require_nip05_verification: {e}")
+                return jsonify({"error": "An internal error occurred"}), 500
+
+        return wrapper
+    return decorator
+
 @app.route('/create_event', methods=['POST'])
 @require_nip05_verification("fuzzedrecords.com")
 def create_event():
@@ -198,39 +231,6 @@ def create_event():
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
         return jsonify({"error": "An internal error occurred"}), 500
-
-# Validate nip05 domain.
-def require_nip05_verification(required_domain):
-    """
-    Decorator to enforce NIP-05 verification for a specific domain.
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                # Extract the public key (pubkey) from the request data
-                data = request.json
-                pubkey = data.get("pubkey")
-
-                if not pubkey:
-                    return jsonify({"error": "Missing pubkey"}), 400
-
-                # Validate the profile for the given pubkey and domain
-                is_valid = fetch_and_validate_profile(pubkey, required_domain)
-
-                if not is_valid:
-                    logger.warning(f"NIP-05 verification failed for pubkey: {pubkey}")
-                    return jsonify({"error": "NIP-05 verification failed"}), 403
-
-                # Proceed with the original function
-                return func(*args, **kwargs)
-
-            except Exception as e:
-                logger.error(f"Error in require_nip05_verification: {e}")
-                return jsonify({"error": "An internal error occurred"}), 500
-
-        return wrapper
-    return decorator
 
 def fetch_and_validate_profile(pubkey, required_domain):
     """
