@@ -6,35 +6,34 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-    // Fetch and display tracks dynamically
-    document.addEventListener("DOMContentLoaded", () => {
-        fetch("/tracks")
-            .then(response => response.json())
-            .then(data => {
-                const songsSection = document.getElementById("songs-section");
-                songsSection.innerHTML = ""; // Clear the "Loading songs..." message
-                if (data.tracks && data.tracks.length > 0) {
-                    data.tracks.forEach(track => {
-                        const trackElement = document.createElement("div");
-                        trackElement.classList.add("song-item");
-                        trackElement.innerHTML = `
-                            <h3>${track.title} by ${track.artist}</h3>
-                            <iframe src="https://embed.wavlake.com/track/${track.track_id}" width="100%" height="380" frameborder="0"></iframe>
-                        `;
-                        songsSection.appendChild(trackElement);
-                    });
-                } else {
-                    songsSection.innerHTML = "<p>No songs available at this time.</p>";
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching tracks:", err);
-                document.getElementById("songs-section").innerHTML = "<p>Error loading songs.</p>";
-            });
-    });
-</script>
+    <script src="/static/scripts/profile.js"></script>
     <style>
+        /* Styling for menu, active sections, and song library */
+        nav {
+            display: flex;
+            justify-content: space-around;
+            background: #333;
+            padding: 10px 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        nav a.active {
+            background: #555;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        section {
+            display: none;
+        }
+        section.active {
+            display: block;
+        }
         .songs-container {
             text-align: center;
             margin: 20px auto;
@@ -50,23 +49,19 @@
         .song-item h3 {
             margin: 0 0 10px;
         }
-        audio {
-            width: 100%;
-        }
     </style>
 </head>
 <body>
-    <div class="profile-container">
-        <!-- Image -->
-        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" style="width: 100%; max-width: 500px; margin: 20px auto; display: block;">
+    <nav>
+        <a href="#" id="menu-library" class="active">Library</a>
+        <a href="#" id="menu-profile">Profile</a>
+        <a href="#" id="menu-admin" class="admin-only">Admin</a>
+    </nav>
 
-        <!-- Intro Section -->
-        <section id="intro-section" class="intro-section">
-            <p>An independent record label.</p>
-        </section>
-
-        <!-- Songs Section -->
-        <section class="songs-container">
+    <!-- Library Section -->
+    <section id="library-section" class="active">
+        <h2>Fuzzed Records Library</h2>
+        <div class="songs-container">
             <h2>
                 Songs in our Library at 
                 <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
@@ -78,8 +73,33 @@
                 <!-- Songs will be dynamically loaded here -->
                 <p>Loading songs...</p>
             </div>
-        </section>
-    </div>
-    <script src="/static/scripts/profile.js"></script>
+        </div>
+    </section>
+
+    <!-- Profile Section -->
+    <section id="profile-section">
+        <h2>Profile</h2>
+        <div id="profile-container">
+            <!-- Profile details will be loaded here -->
+        </div>
+    </section>
+
+    <!-- Admin Section -->
+    <section id="admin-section">
+        <h2>Admin - Create Event</h2>
+        <form id="event-form">
+            <label for="event-title">Event Title:</label>
+            <input type="text" id="event-title" name="event-title" required>
+            <label for="event-venue">Venue:</label>
+            <input type="text" id="event-venue" name="event-venue" required>
+            <label for="event-date">Date:</label>
+            <input type="datetime-local" id="event-date" name="event-date" required>
+            <label for="event-price">Price:</label>
+            <input type="number" id="event-price" name="event-price" required>
+            <label for="event-description">Description:</label>
+            <textarea id="event-description" name="event-description" required></textarea>
+            <button type="submit">Create Event</button>
+        </form>
+    </section>
 </body>
 </html>
