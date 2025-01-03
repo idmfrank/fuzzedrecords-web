@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const menuLibrary = document.getElementById('menu-library');
+    const menuProfile = document.getElementById('menu-profile');
+    const menuAdmin = document.getElementById('menu-admin');
+    const librarySection = document.getElementById('library-section');
+    const profileSection = document.getElementById('profile-section');
+    const adminSection = document.getElementById('admin-section');
+    const eventForm = document.getElementById('event-form');
+
+    // Default: Show library section
+    showSection('library');
+
+    // Event Listeners for Menu
+    menuLibrary.addEventListener('click', () => showSection('library'));
+    menuProfile.addEventListener('click', () => showSection('profile'));
+    menuAdmin.addEventListener('click', () => showSection('admin'));
+
+    // Event Listener for Event Form Submission
+    eventForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(eventForm);
+        const eventData = {
+            title: formData.get('event-title'),
+            venue: formData.get('event-venue'),
+            date: formData.get('event-date'),
+            price: formData.get('event-price'),
+            description: formData.get('event-description')
+        };
+
+        await createEvent(eventData);
+        alert("Event created successfully!");
+    });
+
+    // Authentication with NOSTR
     authenticateWithNostr();
 
     async function authenticateWithNostr() {
@@ -9,155 +42,70 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const pubkey = await window.nostr.getPublicKey();
-            console.log("Public Key (hex) returned by NOSTR wallet:", pubkey);
-
-            // Fetch and validate the profile
             const response = await fetch('/validate-profile', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pubkey: pubkey })
             });
 
             const validationResult = await response.json();
-
             if (response.ok) {
-                console.log("Profile is valid and verified:", validationResult);
-                displayProfile(validationResult); // Use the validated data to display
+                displayProfile(validationResult);
+
+                if (validationResult.content.nip05 && validationResult.content.nip05.includes("fuzzedrecords.com")) {
+                    menuAdmin.classList.remove('admin-only');
+                }
             } else {
                 console.error("Profile validation failed:", validationResult.error);
-                alert("Your profile could not be validated. Please ensure you are NIP-05 verified.");
             }
         } catch (error) {
             console.error("An error occurred during authentication:", error);
         }
     }
 
-    async function createEvent(eventData) {
-        if (!window.nostr) {
-            console.error("NOSTR wallet not available.");
-            return;
-        }
-    
-        try {
-            const pubkey = await window.nostr.getPublicKey();
-    
-            // Construct event to be signed
-            const unsignedEvent = {
-                kind: 52,
-                pubkey: pubkey,
-                created_at: Math.floor(Date.now() / 1000),
-                tags: [
-                    ["title", eventData.title],
-                    ["venue", eventData.venue],
-                    ["date", eventData.date],
-                    ["price", eventData.price]
-                ],
-                content: eventData.description
-            };
-    
-            // Sign the event with the user's wallet
-            const signature = await window.nostr.signEvent(unsignedEvent);
-    
-            // Include signature and pubkey in the payload
-            const payload = {
-                ...eventData,
-                pubkey: pubkey,
-                sig: signature
-            };
-    
-            // Send the signed event to the server
-            const response = await fetch('/create_event', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-    
-            const result = await response.json();
-            if (response.ok) {
-                console.log("Event created successfully:", result);
+    // Fetch and Display Songs
+    fetch("/tracks")
+        .then(response => response.json())
+        .then(data => {
+            const songsSection = document.getElementById("songs-section");
+            songsSection.innerHTML = "";
+            if (data.tracks && data.tracks.length > 0) {
+                data.tracks.forEach(track => {
+                    const trackElement = document.createElement("div");
+                    trackElement.classList.add("song-item");
+                    trackElement.innerHTML = `
+                        <h3>${track.title} by ${track.artist}</h3>
+                        <iframe src="https://embed.wavlake.com/track/${track.track_id}" width="100%" height="380" frameborder="0"></iframe>
+                    `;
+                    songsSection.appendChild(trackElement);
+                });
             } else {
-                console.error("Error creating event:", result.error);
+                songsSection.innerHTML = "<p>No songs available at this time.</p>";
             }
-        } catch (error) {
-            console.error("An error occurred during event creation:", error);
-        }
-    }
+        })
+        .catch(err => {
+            console.error("Error fetching tracks:", err);
+            document.getElementById("songs-section").innerHTML = "<p>Error loading songs.</p>";
+        });
 
-    function displayProfile(profileData) {
-        const profileContainer = document.getElementById('profile-container');
-        const introSection = document.getElementById('intro-section');
+    // Helper: Show Section
+    function showSection(section) {
+        librarySection.classList.remove('active');
+        profileSection.classList.remove('active');
+        adminSection.classList.remove('active');
+        menuLibrary.classList.remove('active');
+        menuProfile.classList.remove('active');
+        menuAdmin.classList.remove('active');
 
-        if (!profileContainer) {
-            console.error("Profile container element not found.");
-            return;
-        }
-
-        profileContainer.innerHTML = "";
-
-        if (profileData.content) {
-            if (introSection) {
-                introSection.style.display = 'none';
-            }
-
-            const content = profileData.content;
-
-            if (content.picture) {
-                const img = document.createElement('img');
-                img.src = content.picture;
-                img.alt = content.display_name || 'Profile Picture';
-                img.classList.add('profile-pic');
-                profileContainer.appendChild(img);
-            }
-
-            if (content.display_name) {
-                const nameElement = document.createElement('h2');
-                nameElement.textContent = content.display_name;
-                profileContainer.appendChild(nameElement);
-            }
-
-            const table = document.createElement('table');
-            table.classList.add('profile-table');
-
-            const details = [
-                { label: 'Username', value: content.name },
-                { label: 'NIP-05', value: content.nip05, isNip05: true },
-                { label: 'LUD-16', value: content.lud16 },
-                { label: 'Website', value: content.website },
-                { label: 'About', value: content.about }
-            ];
-
-            details.forEach(detail => {
-                if (detail.value) {
-                    const row = document.createElement('tr');
-
-                    const labelCell = document.createElement('td');
-                    labelCell.textContent = detail.label;
-
-                    const valueCell = document.createElement('td');
-                    if (detail.isNip05) {
-                        const link = document.createElement('a');
-                        link.href = `https://${detail.value.split('@')[1]}/.well-known/nostr.json?name=${detail.value.split('@')[0]}`;
-                        link.textContent = detail.value;
-                        valueCell.appendChild(link);
-                    } else {
-                        valueCell.textContent = detail.value;
-                    }
-
-                    row.appendChild(labelCell);
-                    row.appendChild(valueCell);
-                    table.appendChild(row);
-                }
-            });
-
-            profileContainer.appendChild(table);
-        } else {
-            if (introSection) {
-                introSection.style.display = 'block';
-            }
+        if (section === 'library') {
+            librarySection.classList.add('active');
+            menuLibrary.classList.add('active');
+        } else if (section === 'profile') {
+            profileSection.classList.add('active');
+            menuProfile.classList.add('active');
+        } else if (section === 'admin') {
+            adminSection.classList.add('active');
+            menuAdmin.classList.add('active');
         }
     }
 });
