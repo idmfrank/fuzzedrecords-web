@@ -6,100 +6,215 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="/static/scripts/profile.js"></script>
     <style>
-        /* Styling for menu, active sections, and song library */
+        /* General Body Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+        }
+
+        /* Navigation Menu */
         nav {
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
             background: #333;
             padding: 10px 20px;
+            gap: 20px;
         }
+
         nav a {
             color: white;
             text-decoration: none;
-            margin: 0 10px;
-            padding: 5px 10px;
-            border-radius: 3px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
         }
+
         nav a.active {
             background: #555;
         }
+
         nav a:hover {
-            text-decoration: underline;
+            background: #444;
         }
+
+        /* Section Styles */
         section {
             display: none;
+            margin: 0 auto;
+            padding: 20px;
+            max-width: 900px;
+            text-align: center;
         }
+
         section.active {
             display: block;
         }
-        .songs-container {
-            text-align: center;
-            margin: 20px auto;
-        }
+
+        /* Song Item Styles */
         .song-item {
             margin: 20px auto;
-            padding: 10px;
+            padding: 15px;
             border: 1px solid #ddd;
-            border-radius: 5px;
-            max-width: 500px;
+            border-radius: 10px;
+            max-width: 600px;
             background: #f9f9f9;
+            text-align: left;
         }
+
         .song-item h3 {
             margin: 0 0 10px;
+        }
+
+        iframe {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        /* Profile Section Styles */
+        #profile-container {
+            margin: 0 auto;
+            max-width: 600px;
+            text-align: left;
+        }
+
+        .profile-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .profile-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .profile-pic {
+            display: block;
+            margin: 20px auto;
+            border-radius: 50%;
+            max-width: 150px;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .song-item {
+                max-width: 100%;
+                padding: 10px;
+            }
+
+            #profile-container {
+                max-width: 100%;
+            }
+
+            iframe {
+                border-radius: 5px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Navigation Menu -->
     <nav>
-        <a href="#" id="menu-library" class="active">Library</a>
-        <a href="#" id="menu-profile">Profile</a>
-        <a href="#" id="menu-admin" class="admin-only">Admin</a>
+        <a href="#songs-section" class="active" onclick="showSection('songs-section')">Songs</a>
+        <a href="#profile-section" onclick="showSection('profile-section')">Profile</a>
+        <a href="#admin-section" onclick="showSection('admin-section')" id="admin-menu" style="display: none;">Admin</a>
     </nav>
 
-    <!-- Library Section -->
-    <section id="library-section" class="active">
-        <h2>Fuzzed Records Library</h2>
-        <div class="songs-container">
-            <h2>
-                Songs in our Library at 
-                <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
-                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" style="width: 20px; height: 20px; margin-right: 5px;">
-                    Wavlake.com
-                </a>
-            </h2>
-            <div id="songs-section">
-                <!-- Songs will be dynamically loaded here -->
-                <p>Loading songs...</p>
-            </div>
+    <!-- Songs Section -->
+    <section id="songs-section" class="active">
+        <h2>
+            Songs in our Library at 
+            <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
+                <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" style="width: 20px; height: 20px; margin-right: 5px;">
+                Wavlake.com
+            </a>
+        </h2>
+        <div id="songs-list">
+            <!-- Songs will be dynamically loaded here -->
+            <p>Loading songs...</p>
         </div>
     </section>
 
     <!-- Profile Section -->
     <section id="profile-section">
-        <h2>Profile</h2>
+        <h2>Your Profile</h2>
         <div id="profile-container">
-            <!-- Profile details will be loaded here -->
+            <!-- Profile details will be dynamically loaded here -->
+            <p>Loading profile...</p>
         </div>
     </section>
 
     <!-- Admin Section -->
     <section id="admin-section">
-        <h2>Admin - Create Event</h2>
-        <form id="event-form">
-            <label for="event-title">Event Title:</label>
-            <input type="text" id="event-title" name="event-title" required>
-            <label for="event-venue">Venue:</label>
-            <input type="text" id="event-venue" name="event-venue" required>
-            <label for="event-date">Date:</label>
-            <input type="datetime-local" id="event-date" name="event-date" required>
-            <label for="event-price">Price:</label>
-            <input type="number" id="event-price" name="event-price" required>
-            <label for="event-description">Description:</label>
-            <textarea id="event-description" name="event-description" required></textarea>
-            <button type="submit">Create Event</button>
-        </form>
+        <h2>Admin Menu</h2>
+        <p>Create and manage events.</p>
+        <!-- Add admin functionalities here -->
     </section>
+
+    <script>
+        // Show a specific section based on menu click
+        function showSection(sectionId) {
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('nav a').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`nav a[href='#${sectionId}']`).classList.add('active');
+        }
+
+        // Dynamically fetch and display songs
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/tracks')
+                .then(response => response.json())
+                .then(data => {
+                    const songsList = document.getElementById('songs-list');
+                    songsList.innerHTML = ""; // Clear loading text
+                    if (data.tracks && data.tracks.length > 0) {
+                        data.tracks.forEach(track => {
+                            const songItem = document.createElement('div');
+                            songItem.classList.add('song-item');
+                            songItem.innerHTML = `
+                                <h3>${track.title} by ${track.artist}</h3>
+                                <iframe src="https://embed.wavlake.com/track/${track.track_id}" width="100%" height="380" frameborder="0"></iframe>
+                            `;
+                            songsList.appendChild(songItem);
+                        });
+                    } else {
+                        songsList.innerHTML = "<p>No songs available at this time.</p>";
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching songs:", err);
+                    document.getElementById('songs-list').innerHTML = "<p>Error loading songs.</p>";
+                });
+
+            // Check if user is admin
+            fetch('/validate-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pubkey: 'user_pubkey' })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_admin) {
+                        document.getElementById('admin-menu').style.display = 'block';
+                    }
+                })
+                .catch(err => console.error('Error validating profile:', err));
+        });
+    </script>
 </body>
 </html>
