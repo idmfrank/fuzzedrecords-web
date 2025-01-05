@@ -6,6 +6,84 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Inline styles for immediate fixes */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        nav {
+            background-color: #333;
+            color: #fff;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li {
+            padding: 15px 20px;
+            cursor: pointer;
+        }
+
+        nav ul li.active {
+            background-color: #555;
+        }
+
+        nav ul li:hover {
+            background-color: #444;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        section {
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        .song-item {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+            nav ul li {
+                text-align: center;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Logo Section -->
@@ -16,7 +94,7 @@
     <!-- Menu -->
     <nav>
         <ul id="menu">
-            <li id="menu-library">Library</li>
+            <li id="menu-library" class="active">Library</li>
             <li id="menu-profile">Profile</li>
             <li id="menu-admin" class="admin-only">Admin</li>
         </ul>
@@ -25,7 +103,7 @@
     <!-- Main Sections -->
     <main>
         <!-- Library Section -->
-        <section id="library-section">
+        <section id="library-section" class="active">
             <h2>Library</h2>
             <div id="songs-section">
                 <p>Loading songs...</p>
