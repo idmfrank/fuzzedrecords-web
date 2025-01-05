@@ -238,7 +238,7 @@ def fetch_and_validate_profile(pubkey, required_domain):
     """
     try:
         # Fetch profile using existing `fetch_profile` logic
-        relay_manager = RelayManager(timeout=2)
+        relay_manager = RelayManager(timeout=10)
         relay_manager.add_relay("wss://relay.damus.io")
         relay_manager.add_relay("wss://relay.primal.net")
         relay_manager.add_relay("wss://relay.getalby.com/v1")
