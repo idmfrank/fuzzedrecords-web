@@ -8,47 +8,61 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
+    <!-- Logo Section -->
     <header>
-        <!-- Logo -->
-        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
-
-        <!-- Navigation Menu -->
-        <ul class="menu">
-            <li id="menu-library" class="active"><a href="#">Songs</a></li>
-            <li id="menu-profile"><a href="#">Profile</a></li>
-            <li id="menu-admin" class="admin-only"><a href="#">Admin</a></li>
-        </ul>
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" id="logo">
     </header>
 
-    <!-- Sections -->
-    <div id="library-section" class="active">
-        <h2>Library</h2>
-        <div id="songs-section">
-            <p>Loading songs...</p>
-        </div>
-    </div>
+    <!-- Menu -->
+    <nav>
+        <ul id="menu">
+            <li id="menu-library">Library</li>
+            <li id="menu-profile">Profile</li>
+            <li id="menu-admin" class="admin-only">Admin</li>
+        </ul>
+    </nav>
 
-    <div id="profile-section">
-        <h2>Profile</h2>
-        <div id="profile-details"></div>
-    </div>
+    <!-- Main Sections -->
+    <main>
+        <!-- Library Section -->
+        <section id="library-section">
+            <h2>Library</h2>
+            <div id="songs-section">
+                <p>Loading songs...</p>
+            </div>
+        </section>
 
-    <div id="admin-section">
-        <h2>Admin Panel</h2>
-        <form id="event-form">
-            <label for="event-title">Title:</label>
-            <input type="text" id="event-title" name="event-title" required>
-            <label for="event-venue">Venue:</label>
-            <input type="text" id="event-venue" name="event-venue" required>
-            <label for="event-date">Date:</label>
-            <input type="datetime-local" id="event-date" name="event-date" required>
-            <label for="event-price">Price:</label>
-            <input type="number" id="event-price" name="event-price" required>
-            <label for="event-description">Description:</label>
-            <textarea id="event-description" name="event-description" required></textarea>
-            <button type="submit">Create Event</button>
-        </form>
-    </div>
+        <!-- Profile Section -->
+        <section id="profile-section">
+            <h2>Profile</h2>
+            <div id="profile-container">
+                <p>Please authenticate with your NOSTR wallet to view your profile.</p>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="admin-section">
+            <h2>Admin</h2>
+            <form id="event-form">
+                <label for="event-title">Event Title:</label>
+                <input type="text" id="event-title" name="event-title" required>
+                
+                <label for="event-venue">Venue:</label>
+                <input type="text" id="event-venue" name="event-venue" required>
+                
+                <label for="event-date">Date:</label>
+                <input type="datetime-local" id="event-date" name="event-date" required>
+                
+                <label for="event-price">Price:</label>
+                <input type="number" id="event-price" name="event-price" step="0.01" required>
+                
+                <label for="event-description">Description:</label>
+                <textarea id="event-description" name="event-description" required></textarea>
+                
+                <button type="submit">Create Event</button>
+            </form>
+        </section>
+    </main>
 
     <script src="/static/scripts/profile.js"></script>
 </body>
