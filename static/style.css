@@ -1,36 +1,66 @@
-/* Reset and Normalize */
-body, h1, h2, p, button, input, textarea, table {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
     font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
-    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.logo {
+    display: block;
+    max-width: 200px;
+    margin: 10px auto;
+}
+
+.menu {
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    background-color: #333;
+    padding: 10px 0;
     margin: 0;
+    list-style-type: none;
 }
 
-/* Intro Section */
-.intro-section {
-    text-align: center;
-    margin-bottom: 20px;
+.menu li {
+    margin: 0 10px;
 }
 
-.intro-section h1 {
-    font-size: 2rem;
-    margin-bottom: 10px;
+.menu li a {
+    text-decoration: none;
+    color: white;
+    padding: 5px 10px;
 }
 
-.intro-section p {
-    font-size: 1.2rem;
-    color: #666;
+.menu li.active a,
+.menu li a:hover {
+    background-color: #555;
+    border-radius: 4px;
 }
 
+.admin-only {
+    display: none;
+}
 
+#library-section,
+#profile-section,
+#admin-section {
+    display: none;
+    padding: 20px;
+}
+
+#library-section.active,
+#profile-section.active,
+#admin-section.active {
+    display: block;
+}
+
+.song-item {
+    margin: 20px auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    max-width: 500px;
+    background: #f9f9f9;
+}
+
+.song-item h3 {
+    margin: 0 0 10px;
+}

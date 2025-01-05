@@ -6,175 +6,49 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        /* General Styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f5f5f5;
-        }
-
-        header {
-            width: 100%;
-            background-color: #333;
-            padding: 10px 0;
-            position: fixed;
-            top: 70px;
-            z-index: 1000;
-        }
-
-        .logo-container {
-            width: 100%;
-            background-color: #fff;
-            text-align: center;
-            padding: 10px 0;
-            position: fixed;
-            top: 0;
-            z-index: 1001;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo-container img {
-            max-width: 200px;
-            height: auto;
-        }
-
-        .menu {
-            display: flex;
-            justify-content: center;
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .menu li {
-            margin: 0 15px;
-        }
-
-        .menu a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            padding: 8px 12px;
-        }
-
-        .menu a:hover {
-            background-color: #575757;
-            border-radius: 4px;
-        }
-
-        .container {
-            margin-top: 160px; /* Offset for logo and fixed header */
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        .profile-container, .songs-container {
-            text-align: center;
-            margin: 20px auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .profile-table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .profile-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-
-        .songs-container .song-item {
-            margin: 20px auto;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            max-width: 500px;
-            background: #f9f9f9;
-        }
-
-        .songs-container h2 {
-            margin-bottom: 20px;
-        }
-
-        .profile-pic {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            margin: 20px auto;
-        }
-
-        footer {
-            text-align: center;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-    </style>
 </head>
 <body>
-    <!-- Logo -->
-    <div class="logo-container">
-        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo">
-    </div>
-
-    <!-- Header and Menu -->
     <header>
+        <!-- Logo -->
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
+
+        <!-- Navigation Menu -->
         <ul class="menu">
-            <li><a href="#songs">Songs</a></li>
-            <li><a href="#profile">Profile</a></li>
-            <li><a href="#admin">Admin</a></li>
+            <li id="menu-library" class="active"><a href="#">Songs</a></li>
+            <li id="menu-profile"><a href="#">Profile</a></li>
+            <li id="menu-admin" class="admin-only"><a href="#">Admin</a></li>
         </ul>
     </header>
 
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Songs Section -->
-        <section id="songs" class="songs-container">
-            <h2>
-                Songs in our Library at 
-                <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
-                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" style="width: 20px; height: 20px; margin-right: 5px;">
-                    Wavlake.com
-                </a>
-            </h2>
-            <div id="songs-section">
-                <!-- Songs will be dynamically loaded here -->
-                <p>Loading songs...</p>
-            </div>
-        </section>
-
-        <!-- Profile Section -->
-        <section id="profile" class="profile-container">
-            <section id="intro-section" class="intro-section">
-                <p>An independent record label.</p>
-            </section>
-            <div id="profile-details">
-                <!-- Profile details dynamically rendered -->
-            </div>
-        </section>
-
-        <!-- Admin Section -->
-        <section id="admin" class="profile-container">
-            <h2>Admin Panel</h2>
-            <p>Manage events and other administrative tasks.</p>
-            <button onclick="openCreateEvent()">Create Event</button>
-        </section>
+    <!-- Sections -->
+    <div id="library-section" class="active">
+        <h2>Library</h2>
+        <div id="songs-section">
+            <p>Loading songs...</p>
+        </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        &copy; 2025 Fuzzed Records. All rights reserved.
-    </footer>
+    <div id="profile-section">
+        <h2>Profile</h2>
+        <div id="profile-details"></div>
+    </div>
+
+    <div id="admin-section">
+        <h2>Admin Panel</h2>
+        <form id="event-form">
+            <label for="event-title">Title:</label>
+            <input type="text" id="event-title" name="event-title" required>
+            <label for="event-venue">Venue:</label>
+            <input type="text" id="event-venue" name="event-venue" required>
+            <label for="event-date">Date:</label>
+            <input type="datetime-local" id="event-date" name="event-date" required>
+            <label for="event-price">Price:</label>
+            <input type="number" id="event-price" name="event-price" required>
+            <label for="event-description">Description:</label>
+            <textarea id="event-description" name="event-description" required></textarea>
+            <button type="submit">Create Event</button>
+        </form>
+    </div>
 
     <script src="/static/scripts/profile.js"></script>
 </body>
