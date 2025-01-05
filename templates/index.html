@@ -7,56 +7,53 @@
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Inline styles for immediate fixes */
+        /* General Styles */
         body {
-            margin: 0;
             font-family: Arial, sans-serif;
-        }
-
-        header {
+            margin: 0;
+            padding: 0;
             text-align: center;
-            margin: 20px 0;
         }
 
-        header img {
+        /* Logo Styling */
+        .logo {
             max-width: 100%;
-            height: auto;
+            width: 90%; /* Ensure the logo doesn't exceed the container */
+            margin: 20px auto;
             display: block;
-            margin: 0 auto;
         }
 
-        nav {
-            background-color: #333;
-            color: #fff;
-        }
-
-        nav ul {
-            list-style: none;
+        /* Menu Styling */
+        .menu {
             display: flex;
             justify-content: center;
-            padding: 0;
-            margin: 0;
+            gap: 10px;
+            background-color: #333;
+            padding: 10px 20px;
+            border-radius: 10px;
+            max-width: 90%; /* Align with logo */
+            margin: 0 auto 20px;
         }
 
-        nav ul li {
-            padding: 15px 20px;
-            cursor: pointer;
-        }
-
-        nav ul li.active {
+        .menu button {
             background-color: #555;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
 
-        nav ul li:hover {
+        .menu button.active {
+            background-color: #007BFF;
+        }
+
+        .menu button:hover {
             background-color: #444;
         }
 
-        main {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
+        /* Section Styling */
         section {
             display: none;
         }
@@ -65,82 +62,65 @@
             display: block;
         }
 
+        /* Embedded Songs Styling */
+        .songs-container {
+            margin: 20px auto;
+            max-width: 90%;
+        }
+
         .song-item {
-            margin: 20px 0;
+            margin: 20px auto;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            background-color: #f9f9f9;
+            max-width: 500px;
+            background: #f9f9f9;
         }
 
-        @media (max-width: 768px) {
-            nav ul {
-                flex-direction: column;
-                align-items: center;
-            }
-            nav ul li {
-                text-align: center;
-                width: 100%;
-            }
+        .song-item h3 {
+            margin: 0 0 10px;
+        }
+
+        iframe {
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <!-- Logo Section -->
-    <header>
-        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" id="logo">
-    </header>
+    <!-- Logo -->
+    <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
 
     <!-- Menu -->
-    <nav>
-        <ul id="menu">
-            <li id="menu-library" class="active">Library</li>
-            <li id="menu-profile">Profile</li>
-            <li id="menu-admin" class="admin-only">Admin</li>
-        </ul>
+    <nav class="menu">
+        <button id="menu-library" class="active">Library</button>
+        <button id="menu-profile">Profile</button>
+        <button id="menu-admin" class="admin-only">Admin</button>
     </nav>
 
-    <!-- Main Sections -->
-    <main>
-        <!-- Library Section -->
-        <section id="library-section" class="active">
-            <h2>Library</h2>
-            <div id="songs-section">
-                <p>Loading songs...</p>
-            </div>
-        </section>
+    <!-- Sections -->
+    <section id="library-section" class="active">
+        <h2>Fuzzed Records Library</h2>
+        <div id="songs-section">
+            <p>Loading songs...</p>
+        </div>
+    </section>
 
-        <!-- Profile Section -->
-        <section id="profile-section">
-            <h2>Profile</h2>
-            <div id="profile-container">
-                <p>Please authenticate with your NOSTR wallet to view your profile.</p>
-            </div>
-        </section>
+    <section id="profile-section">
+        <h2>Your Profile</h2>
+        <div id="profile-container"></div>
+    </section>
 
-        <!-- Admin Section -->
-        <section id="admin-section">
-            <h2>Admin</h2>
-            <form id="event-form">
-                <label for="event-title">Event Title:</label>
-                <input type="text" id="event-title" name="event-title" required>
-                
-                <label for="event-venue">Venue:</label>
-                <input type="text" id="event-venue" name="event-venue" required>
-                
-                <label for="event-date">Date:</label>
-                <input type="datetime-local" id="event-date" name="event-date" required>
-                
-                <label for="event-price">Price:</label>
-                <input type="number" id="event-price" name="event-price" step="0.01" required>
-                
-                <label for="event-description">Description:</label>
-                <textarea id="event-description" name="event-description" required></textarea>
-                
-                <button type="submit">Create Event</button>
-            </form>
-        </section>
-    </main>
+    <section id="admin-section">
+        <h2>Create an Event</h2>
+        <form id="event-form">
+            <input type="text" name="event-title" placeholder="Event Title" required>
+            <input type="text" name="event-venue" placeholder="Venue" required>
+            <input type="datetime-local" name="event-date" required>
+            <input type="number" name="event-price" placeholder="Price" required>
+            <textarea name="event-description" placeholder="Description" rows="5" required></textarea>
+            <button type="submit">Create Event</button>
+        </form>
+    </section>
 
     <script src="/static/scripts/profile.js"></script>
 </body>
