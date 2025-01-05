@@ -6,100 +6,23 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        /* General Styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
-
-        /* Logo Styling */
-        .logo {
-            max-width: 100%;
-            width: 80%; /* Ensure the logo doesn't exceed the container */
-            margin: 20px auto;
-            display: block;
-        }
-
-        /* Menu Styling */
-        .menu {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            background-color: #333;
-            padding: 10px 20px;
-            border-radius: 10px;
-            max-width: 80%; /* Align with logo */
-            margin: 0 auto 20px;
-        }
-
-        .menu button {
-            background-color: #555;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .menu button.active {
-            background-color: #007BFF;
-        }
-
-        .menu button:hover {
-            background-color: #444;
-        }
-
-        /* Section Styling */
-        section {
-            display: none;
-        }
-
-        section.active {
-            display: block;
-        }
-
-        /* Embedded Songs Styling */
-        .songs-container {
-            margin: 20px auto;
-            max-width: 90%;
-        }
-
-        .song-item {
-            margin: 20px auto;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            max-width: 500px;
-            background: #f9f9f9;
-        }
-
-        .song-item h3 {
-            margin: 0 0 10px;
-        }
-
-        iframe {
-            width: 100%;
-        }
-    </style>
 </head>
 <body>
-    <!-- Logo -->
-    <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
+    <!-- Logo Section -->
+    <div class="logo-container">
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
+    </div>
 
     <!-- Menu -->
-    <nav class="menu">
-        <button id="menu-library" class="active">Library</button>
-        <button id="menu-profile">Profile</button>
-        <button id="menu-admin" class="admin-only">Admin</button>
-    </nav>
+    <ul class="menu">
+        <li id="menu-library" class="active"><a href="javascript:void(0)">Library</a></li>
+        <li id="menu-profile"><a href="javascript:void(0)">Profile</a></li>
+        <li id="menu-admin" class="admin-only"><a href="javascript:void(0)">Admin</a></li>
+    </ul>
 
     <!-- Sections -->
     <section id="library-section" class="active">
-        <h2>Fuzzed Records Library</h2>
+        <h2>Songs in our Library</h2>
         <div id="songs-section">
             <p>Loading songs...</p>
         </div>
@@ -111,13 +34,18 @@
     </section>
 
     <section id="admin-section">
-        <h2>Create an Event</h2>
+        <h2>Create Event</h2>
         <form id="event-form">
-            <input type="text" name="event-title" placeholder="Event Title" required>
-            <input type="text" name="event-venue" placeholder="Venue" required>
-            <input type="datetime-local" name="event-date" required>
-            <input type="number" name="event-price" placeholder="Price" required>
-            <textarea name="event-description" placeholder="Description" rows="5" required></textarea>
+            <label for="event-title">Title:</label>
+            <input type="text" id="event-title" name="event-title" required>
+            <label for="event-venue">Venue:</label>
+            <input type="text" id="event-venue" name="event-venue" required>
+            <label for="event-date">Date:</label>
+            <input type="datetime-local" id="event-date" name="event-date" required>
+            <label for="event-price">Price:</label>
+            <input type="number" id="event-price" name="event-price" required>
+            <label for="event-description">Description:</label>
+            <textarea id="event-description" name="event-description" required></textarea>
             <button type="submit">Create Event</button>
         </form>
     </section>

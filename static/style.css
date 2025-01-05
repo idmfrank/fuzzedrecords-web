@@ -1,21 +1,36 @@
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Font Awesome 5 Free', Arial, sans-serif;
     margin: 0;
     padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    text-align: center;
+}
+
+/* Logo */
+.logo-container {
+    margin: 20px auto;
+    max-width: 500px; /* Consistent width with sections */
 }
 
 .logo {
     display: block;
-    max-width: 200px;
-    margin: 10px auto;
+    max-width: 80%;
+    max-height: 100px;
+    margin: 0 auto;
+    border-radius: 8px;
 }
 
+/* Menu */
 .menu {
     display: flex;
     justify-content: center;
     background-color: #333;
-    padding: 10px 0;
-    margin: 0;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 500px;
+    margin: 0 auto 20px auto;
     list-style-type: none;
 }
 
@@ -26,41 +41,112 @@ body {
 .menu li a {
     text-decoration: none;
     color: white;
-    padding: 5px 10px;
+    font-weight: bold;
+    padding: 5px 15px;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .menu li.active a,
 .menu li a:hover {
     background-color: #555;
-    border-radius: 4px;
+    border-radius: 8px;
+    color: #f9f9f9;
 }
 
+/* Admin Section Visibility */
 .admin-only {
     display: none;
 }
 
-#library-section,
-#profile-section,
-#admin-section {
-    display: none;
+/* Sections */
+section {
     padding: 20px;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    max-width: 500px;
+    margin: 20px auto;
+    display: none; /* Default hidden */
 }
 
-#library-section.active,
-#profile-section.active,
-#admin-section.active {
+section.active {
     display: block;
 }
 
+/* Song Item */
 .song-item {
     margin: 20px auto;
     padding: 10px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 8px;
     max-width: 500px;
     background: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .song-item h3 {
     margin: 0 0 10px;
+    font-size: 1.1em;
+    color: #333;
+}
+
+/* Forms in Admin Section */
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+form label {
+    text-align: left;
+    width: 100%;
+    max-width: 500px;
+}
+
+form input,
+form textarea,
+form button {
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+}
+
+form button {
+    background-color: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+form button:hover {
+    background-color: #555;
+}
+
+/* Add Responsiveness */
+@media (max-width: 600px) {
+    .logo-container {
+        max-width: 100%;
+    }
+
+    .menu {
+        flex-direction: column;
+        max-width: 90%;
+    }
+
+    .menu li {
+        margin: 5px 0;
+    }
+
+    section {
+        max-width: 90%;
+    }
+
+    .song-item {
+        max-width: 90%;
+    }
 }
