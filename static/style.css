@@ -150,3 +150,26 @@ form button:hover {
         max-width: 90%;
     }
 }
+
+/* Library Heading */
+.library-heading {
+    text-align: center;
+    font-size: 1.5em;
+    margin: 20px 0;
+    color: #333;
+}
+
+/* Wavlake Link */
+.wavlake-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Wavlake Logo */
+.wavlake-logo {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
