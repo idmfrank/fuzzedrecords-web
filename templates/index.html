@@ -7,214 +7,175 @@
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* General Body Styles */
+        /* General Styles */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
         }
 
-        /* Navigation Menu */
-        nav {
+        header {
+            width: 100%;
+            background-color: #333;
+            padding: 10px 0;
+            position: fixed;
+            top: 70px;
+            z-index: 1000;
+        }
+
+        .logo-container {
+            width: 100%;
+            background-color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            top: 0;
+            z-index: 1001;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .menu {
             display: flex;
             justify-content: center;
-            background: #333;
-            padding: 10px 20px;
-            gap: 20px;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
         }
 
-        nav a {
+        .menu li {
+            margin: 0 15px;
+        }
+
+        .menu a {
             color: white;
             text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            font-size: 18px;
+            padding: 8px 12px;
         }
 
-        nav a.active {
-            background: #555;
+        .menu a:hover {
+            background-color: #575757;
+            border-radius: 4px;
         }
 
-        nav a:hover {
-            background: #444;
-        }
-
-        /* Section Styles */
-        section {
-            display: none;
-            margin: 0 auto;
-            padding: 20px;
-            max-width: 900px;
-            text-align: center;
-        }
-
-        section.active {
-            display: block;
-        }
-
-        /* Song Item Styles */
-        .song-item {
-            margin: 20px auto;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            max-width: 600px;
-            background: #f9f9f9;
-            text-align: left;
-        }
-
-        .song-item h3 {
-            margin: 0 0 10px;
-        }
-
-        iframe {
+        .container {
+            margin-top: 160px; /* Offset for logo and fixed header */
             width: 100%;
-            border-radius: 10px;
+            max-width: 1200px;
         }
 
-        /* Profile Section Styles */
-        #profile-container {
-            margin: 0 auto;
-            max-width: 600px;
-            text-align: left;
+        .profile-container, .songs-container {
+            text-align: center;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .profile-table {
-            width: 100%;
+            margin: 20px auto;
             border-collapse: collapse;
-            margin-top: 20px;
+            width: 100%;
+            max-width: 500px;
         }
 
         .profile-table td {
             padding: 10px;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #ddd;
+        }
+
+        .songs-container .song-item {
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-width: 500px;
+            background: #f9f9f9;
+        }
+
+        .songs-container h2 {
+            margin-bottom: 20px;
         }
 
         .profile-pic {
-            display: block;
-            margin: 20px auto;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            max-width: 150px;
+            margin: 20px auto;
         }
 
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            nav {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .song-item {
-                max-width: 100%;
-                padding: 10px;
-            }
-
-            #profile-container {
-                max-width: 100%;
-            }
-
-            iframe {
-                border-radius: 5px;
-            }
+        footer {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Menu -->
-    <nav>
-        <a href="#songs-section" class="active" onclick="showSection('songs-section')">Songs</a>
-        <a href="#profile-section" onclick="showSection('profile-section')">Profile</a>
-        <a href="#admin-section" onclick="showSection('admin-section')" id="admin-menu" style="display: none;">Admin</a>
-    </nav>
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo">
+    </div>
 
-    <!-- Songs Section -->
-    <section id="songs-section" class="active">
-        <h2>
-            Songs in our Library at 
-            <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
-                <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" style="width: 20px; height: 20px; margin-right: 5px;">
-                Wavlake.com
-            </a>
-        </h2>
-        <div id="songs-list">
-            <!-- Songs will be dynamically loaded here -->
-            <p>Loading songs...</p>
-        </div>
-    </section>
+    <!-- Header and Menu -->
+    <header>
+        <ul class="menu">
+            <li><a href="#songs">Songs</a></li>
+            <li><a href="#profile">Profile</a></li>
+            <li><a href="#admin">Admin</a></li>
+        </ul>
+    </header>
 
-    <!-- Profile Section -->
-    <section id="profile-section">
-        <h2>Your Profile</h2>
-        <div id="profile-container">
-            <!-- Profile details will be dynamically loaded here -->
-            <p>Loading profile...</p>
-        </div>
-    </section>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Songs Section -->
+        <section id="songs" class="songs-container">
+            <h2>
+                Songs in our Library at 
+                <a href="https://wavlake.com" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center;">
+                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" style="width: 20px; height: 20px; margin-right: 5px;">
+                    Wavlake.com
+                </a>
+            </h2>
+            <div id="songs-section">
+                <!-- Songs will be dynamically loaded here -->
+                <p>Loading songs...</p>
+            </div>
+        </section>
 
-    <!-- Admin Section -->
-    <section id="admin-section">
-        <h2>Admin Menu</h2>
-        <p>Create and manage events.</p>
-        <!-- Add admin functionalities here -->
-    </section>
+        <!-- Profile Section -->
+        <section id="profile" class="profile-container">
+            <section id="intro-section" class="intro-section">
+                <p>An independent record label.</p>
+            </section>
+            <div id="profile-details">
+                <!-- Profile details dynamically rendered -->
+            </div>
+        </section>
 
-    <script>
-        // Show a specific section based on menu click
-        function showSection(sectionId) {
-            document.querySelectorAll('section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(sectionId).classList.add('active');
+        <!-- Admin Section -->
+        <section id="admin" class="profile-container">
+            <h2>Admin Panel</h2>
+            <p>Manage events and other administrative tasks.</p>
+            <button onclick="openCreateEvent()">Create Event</button>
+        </section>
+    </div>
 
-            document.querySelectorAll('nav a').forEach(link => {
-                link.classList.remove('active');
-            });
-            document.querySelector(`nav a[href='#${sectionId}']`).classList.add('active');
-        }
+    <!-- Footer -->
+    <footer>
+        &copy; 2025 Fuzzed Records. All rights reserved.
+    </footer>
 
-        // Dynamically fetch and display songs
-        document.addEventListener('DOMContentLoaded', function () {
-            fetch('/tracks')
-                .then(response => response.json())
-                .then(data => {
-                    const songsList = document.getElementById('songs-list');
-                    songsList.innerHTML = ""; // Clear loading text
-                    if (data.tracks && data.tracks.length > 0) {
-                        data.tracks.forEach(track => {
-                            const songItem = document.createElement('div');
-                            songItem.classList.add('song-item');
-                            songItem.innerHTML = `
-                                <h3>${track.title} by ${track.artist}</h3>
-                                <iframe src="https://embed.wavlake.com/track/${track.track_id}" width="100%" height="380" frameborder="0"></iframe>
-                            `;
-                            songsList.appendChild(songItem);
-                        });
-                    } else {
-                        songsList.innerHTML = "<p>No songs available at this time.</p>";
-                    }
-                })
-                .catch(err => {
-                    console.error("Error fetching songs:", err);
-                    document.getElementById('songs-list').innerHTML = "<p>Error loading songs.</p>";
-                });
-
-            // Check if user is admin
-            fetch('/validate-profile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ pubkey: 'user_pubkey' })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.is_admin) {
-                        document.getElementById('admin-menu').style.display = 'block';
-                    }
-                })
-                .catch(err => console.error('Error validating profile:', err));
-        });
-    </script>
+    <script src="/static/scripts/profile.js"></script>
 </body>
 </html>
