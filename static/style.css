@@ -3,20 +3,17 @@ body {
     font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #fff;
-    color: #333;
-}
-
-/* Header Styles */
-header {
     text-align: center;
-    padding: 20px;
+    background-color: #f9f9f9;
 }
 
+/* Logo Styles */
 .logo {
-    max-width: 200px;
     display: block;
-    margin: 0 auto;
+    max-width: 500px;
+    width: 80%;
+    height: auto;
+    margin: 20px auto;
 }
 
 /* Menu Styles */
@@ -24,9 +21,12 @@ header {
     display: flex;
     justify-content: center;
     background-color: #333;
-    padding: 10px;
+    padding: 10px 0;
+    margin: 0 auto;
     list-style-type: none;
-    margin: 0;
+    border-radius: 10px;
+    max-width: 500px;
+    width: 80%;
 }
 
 .menu li {
@@ -37,19 +37,20 @@ header {
     text-decoration: none;
     color: white;
     padding: 5px 10px;
+    border-radius: 4px;
 }
 
 .menu li.active a,
 .menu li a:hover {
     background-color: #555;
-    border-radius: 4px;
 }
 
+/* Admin Menu Visibility */
 .admin-only {
     display: none;
 }
 
-/* Section Styles */
+/* Sections */
 #library-section,
 #profile-section,
 #admin-section {
@@ -63,65 +64,37 @@ header {
     display: block;
 }
 
-/* Song Item Styles */
+/* Song Items */
 .song-item {
     margin: 20px auto;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
     max-width: 500px;
-    background: #f9f9f9;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .song-item h3 {
     margin: 0 0 10px;
 }
 
-/* External Logo */
-.external-logo {
+/* Songs Header */
+.songs-header {
+    font-size: 1.5em;
+    margin: 20px auto;
+    color: #333;
+}
+
+.songs-header a {
+    text-decoration: none;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+}
+
+.songs-header a img {
     width: 20px;
     height: 20px;
     margin-right: 5px;
-    vertical-align: middle;
-}
-
-/* Form Styles */
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-input, textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-
-button {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-button:hover {
-    background-color: #555;
-}
-
-/* Footer Styles */
-footer {
-    text-align: center;
-    padding: 10px;
-    background-color: #333;
-    color: white;
 }
