@@ -1,25 +1,22 @@
 /* General Styles */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f8f9fa;
-    color: #333333;
     margin: 0;
     padding: 0;
+    background-color: #fff;
+    color: #333;
 }
 
 /* Header Styles */
-.header {
+header {
     text-align: center;
     padding: 20px;
-    background-color: #1e90ff;
-    color: white;
 }
 
 .logo {
-    max-width: 80%;
-    max-height: 200px;
-    margin: 0 auto;
+    max-width: 200px;
     display: block;
+    margin: 0 auto;
 }
 
 /* Menu Styles */
@@ -28,10 +25,8 @@ body {
     justify-content: center;
     background-color: #333;
     padding: 10px;
-    border-radius: 8px;
-    max-width: 500px;
-    margin: 10px auto;
     list-style-type: none;
+    margin: 0;
 }
 
 .menu li {
@@ -41,31 +36,17 @@ body {
 .menu li a {
     text-decoration: none;
     color: white;
-    padding: 10px 15px;
-    border-radius: 4px;
+    padding: 5px 10px;
 }
 
 .menu li.active a,
 .menu li a:hover {
     background-color: #555;
+    border-radius: 4px;
 }
 
 .admin-only {
     display: none;
-}
-
-/* Main Content Styles */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-h2 {
-    font-weight: 600;
-    color: #1e90ff;
-    text-align: center;
-    margin-bottom: 20px;
 }
 
 /* Section Styles */
@@ -90,7 +71,6 @@ h2 {
     border-radius: 5px;
     max-width: 500px;
     background: #f9f9f9;
-    text-align: center;
 }
 
 .song-item h3 {
@@ -125,41 +105,23 @@ input, textarea {
 }
 
 button {
-    background-color: #1e90ff;
+    background-color: #333;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     font-weight: 600;
-    transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #555;
 }
 
 /* Footer Styles */
-.footer {
+footer {
     text-align: center;
     padding: 10px;
     background-color: #333;
     color: white;
-    margin-top: 20px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .logo {
-        max-width: 100%;
-    }
-
-    .menu {
-        flex-direction: column;
-    }
-
-    button {
-        width: 100%;
-        padding: 15px;
-    }
 }
