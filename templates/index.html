@@ -5,56 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Logo Section -->
-    <div class="logo-container">
+    <header class="header">
         <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
-    </div>
+    </header>
 
-    <!-- Menu -->
-    <ul class="menu">
-        <li id="menu-library" class="active"><a href="javascript:void(0)">Library</a></li>
-        <li id="menu-profile"><a href="javascript:void(0)">Profile</a></li>
-        <li id="menu-admin" class="admin-only"><a href="javascript:void(0)">Admin</a></li>
-    </ul>
+    <nav class="menu">
+        <ul>
+            <li id="menu-library" class="active"><a href="#">Library</a></li>
+            <li id="menu-profile"><a href="#">Profile</a></li>
+            <li id="menu-admin" class="admin-only"><a href="#">Admin</a></li>
+        </ul>
+    </nav>
 
-    <!-- Sections -->
-    <section id="library-section" class="active">
-        <h2 class="library-heading">
-            Songs in our Library at
-            <a href="https://wavlake.com" target="_blank" class="wavlake-link">
-                <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" class="wavlake-logo">
-                Wavlake.com
-            </a>
-        </h2>
-        <div id="songs-section">
-            <p>Loading songs...</p>
-        </div>
-    </section>
+    <main class="container">
+        <section id="library-section" class="active">
+            <h2>
+                Songs in our Library at 
+                <a href="https://wavlake.com" target="_blank">
+                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" class="external-logo">
+                    Wavlake.com
+                </a>
+            </h2>
+            <div id="songs-section">
+                <p>Loading songs...</p>
+            </div>
+        </section>
 
-    <section id="profile-section">
-        <h2>Your Profile</h2>
-        <div id="profile-container"></div>
-    </section>
+        <section id="profile-section">
+            <h2>Profile</h2>
+            <div id="profile-container"></div>
+        </section>
 
-    <section id="admin-section">
-        <h2>Create Event</h2>
-        <form id="event-form">
-            <label for="event-title">Title:</label>
-            <input type="text" id="event-title" name="event-title" required>
-            <label for="event-venue">Venue:</label>
-            <input type="text" id="event-venue" name="event-venue" required>
-            <label for="event-date">Date:</label>
-            <input type="datetime-local" id="event-date" name="event-date" required>
-            <label for="event-price">Price:</label>
-            <input type="number" id="event-price" name="event-price" required>
-            <label for="event-description">Description:</label>
-            <textarea id="event-description" name="event-description" required></textarea>
-            <button type="submit">Create Event</button>
-        </form>
-    </section>
+        <section id="admin-section">
+            <h2>Admin</h2>
+            <form id="event-form">
+                <div class="form-group">
+                    <label for="event-title">Title:</label>
+                    <input type="text" id="event-title" name="event-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-venue">Venue:</label>
+                    <input type="text" id="event-venue" name="event-venue" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-date">Date:</label>
+                    <input type="datetime-local" id="event-date" name="event-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-price">Price:</label>
+                    <input type="number" id="event-price" name="event-price" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-description">Description:</label>
+                    <textarea id="event-description" name="event-description" required></textarea>
+                </div>
+                <button type="submit">Create Event</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>© 2025 Fuzzed Records. All rights reserved.</p>
+    </footer>
 
     <script src="/static/scripts/profile.js"></script>
 </body>
