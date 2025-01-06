@@ -9,7 +9,7 @@ body {
     display: block;
     max-width: 90%;
     max-width: 500px;
-    margin: 10px auto;
+    margin: 20px auto;
     height: auto; /* Maintain aspect ratio */
 }
 
@@ -17,11 +17,10 @@ body {
     display: flex;
     justify-content: center;
     background-color: #333;
-    padding: 10px 0;
+    padding: 10px 20px;
     list-style-type: none;
-    border-radius: 8px;
-    max-width: 90%; /* Align with logo */
-    max-width: 500px;
+    border-radius: 10px;
+    max-width: 80%; /* Align with logo */
     margin: 0 auto 20px auto; /* Center menu and add spacing */
 }
 
@@ -30,22 +29,21 @@ body {
     text-align: center;
     margin: 0; /* Remove default margin */
     list-style-type: none;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 .menu li a {
-    text-decoration: none;
-    color: white;
-    padding: 10px 0;
-    display: block;
-    width: 100%; /* Ensure buttons stretch */
-    max-width: 120px; /* Prevent overly wide buttons */
-    margin: 0 auto;
+    background-color: #555;
 }
 
 .menu li.active a,
 .menu li a:hover {
-    background-color: #555;
-    border-radius: 4px;
+    background-color: #444;
 }
 
 .admin-only {
