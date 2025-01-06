@@ -137,7 +137,8 @@ def validate_profile():
         is_valid = fetch_and_validate_profile(pubkey, "fuzzedrecords.com")
 
         if is_valid:
-            return jsonify({"message": "Profile is valid and verified."})
+            return jsonify({"message": "Profile is valid and verified.", 
+                            "content": data.get("content")})
         else:
             return jsonify({"error": "Profile validation failed."}), 403
 

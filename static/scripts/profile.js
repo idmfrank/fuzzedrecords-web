@@ -49,14 +49,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const validationResult = await response.json();
-            if (response.ok) {
+            if (response.ok && validationResult.content) {
                 displayProfile(validationResult);
-
+                console.log("Validation Result: ", validationResult);
                 if (validationResult.content.nip05 && validationResult.content.nip05.includes("fuzzedrecords.com")) {
                     menuAdmin.classList.remove('admin-only');
                 }
             } else {
-                console.error("Profile validation failed:", validationResult.error);
+                console.error("Profile validation failed or content is missing:", validationResult);
             }
         } catch (error) {
             console.error("An error occurred during authentication:", error);
