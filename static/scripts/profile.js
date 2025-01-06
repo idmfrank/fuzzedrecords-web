@@ -63,6 +63,74 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function displayProfile(profileData) {
+        const profileContainer = document.getElementById('profile-container');
+        if (!profileContainer) {
+            console.error("Profile container not found.");
+            return;
+        }
+    
+        profileContainer.innerHTML = ""; // Clear existing content
+    
+        if (profileData.content) {
+            const content = profileData.content;
+    
+            // Add profile picture
+            if (content.picture) {
+                const img = document.createElement('img');
+                img.src = content.picture;
+                img.alt = content.display_name || 'Profile Picture';
+                img.classList.add('profile-pic');
+                profileContainer.appendChild(img);
+            }
+    
+            // Add display name
+            if (content.display_name) {
+                const nameElement = document.createElement('h2');
+                nameElement.textContent = content.display_name;
+                profileContainer.appendChild(nameElement);
+            }
+    
+            // Add additional profile details
+            const detailsTable = document.createElement('table');
+            const details = [
+                { label: 'Username', value: content.name },
+                { label: 'NIP-05', value: content.nip05 },
+                { label: 'LUD-16', value: content.lud16 },
+                { label: 'Website', value: content.website },
+                { label: 'About', value: content.about }
+            ];
+    
+            details.forEach(detail => {
+                if (detail.value) {
+                    const row = document.createElement('tr');
+    
+                    const labelCell = document.createElement('td');
+                    labelCell.textContent = detail.label;
+    
+                    const valueCell = document.createElement('td');
+                    if (detail.label === 'NIP-05' && detail.value.includes('@')) {
+                        const link = document.createElement('a');
+                        link.href = `https://${detail.value.split('@')[1]}/.well-known/nostr.json?name=${detail.value.split('@')[0]}`;
+                        link.textContent = detail.value;
+                        valueCell.appendChild(link);
+                    } else {
+                        valueCell.textContent = detail.value;
+                    }
+    
+                    row.appendChild(labelCell);
+                    row.appendChild(valueCell);
+                    detailsTable.appendChild(row);
+                }
+            });
+    
+            profileContainer.appendChild(detailsTable);
+        } else {
+            profileContainer.innerHTML = "<p>No profile data available.</p>";
+        }
+    }
+    
+
     // Fetch and Display Songs
     fetch("/tracks")
         .then(response => response.json())
