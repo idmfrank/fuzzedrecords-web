@@ -9,6 +9,7 @@ body {
 .logo {
     display: block;
     max-width: 500px;
+    width: 80%; /* Maintain responsiveness */
     margin: 20px auto;
     height: auto; /* Maintain aspect ratio */
 }
