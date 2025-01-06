@@ -10,12 +10,12 @@ body {
     max-width: 500px;
     margin: 20px auto;
     height: auto; /* Maintain aspect ratio */
-    margin: 0 auto 20px auto; /* Center the logo */
 }
 
 .menu {
     display: flex;
     justify-content: center;
+    align-items: center; /* Vertically align items */
     flex-wrap: wrap; /* Allow wrapping to next line for small screens */
     background-color: #333;
     padding: 10px;
@@ -23,25 +23,24 @@ body {
     border-radius: 10px;
     max-width: 500px; /* Match the logo's max-width */
     margin: 0 auto 20px auto; /* Center the menu */
+    gap: 10px; /* Add consistent spacing between buttons */
 }
 
 .menu li {
-    flex: 1 1 auto; /* Allow buttons to shrink and grow equally */
-    text-align: center;
-    margin: 5px; /* Add spacing between buttons */
-    list-style-type: none;
+    list-style-type: none; /* Remove default bullet points */
+    flex: 0 1 auto; /* Ensure items fit the available space */
 }
 
 .menu li a {
-    display: inline-block; /* Ensures button-like appearance */
-    width: 100%; /* Buttons stretch to fill the available space */
-    max-width: 120px; /* Prevent overly wide buttons */
-    padding: 10px 15px; /* Add padding for the text */
+    display: block; /* Ensure button-like appearance */
+    padding: 10px 20px; /* Add padding for the text */
     background-color: #555;
     color: white;
     text-decoration: none;
     border-radius: 5px;
     font-size: 16px;
+    text-align: center;
+    white-space: nowrap; /* Prevent text wrapping inside buttons */
     transition: background-color 0.3s ease; /* Smooth hover effect */
 }
 
