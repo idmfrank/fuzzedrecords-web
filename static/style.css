@@ -25,8 +25,8 @@ body {
 }
 
 .menu button {
-    flex: 1 1 auto; /* Allow buttons to grow/shrink equally */
-    padding: 10px 15px; /* Add padding inside the buttons */
+    flex: none; /* Prevent buttons from growing to fill the space */
+    padding: 10px 20px; /* Add padding inside the buttons */
     background-color: #555; /* Default button background */
     color: white; /* White text color */
     border: none; /* Remove default button borders */
@@ -35,6 +35,8 @@ body {
     text-align: center; /* Center text within buttons */
     cursor: pointer; /* Pointer cursor on hover */
     transition: background-color 0.3s ease; /* Smooth hover effect */
+    min-width: 80px; /* Ensure all buttons have a minimum width */
+    max-width: 150px; /* Prevent buttons from getting too wide */
 }
 
 .menu button:hover {
