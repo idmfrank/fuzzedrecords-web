@@ -22,6 +22,7 @@ body {
     padding: 10px;
     border-radius: 10px; /* Rounded edges for the menu box */
     max-width: 500px; /* Match the logo's max width */
+    width: 80%; /* Maintain responsiveness */
     margin: 0 auto 20px auto; /* Center the menu and add spacing below */
     gap: 10px; /* Spacing between buttons */
     box-sizing: border-box; /* Ensure padding is included in width calculations */
