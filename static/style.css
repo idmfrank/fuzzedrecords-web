@@ -13,43 +13,36 @@ body {
 }
 
 .menu {
-    display: flex;
-    justify-content: center; /* Center items horizontally */
-    align-items: center; /* Align items vertically within the menu */
-    flex-wrap: wrap; /* Allow items to wrap if screen size is too small */
-    background-color: #333;
+    display: flex; /* Ensure buttons are horizontally aligned */
+    justify-content: center; /* Center align the menu items */
+    flex-wrap: wrap; /* Allow wrapping for small screens */
+    background-color: #333; /* Dark background for the menu */
     padding: 10px;
-    list-style-type: none;
-    border-radius: 10px;
-    max-width: 500px; /* Match the logo's max-width */
-    margin: 0 auto 20px auto; /* Center the menu */
-    gap: 10px; /* Add spacing between buttons */
+    border-radius: 10px; /* Rounded edges for the menu box */
+    max-width: 500px; /* Match the logo's max width */
+    margin: 0 auto 20px auto; /* Center the menu and add spacing below */
+    gap: 10px; /* Spacing between buttons */
 }
 
-.menu li {
-    list-style-type: none; /* Remove default bullet points */
-    flex: 0 0 auto; /* Ensure buttons don't shrink or stretch excessively */
-}
-
-.menu li a {
-    display: inline-block; /* Ensures button-like appearance */
-    min-width: 100px; /* Ensure consistent minimum button width */
-    padding: 10px 20px; /* Add padding for the text */
-    background-color: #555;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 16px;
-    text-align: center;
+.menu button {
+    flex: 1 1 auto; /* Allow buttons to grow/shrink equally */
+    padding: 10px 15px; /* Add padding inside the buttons */
+    background-color: #555; /* Default button background */
+    color: white; /* White text color */
+    border: none; /* Remove default button borders */
+    border-radius: 5px; /* Rounded button edges */
+    font-size: 16px; /* Set consistent font size */
+    text-align: center; /* Center text within buttons */
+    cursor: pointer; /* Pointer cursor on hover */
     transition: background-color 0.3s ease; /* Smooth hover effect */
 }
 
-.menu li a:hover {
-    background-color: #777; /* Slightly lighter color on hover */
+.menu button:hover {
+    background-color: #777; /* Lighter background on hover */
 }
 
-.menu li.active a {
-    background-color: #999; /* Highlight active menu item */
+.menu button.active {
+    background-color: #999; /* Highlight active button */
 }
 
 .admin-only {
