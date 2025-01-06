@@ -7,9 +7,10 @@ body {
 
 .logo {
     display: block;
-    max-width: 90%;
+    max-width: 500px;
     margin: 20px auto;
     height: auto; /* Maintain aspect ratio */
+    margin: 0 auto 20px auto; /* Center the logo */
 }
 
 .menu {
@@ -28,6 +29,7 @@ body {
     flex: 1 1 auto; /* Allow buttons to shrink and grow equally */
     text-align: center;
     margin: 5px; /* Add spacing between buttons */
+    list-style-type: none;
 }
 
 .menu li a {
