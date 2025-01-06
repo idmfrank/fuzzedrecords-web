@@ -3,6 +3,7 @@ body {
     margin: 0;
     padding: 0;
     text-align: center;
+    overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
 }
 
 .logo {
@@ -22,11 +23,12 @@ body {
     max-width: 500px; /* Match the logo's max width */
     margin: 0 auto 20px auto; /* Center the menu and add spacing below */
     gap: 10px; /* Spacing between buttons */
+    box-sizing: border-box; /* Ensure padding is included in width calculations */
 }
 
 .menu button {
     flex: none; /* Prevent buttons from growing to fill the space */
-    padding: 10px 20px; /* Add padding inside the buttons */
+    padding: 10px 15px; /* Adjust padding for better spacing */
     background-color: #555; /* Default button background */
     color: white; /* White text color */
     border: none; /* Remove default button borders */
@@ -37,6 +39,7 @@ body {
     transition: background-color 0.3s ease; /* Smooth hover effect */
     min-width: 80px; /* Ensure all buttons have a minimum width */
     max-width: 150px; /* Prevent buttons from getting too wide */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Add a slight shadow for a modern look */
 }
 
 .menu button:hover {
@@ -77,8 +80,24 @@ body {
     margin: 0 0 10px;
 }
 
-/* Ensure no bullets appear in the menu */
-.menu {
-    list-style-type: none;
-    padding-left: 0;
+/* Ensure the Wavlake logo link is centered and inline */
+.external-logo {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle; /* Align icon with text */
+    margin-right: 5px;
+}
+
+/* Prevent extra whitespace or overflow on small screens */
+main, footer {
+    margin: 0 auto;
+    max-width: 500px;
+    padding: 10px;
+}
+
+footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #777;
+    font-size: 14px;
 }
