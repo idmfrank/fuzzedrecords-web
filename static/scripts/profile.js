@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const pubkey = await window.nostr.getPublicKey();
-            const response = await fetch('/validate-profile', {
+            const response = await fetch('/fetch-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pubkey: pubkey })
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.info("Validate Profile returned the following response:", response);
 
             const validationResult = await response.json();
-            if (response.ok && validationResult.content) {
+            if (validationResult.content) {
                 displayProfile(validationResult);
                 console.log("Validation Result: ", validationResult);
                 if (validationResult.content.nip05 && validationResult.content.nip05.includes("fuzzedrecords.com")) {
