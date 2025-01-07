@@ -57,8 +57,9 @@ def fetch_profile():
                 # Remove the stale cache entry
                 del cache[pubkey_hex]
 
-        # Initialize RelayManager with a timeout of 2 seconds and key trusted default relays
-        relay_manager = RelayManager(timeout=2)
+        # Initialize RelayManager with a timeout of 5 seconds and key trusted default relays
+        relay_manager = RelayManager(timeout=5)
+        relay_manager.add_relay("wss://relay.wavlake.com")
         relay_manager.add_relay("wss://relay.damus.io")
         relay_manager.add_relay("wss://relay.primal.net")
         relay_manager.add_relay("wss://relay.getalby.com/v1")
