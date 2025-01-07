@@ -6,6 +6,7 @@ from pynostr.filters import FiltersList, Filters
 from pynostr.event import EventKind, Event
 from functools import wraps
 from datetime import datetime, timezone
+from msal import ConfidentialClientApplication
 import os, json, time, uuid, requests
 import logging
 
@@ -436,59 +437,82 @@ class Main(Resource):
         return jsonify({'message': 'Welcome to the Fuzzed Records Flask REST App'})
 
 class NostrJson(Resource):
-    logger.info('::: In NostrJson :::')
     def get(self):
-        logger.info('::: We now have a GET In NostrJson :::')
-        SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-        json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
-        jsonData = json.load(open(json_url))
-        namesList = jsonData['names']
-        relayList = jsonData['relays']
+        logger.info("Fetching admin users and relays from Entra ID")
 
-        if 'name' not in request.args:
-            logger.info('::: No name variable in request...returning whole nostr.json :::')
-            nostrJsonResponse = jsonData
-            return nostrJsonResponse
-        else:
-            nostrName = request.args.get('name')
-            nostrName = nostrName.lower()
-            logger.info('::: Found name variable in request... :::', nostrName)
-            if nostrName in namesList:
-                pubKey = namesList[nostrName]
-                if pubKey in relayList:
-                    pubRelays = relayList[pubKey]
-                    nostrJsonResponse = { "names" : { nostrName : pubKey }, "relays" :  { pubKey :  pubRelays } }
-                    return nostrJsonResponse
-                else:
-                    nostrJsonResponse = { "names" : { nostrName : pubKey } }
-                    return nostrJsonResponse
-            else:
-                logger.info('::: No name variable found :::')
-                nostrJsonResponse = { "names" : {} }
-                return nostrJsonResponse
+        # MSAL App Configuration
+        tenant_id = os.getenv("TENANT_ID")
+        client_id = os.getenv("CLIENT_ID")
+        client_secret = os.getenv("CLIENT_SECRET")
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        graph_api_base = "https://graph.microsoft.com/v1.0"
 
-class LnURLp(Resource):
-    logger.info('::: In LnURLp :::')
-    def get(self, resource_name):
-        logger.info('::: We now have a GET In LnURLp :::')
-        try:
-            # Attempt to read the JSON file
-            SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-            with open(os.path.join(SITE_ROOT, "static", resource_name), 'r') as f:
-                data = json.load(f)
-            logger.info(f'Returning data for resource: {resource_name}')
-            return jsonify(data)
-        except FileNotFoundError:
-            logger.info(f'File not found: {resource_name}')
-            return {"error": "File not found"}, 404
-        except json.JSONDecodeError:
-            logger.info(f'Error decoding JSON file: {resource_name}')
-            return {"error": "Error decoding JSON file"}, 500
+        app = ConfidentialClientApplication(
+            client_id, authority=authority, client_credential=client_secret
+        )
+
+        # Get Token
+        token = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+
+        if "access_token" not in token:
+            logger.error("Failed to acquire token")
+            return jsonify({"error": "Authentication failed"}), 500
+
+        access_token = token["access_token"]
+
+        # Fetch Groups
+        group_response = requests.get(
+            f"{graph_api_base}/groups?$select=displayName,description",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        groups = group_response.json().get("value", [])
+
+        # Map Relay Groups
+        relay_groups = {
+            group["displayName"]: group["description"]
+            for group in groups
+            if group["displayName"].endswith("Relay") and group["description"].startswith("wss://")
+        }
+
+        # Fetch Users
+        user_response = requests.get(
+            f"{graph_api_base}/users?$select=displayName,jobTitle",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        users = user_response.json().get("value", [])
+
+        # Map User Data
+        names = {}
+        relays = {}
+
+        for user in users:
+            pubkey = user.get("jobTitle")
+            name = user.get("displayName")
+
+            if not name or not pubkey:
+                continue
+
+            names[name] = pubkey
+            relays[pubkey] = []
+
+            # Fetch User Group Memberships
+            user_id = user["id"]
+            membership_response = requests.get(
+                f"{graph_api_base}/users/{user_id}/memberOf?$select=displayName",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            memberships = membership_response.json().get("value", [])
+
+            for group in memberships:
+                group_name = group.get("displayName")
+                if group_name in relay_groups:
+                    relays[pubkey].append(relay_groups[group_name])
+
+        return jsonify({"names": names, "relays": relays})
 
 # adding the defined resources along with their corresponding urls
 api.add_resource(Main, '/')
 api.add_resource(NostrJson, '/.well-known/nostr.json')
-api.add_resource(LnURLp, '/.well-known/lnurlp/<string:resource_name>')
 
 @app.after_request
 def after_request(response):
