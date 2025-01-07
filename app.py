@@ -476,10 +476,13 @@ class NostrJson(Resource):
 
         # Fetch Users
         user_response = requests.get(
-            f"{graph_api_base}/users?$select=displayName,jobTitle",
+            f"{graph_api_base}/users?$select=id,displayName,jobTitle",
             headers={"Authorization": f"Bearer {access_token}"}
         )
         users = user_response.json().get("value", [])
+        
+        # Debugging: Log the response for inspection
+        logger.debug(f"Users response: {users}")
 
         # Map User Data
         names = {}
