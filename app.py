@@ -248,11 +248,14 @@ def fetch_and_validate_profile(pubkey, required_domain):
         filters = FiltersList([Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)])
         subscription_id = uuid.uuid1().hex
         relay_manager.add_subscription_on_all_relays(subscription_id, filters)
+        logger.info(f"Fetching and Validating Profile with the following filters: {filters}")
         relay_manager.run_sync()
+        logger.info("Relay manager completed sync")
 
         profile_data = None
         while relay_manager.message_pool.has_events():
             event_msg = relay_manager.message_pool.get_event()
+            logger.info(f"Relay Manager event message returned: {event_msg}")
             if event_msg.event.kind == EventKind.SET_METADATA:
                 profile_content = json.loads(event_msg.event.content)
                 profile_data = {
@@ -263,6 +266,7 @@ def fetch_and_validate_profile(pubkey, required_domain):
                 break
 
         relay_manager.close_all_relay_connections()
+        logger.info("Relay manager Closed Connections")
 
         if not profile_data:
             logger.warning(f"No profile found for pubkey: {pubkey}")
