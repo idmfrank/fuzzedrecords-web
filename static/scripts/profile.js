@@ -48,12 +48,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ pubkey: pubkey })
             });
 
-            console.info("Validate Profile returned the following response:", response);
-
             const validationResult = await response.json();
             if (validationResult.content) {
                 displayProfile(validationResult);
-                console.log("Validation Result: ", validationResult);
                 if (validationResult.content.nip05 && validationResult.content.nip05.includes("fuzzedrecords.com")) {
                     menuAdmin.classList.remove('admin-only');
                 }
@@ -67,17 +64,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function displayProfile(profileData) {
         const profileContainer = document.getElementById('profile-container');
-        if (!profileContainer) {
-            console.error("Profile container not found.");
-            return;
-        }
-    
-        profileContainer.innerHTML = ""; // Clear existing content
-    
+        profileContainer.innerHTML = ''; // Clear existing content
+
         if (profileData.content) {
             const content = profileData.content;
-    
-            // Add profile picture
+
+            // Profile Picture
             if (content.picture) {
                 const img = document.createElement('img');
                 img.src = content.picture;
@@ -85,16 +77,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 img.classList.add('profile-pic');
                 profileContainer.appendChild(img);
             }
-    
-            // Add display name
-            if (content.display_name) {
-                const nameElement = document.createElement('h2');
-                nameElement.textContent = content.display_name;
-                profileContainer.appendChild(nameElement);
-            }
-    
-            // Add additional profile details
+
+            // Details Table
             const detailsTable = document.createElement('table');
+            detailsTable.classList.add('profile-details');
             const details = [
                 { label: 'Username', value: content.name },
                 { label: 'NIP-05', value: content.nip05 },
@@ -102,14 +88,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 { label: 'Website', value: content.website },
                 { label: 'About', value: content.about }
             ];
-    
+
             details.forEach(detail => {
                 if (detail.value) {
                     const row = document.createElement('tr');
-    
+
                     const labelCell = document.createElement('td');
                     labelCell.textContent = detail.label;
-    
+
                     const valueCell = document.createElement('td');
                     if (detail.label === 'NIP-05' && detail.value.includes('@')) {
                         const link = document.createElement('a');
@@ -119,19 +105,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     } else {
                         valueCell.textContent = detail.value;
                     }
-    
+
                     row.appendChild(labelCell);
                     row.appendChild(valueCell);
                     detailsTable.appendChild(row);
                 }
             });
-    
+
             profileContainer.appendChild(detailsTable);
         } else {
-            profileContainer.innerHTML = "<p>No profile data available.</p>";
+            profileContainer.innerHTML = "<p class='empty-profile'>No profile data available.</p>";
         }
     }
-    
 
     // Fetch and Display Songs
     fetch("/tracks")

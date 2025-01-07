@@ -82,19 +82,51 @@ body {
     margin: 0 0 10px;
 }
 
-/* Ensure the Wavlake logo link is centered and inline */
+.profile-pic {
+    border-radius: 50%;
+    max-width: 150px;
+    width: 80%;
+    margin: 10px auto;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    display: block;
+}
+
+.profile-details {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 20px auto;
+    max-width: 500px;
+    background: #f9f9f9;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.profile-details td {
+    padding: 5px;
+}
+
+.profile-details td:first-child {
+    font-weight: bold;
+    text-align: right;
+    width: 30%;
+    color: #555;
+}
+
+.empty-profile {
+    font-style: italic;
+    color: #777;
+    padding: 20px;
+    border: 1px dashed #ddd;
+    border-radius: 5px;
+    max-width: 500px;
+    margin: 20px auto;
+}
+
 .external-logo {
     width: 20px;
     height: 20px;
     vertical-align: middle; /* Align icon with text */
     margin-right: 5px;
-}
-
-/* Prevent extra whitespace or overflow on small screens */
-main, footer {
-    margin: 0 auto;
-    max-width: 500px;
-    padding: 10px;
 }
 
 footer {
