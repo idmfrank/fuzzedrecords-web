@@ -48,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ pubkey: pubkey })
             });
 
+            console.info("Validate Profile returned the following response:", response.json.toString);
+
             const validationResult = await response.json();
             if (response.ok && validationResult.content) {
                 displayProfile(validationResult);
