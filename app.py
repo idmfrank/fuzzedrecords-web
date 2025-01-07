@@ -57,12 +57,10 @@ def fetch_profile():
                 # Remove the stale cache entry
                 del cache[pubkey_hex]
 
-        # Initialize RelayManager with a timeout of 5 seconds and key trusted default relays
-        relay_manager = RelayManager(timeout=5)
-        relay_manager.add_relay("wss://relay.wavlake.com")
+        # Initialize RelayManager with a timeout of 10 seconds and key trusted default relays
+        relay_manager = RelayManager(timeout=10)
         relay_manager.add_relay("wss://relay.damus.io")
         relay_manager.add_relay("wss://relay.primal.net")
-        relay_manager.add_relay("wss://relay.getalby.com/v1")
 
 
         # Create filters for kind 0 events (user profile)
@@ -243,7 +241,6 @@ def fetch_and_validate_profile(pubkey, required_domain):
         relay_manager = RelayManager(timeout=10)
         relay_manager.add_relay("wss://relay.damus.io")
         relay_manager.add_relay("wss://relay.primal.net")
-        relay_manager.add_relay("wss://relay.getalby.com/v1")
 
         filters = FiltersList([Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)])
         subscription_id = uuid.uuid1().hex
@@ -263,6 +260,7 @@ def fetch_and_validate_profile(pubkey, required_domain):
                     "pubkey": event_msg.event.pubkey,
                     "content": profile_content,
                 }
+                logger.info(f"Profile Data: {profile_data}")
                 break
 
         relay_manager.close_all_relay_connections()
