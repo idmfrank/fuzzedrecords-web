@@ -298,7 +298,7 @@ def build_music_library():
 
     except Exception as e:
         logger.error(f"Error in build_music_library: {e}")
-        return []
+        return error_response(f"Error in build_music_library: {e}", 500)
 
 
 # Fetch Artists by Search Term
@@ -326,10 +326,10 @@ def fetch_artists():
             return valid_artists
         else:
             logger.warning(f"Error fetching artists: {response.status_code}")
-            return []
+            return error_response(f"Error fetching artists: {response.status_code}", 500)
     except Exception as e:
         logger.error(f"Error in fetch_artists: {e}")
-        return []
+        return error_response(f"Error in fetch_artists: {e}", 500)
 
 # Fetch Albums for an Artist
 def fetch_albums(artist_id):
@@ -346,10 +346,10 @@ def fetch_albums(artist_id):
             return [{"id": album["id"], "title": album["title"], "albumArtUrl": album["albumArtUrl"]} for album in albums]
         else:
             logger.info(f"Error fetching albums for {artist_id}: {response.status_code}")
-            return []
+            return error_response(f"Error fetching albums for {artist_id}: {response.status_code}", 500)
     except Exception as e:
         logger.error(f"Error in fetch_albums: {e}")
-        return []
+        return error_response(f"Error in fetch_albums: {e}", 500)
 
 # Fetch Tracks for an Album
 def fetch_tracks(album_id):
@@ -376,10 +376,10 @@ def fetch_tracks(album_id):
             ]
         else:
             logger.info(f"Error fetching tracks for {album_id}: {response.status_code}")
-            return []
+            return error_response(f"Error fetching tracks for {album_id}: {response.status_code}", 500)
     except Exception as e:
         logger.error(f"Error in fetch_tracks: {e}")
-        return []
+        return error_response(f"Error in fetch_tracks: {e}", 500)
 
 class Main(Resource):
     def post(self):
