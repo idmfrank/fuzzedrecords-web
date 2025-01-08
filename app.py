@@ -104,6 +104,7 @@ def fetch_profile():
 def get_tracks():
     try:
         library = build_music_library()
+        logger.info(f'Music Library: {library}')
         return jsonify({"tracks": library})
     except Exception as e:
         logger.error(f"Error building library: {e}")
