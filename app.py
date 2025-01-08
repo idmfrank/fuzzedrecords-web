@@ -281,16 +281,18 @@ def build_music_library():
                     continue
 
                 for track in tracks:
-                    if "id" not in track:
-                        logger.warning(f"Track missing 'id': {track}")
+                    # Check for 'track_id' instead of 'id'
+                    if "track_id" not in track:
+                        logger.warning(f"Track missing 'track_id': {track}")
                         continue
 
+                    # Build the music library entry
                     music_library.append({
                         "artist": artist["name"].replace(SEARCH_TERM, ""),
                         "album": album["title"],
                         "title": track["title"],
                         "media_url": track["media_url"],
-                        "track_id": track["id"]
+                        "track_id": track["track_id"]
                     })
 
         logger.debug(f"Music library built with {len(music_library)} tracks.")
@@ -298,7 +300,7 @@ def build_music_library():
 
     except Exception as e:
         logger.error(f"Error in build_music_library: {e}")
-        return error_response(f"Error in build_music_library: {e}", 500)
+        return []
 
 
 # Fetch Artists by Search Term
