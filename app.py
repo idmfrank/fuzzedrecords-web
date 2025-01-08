@@ -77,6 +77,7 @@ def fetch_profile():
         relay_manager.run_sync()
 
         profile_data = None
+        logger.info(f'Fetch Profile - Relay Manager has events: {relay_manager.message_pool.has_events()}')
         while relay_manager.message_pool.has_events():
             event_msg = relay_manager.message_pool.get_event()
             logger.info(f'Fetch Profile - Relay Manager Event message: {event_msg}')
