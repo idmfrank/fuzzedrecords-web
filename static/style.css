@@ -130,6 +130,46 @@ body {
     margin-right: 5px;
 }
 
+.form-group {
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    margin-bottom: 15px; /* Add spacing between form fields */
+    max-width: 500px; /* Limit form width */
+    margin-left: auto;
+    margin-right: auto; /* Center the form on the page */
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%; /* Make inputs take up full width */
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+button[type="submit"] {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #777;
+}
+
 footer {
     text-align: center;
     margin-top: 20px;
