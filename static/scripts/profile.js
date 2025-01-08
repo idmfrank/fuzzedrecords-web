@@ -62,6 +62,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    async function createEvent(eventData) {
+        try {
+            const response = await fetch('/create_event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventData),
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error creating event:', errorData);
+                alert('Failed to create event: ' + (errorData.error || 'Unknown error'));
+                return;
+            }
+    
+            const result = await response.json();
+            console.log('Event created successfully:', result);
+            alert('Event created successfully!');
+        } catch (error) {
+            console.error('An error occurred while creating the event:', error);
+            alert('An error occurred while creating the event.');
+        }
+    }    
+
     function displayProfile(profileData) {
         const profileContainer = document.getElementById('profile-container');
         profileContainer.innerHTML = ''; // Clear existing content
