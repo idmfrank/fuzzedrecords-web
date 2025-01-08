@@ -253,19 +253,53 @@ def fetch_and_validate_profile(pubkey, required_domain):
 
 # Helper to build music library
 def build_music_library():
-    artists = fetch_artists()
-    music_library = []
-    for artist in artists:
-        for album in fetch_albums(artist["id"]):
-            for track in fetch_tracks(album["id"]):
-                music_library.append({
-                    "artist": artist["name"].replace(SEARCH_TERM, ""),
-                    "album": album["title"],
-                    "title": track["title"],
-                    "media_url": track["media_url"],
-                    "track_id": track["id"]
-                })
-    return music_library
+    try:
+        artists = fetch_artists()
+        if not artists:
+            logger.warning("No artists found.")
+            return []
+
+        music_library = []
+        for artist in artists:
+            if "id" not in artist:
+                logger.warning(f"Artist missing 'id': {artist}")
+                continue
+
+            albums = fetch_albums(artist["id"])
+            if not albums:
+                logger.warning(f"No albums found for artist: {artist['name']}")
+                continue
+
+            for album in albums:
+                if "id" not in album:
+                    logger.warning(f"Album missing 'id': {album}")
+                    continue
+
+                tracks = fetch_tracks(album["id"])
+                if not tracks:
+                    logger.warning(f"No tracks found for album: {album['title']}")
+                    continue
+
+                for track in tracks:
+                    if "id" not in track:
+                        logger.warning(f"Track missing 'id': {track}")
+                        continue
+
+                    music_library.append({
+                        "artist": artist["name"].replace(SEARCH_TERM, ""),
+                        "album": album["title"],
+                        "title": track["title"],
+                        "media_url": track["media_url"],
+                        "track_id": track["id"]
+                    })
+
+        logger.debug(f"Music library built with {len(music_library)} tracks.")
+        return music_library
+
+    except Exception as e:
+        logger.error(f"Error in build_music_library: {e}")
+        return []
+
 
 # Fetch Artists by Search Term
 def fetch_artists():
@@ -278,10 +312,20 @@ def fetch_artists():
         if response.status_code == 200:
             logger.info(f"Received response: {response.text}")
             artists = response.json()
-            logger.info(f"Fetched {len(artists)} artist(s).")
-            return [{"id": artist["id"], "name": artist["name"], "art_url": artist.get("artistArtUrl", "")} for artist in artists]
+            # Validate artist structure
+            valid_artists = [
+                {
+                    "id": artist.get("id"),
+                    "name": artist.get("name", "Unknown Artist"),
+                    "art_url": artist.get("artistArtUrl", "")
+                }
+                for artist in artists
+                if "id" in artist  # Ensure "id" exists
+            ]
+            logger.info(f"Fetched {len(valid_artists)} valid artist(s).")
+            return valid_artists
         else:
-            logger.info(f"Error fetching artists: {response.status_code}")
+            logger.warning(f"Error fetching artists: {response.status_code}")
             return []
     except Exception as e:
         logger.error(f"Error in fetch_artists: {e}")
