@@ -14,27 +14,44 @@ import logging
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
+
+# Configuration
+RELAY_URLS = os.getenv("RELAY_URLS", "wss://relay.damus.io,wss://relay.primal.net").split(',')
+CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
+REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 WAVLAKE_API_BASE = "https://wavlake.com/api/v1"
 SEARCH_TERM = " by Fuzzed Records"
 
-# Set up basic logging
+# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.debug("Flask app has started.")
 
-# In-memory cache (simple dictionary)
+# In-memory cache
 cache = {}
 
-# Cache settings
-CACHE_TIMEOUT = 300  # Cache timeout in seconds (e.g., 5 minutes)
+def get_cached_item(cache_key):
+    item = cache.get(cache_key)
+    if item and time.time() - item[1] < CACHE_TIMEOUT:
+        return item[0]
+    return None
+
+def set_cached_item(cache_key, item):
+    cache[cache_key] = (item, time.time())
+
+def initialize_relay_manager(timeout=10):
+    relay_manager = RelayManager(timeout=timeout)
+    for relay in RELAY_URLS:
+        relay_manager.add_relay(relay)
+    return relay_manager
+
+def error_response(message, status_code=400):
+    return jsonify({"error": message}), status_code
 
 @app.route('/')
 def index():
     logger.info("Request for index page received")
-    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-    json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
-    jsonData = json.load(open(json_url))
-    return render_template('index.html', nostrJson=jsonData)
+    return render_template('index.html')
 
 @app.route('/favicon.ico')
 def favicon():
@@ -48,78 +65,49 @@ def fetch_profile():
         pubkey_hex = data['pubkey']
         logger.info(f'Received request to fetch profile for pubkey: {pubkey_hex}')
 
-        # Check if the profile is already cached
-        if pubkey_hex in cache:
-            cached_profile, timestamp = cache[pubkey_hex]
-            if time.time() - timestamp < CACHE_TIMEOUT:
-                logger.info(f'Profile for {pubkey_hex} returned from cache.')
-                return jsonify(cached_profile)
-            else:
-                # Remove the stale cache entry
-                del cache[pubkey_hex]
+        cached_profile = get_cached_item(pubkey_hex)
+        if cached_profile:
+            logger.info(f'Profile for {pubkey_hex} returned from cache.')
+            return jsonify(cached_profile)
 
-        # Initialize RelayManager with a timeout of 10 seconds and key trusted default relays
-        relay_manager = RelayManager(timeout=10)
-        relay_manager.add_relay("wss://relay.damus.io")
-        relay_manager.add_relay("wss://relay.primal.net")
-
-
-        # Create filters for kind 0 events (user profile)
+        relay_manager = initialize_relay_manager()
         filters = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
         subscription_id = uuid.uuid1().hex
-
-        # Subscribe to all relays
         relay_manager.add_subscription_on_all_relays(subscription_id, filters)
         relay_manager.run_sync()
 
         profile_data = None
-
-        # Process events
         while relay_manager.message_pool.has_events():
             event_msg = relay_manager.message_pool.get_event()
             if event_msg.event.kind == EventKind.SET_METADATA:
-                # Parse the content field as JSON
                 profile_content = json.loads(event_msg.event.content)
                 profile_data = {
                     "id": event_msg.event.id,
                     "pubkey": event_msg.event.pubkey,
-                    "created_at": event_msg.event.created_at,
-                    "kind": event_msg.event.kind,
-                    "tags": event_msg.event.tags,
-                    "content": profile_content,  # Decoded JSON content
+                    "content": profile_content,
                     "sig": event_msg.event.sig
                 }
-                logger.info(f'Received profile event: {profile_data}')
                 break
 
-        # Close all relay connections
         relay_manager.close_all_relay_connections()
 
-        # Validate NIP-05 if available
-        if profile_data and 'nip05' in profile_data['content']:
-            profile_data['nip05_verified'] = validate_nip05(profile_data['pubkey'], profile_data['content']['nip05'])
-        else:
-            profile_data['nip05_verified'] = False
-
         if profile_data:
-            # Cache the profile
-            cache[pubkey_hex] = (profile_data, time.time())
+            set_cached_item(pubkey_hex, profile_data)
             return jsonify(profile_data)
-        else:
-            return jsonify({"error": "Profile not found or relay did not respond in time"})
+        return error_response("Profile not found or relay did not respond in time", 404)
+
     except Exception as e:
-        logger.error(f'Error occurred in fetch-profile: {e}')
-        return jsonify({"error": str(e)})
+        logger.error(f'Error in fetch-profile: {e}')
+        return error_response(str(e), 500)
 
 @app.route('/tracks', methods=['GET'])
 def get_tracks():
-    """Return the complete Fuzzed Records music library."""
     try:
         library = build_music_library()
         return jsonify({"tracks": library})
     except Exception as e:
         logger.error(f"Error building library: {e}")
-        return jsonify({"error": "Unable to build music library"}), 500
+        return error_response("Unable to build music library", 500)
 
 @app.route('/validate-profile', methods=['POST'])
 def validate_profile():
@@ -180,58 +168,32 @@ def require_nip05_verification(required_domain):
     return decorator
 
 @app.route('/create_event', methods=['POST'])
-@require_nip05_verification("fuzzedrecords.com")
+@require_nip05_verification(REQUIRED_DOMAIN)
 def create_event():
     try:
-        # Parse event data from request
         data = request.json
-        title = data.get("title")
-        venue = data.get("venue")
-        date = data.get("date")
-        price = data.get("price")
-        description = data.get("description")
-        pubkey = data.get("pubkey")
-        sig = data.get("sig")
+        required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig"]
+        if not all(field in data for field in required_fields):
+            return error_response("Missing required fields")
 
-        if not all([title, venue, date, price, description, pubkey, sig]):
-            return jsonify({"error": "Missing required fields"}), 400
-            
-        # Validate and normalize the date
-        try:
-            # Parse date and convert to UTC
-            parsed_date = datetime.fromisoformat(date.replace("Z", "+00:00")).astimezone(timezone.utc)
-            iso_date = parsed_date.isoformat()  # Format back to ISO 8601 (UTC)
-        except ValueError:
-            return jsonify({"error": "Invalid date format. Use ISO 8601 (e.g., 2024-12-24T18:30:00Z)."}), 400
-
-        # Construct the event
-        tags = [
-            ["title", title],
-            ["venue", venue],
-            ["date", iso_date],
-            ["price", str(price)]
-        ]
+        parsed_date = datetime.fromisoformat(data["date"].replace("Z", "+00:00")).astimezone(timezone.utc)
         event = Event(
             kind=52,
-            pubkey=pubkey,
-            content=description,
-            tags=tags
+            pubkey=data["pubkey"],
+            content=data["description"],
+            tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]],
         )
 
-        # Verify the signature using the provided public key
-        if not event.verify(sig):
-            return jsonify({"error": "Invalid signature"}), 403
+        if not event.verify(data["sig"]):
+            return error_response("Invalid signature", 403)
 
-        # Publish the event to NOSTR relays
-        relays = ["wss://relay.damus.io", "wss://relay.primal.net", "wss://relay.getalby.com/v1"]
-        for relay in relays:
+        for relay in RELAY_URLS:
             requests.post(f"{relay}/publish", json=event.to_dict())
 
         return jsonify({"message": "Event created successfully", "event_id": event.id})
-
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
-        return jsonify({"error": "An internal error occurred"}), 500
+        return error_response("An internal error occurred", 500)
 
 def fetch_and_validate_profile(pubkey, required_domain):
     """
@@ -288,43 +250,21 @@ def fetch_and_validate_profile(pubkey, required_domain):
         logger.error(f"Error in fetch_and_validate_profile: {e}")
         return False
 
-def validate_nip05(pubkey, nip05_address):
-    logger.info(f"In validate_nip05 with variables: {pubkey}, {nip05_address}")
-    try:
-        domain = nip05_address.split('@')[-1]
-        logger.info(f"In validate_nip05 domain: {domain}")
-
-        if domain == "pinkanki.org":
-            # Directly access the nostr.json file for internal domain
-            SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-            json_url = os.path.join(SITE_ROOT, "static", "nostr.json")
-            with open(json_url, 'r') as f:
-                data = json.load(f)
-            logger.info(f"NIP-05 Check response from local file: {data}")
-
-            # Check if the pubkey matches the one in the NIP-05 record
-            if 'names' in data and nip05_address.split('@')[0] in data['names']:
-                if data['names'][nip05_address.split('@')[0]] == pubkey:
-                    return True
-        else:
-            # Perform NIP-05 lookup to find the well-known NOSTR JSON file
-            well_known_url = f"https://{domain}/.well-known/nostr.json?name={nip05_address.split('@')[0]}"
-            logger.info(f"In validate_nip05 well_known_url: {well_known_url}")
-            response = requests.get(well_known_url, timeout=10)
-
-            if response.status_code == 200:
-                data = response.json()
-                logger.info(f"NIP-05 Check response: {data}")
-
-                # Check if the pubkey matches the one in the NIP-05 record
-                if 'names' in data and nip05_address.split('@')[0] in data['names']:
-                    if data['names'][nip05_address.split('@')[0]] == pubkey:
-                        return True
-
-        return False
-    except Exception as e:
-        logger.error(f"Error during NIP-05 validation: {e}")
-        return False
+# Helper to build music library
+def build_music_library():
+    artists = fetch_artists()
+    music_library = []
+    for artist in artists:
+        for album in fetch_albums(artist["id"]):
+            for track in fetch_tracks(album["id"]):
+                music_library.append({
+                    "artist": artist["name"].replace(SEARCH_TERM, ""),
+                    "album": album["title"],
+                    "title": track["title"],
+                    "media_url": track["media_url"],
+                    "track_id": track["id"]
+                })
+    return music_library
 
 # Fetch Artists by Search Term
 def fetch_artists():
@@ -395,42 +335,6 @@ def fetch_tracks(album_id):
     except Exception as e:
         logger.error(f"Error in fetch_tracks: {e}")
         return []
-
-# Build Complete Library
-def build_music_library():
-    artists = fetch_artists()
-    if not artists:
-        return []
-
-    music_library = []
-    for artist in artists:
-        full_artist_name = artist["name"]
-        artist_name = full_artist_name.replace(" by Fuzzed Records", "").strip()
-        artist_id = artist["id"]
-        logger.info(f"Processing artist: {artist_name}")
-
-        albums = fetch_albums(artist_id)
-        for album in albums:
-            album_title = album["title"]
-            album_id = album["id"]
-            albumArtUrl = album["albumArtUrl"]
-            logger.info(f" - Processing album: {album_title}")
-
-            tracks = fetch_tracks(album_id)
-            for track in tracks:
-                track_info = {
-                    "artist": artist_name,
-                    "album": album_title,
-                    "albumArtUrl": albumArtUrl,
-                    "title": track["title"],
-                    "media_url": track["media_url"],
-                    "track_id": track["track_id"],
-                    "nostr_npub": track["nostr_npub"]
-                }
-                music_library.append(track_info)
-    
-    logger.info(f"Total tracks found: {len(music_library)}")
-    return music_library
 
 class Main(Resource):
     def post(self):
