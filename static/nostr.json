@@ -1,8 +1,0 @@
-{
-    "names": {
-      "pancho": "2dff6f2ab427ff6741817de6f61a5a15f57e62ae77d12b209590de32ad2f038b"
-    },
-    "relays": {
-      "2dff6f2ab427ff6741817de6f61a5a15f57e62ae77d12b209590de32ad2f038b": [ "wss://relay.primal.net", "wss://purplepag.es", "wss://eden.nostr.land", "wss://relay.damus.io", "wss://nos.lol", "wss://relay.getalby.com/v1", "wss://nostr.wine", "wss://relay.nostr.band", "wss://relay.snort.social" ]
-    }
-}
