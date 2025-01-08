@@ -79,6 +79,7 @@ def fetch_profile():
         profile_data = None
         while relay_manager.message_pool.has_events():
             event_msg = relay_manager.message_pool.get_event()
+            logger.info(f'Fetch Profile - Relay Manager Event message: {event_msg}')
             if event_msg.event.kind == EventKind.SET_METADATA:
                 profile_content = json.loads(event_msg.event.content)
                 profile_data = {
