@@ -108,7 +108,7 @@ def get_tracks():
         return jsonify({"tracks": library})
     except Exception as e:
         logger.error(f"Error building library: {e}")
-        return error_response("Unable to build music library", 500)
+        return error_response(f"Error building library: {e}", 500)
 
 @app.route('/validate-profile', methods=['POST'])
 def validate_profile():
