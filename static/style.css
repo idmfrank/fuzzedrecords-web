@@ -103,6 +103,7 @@ body {
 
 .profile-details td {
     padding: 5px;
+    text-align: left;
 }
 
 .profile-details td:first-child {
