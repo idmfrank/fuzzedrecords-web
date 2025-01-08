@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
             venue: formData.get('event-venue'),
             date: formData.get('event-date'),
             price: formData.get('event-price'),
-            description: formData.get('event-description')
+            description: formData.get('event-description'),
+            pubkey: localStorage.getItem('pubkey'), // Add pubkey to event data
         };
 
         await createEvent(eventData);
@@ -41,7 +42,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            const pubkey = await window.nostr.getPublicKey();
+            const pubkey = await window.nostr.getPublicKey(); // Retrieve pubkey
+            console.log("Authenticated pubkey:", pubkey); // Log for debugging
+            localStorage.setItem('pubkey', pubkey); // Save pubkey for later use
             const response = await fetch('/fetch-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
