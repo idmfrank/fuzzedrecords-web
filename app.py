@@ -16,7 +16,7 @@ CORS(app)
 api = Api(app)
 
 # Configuration
-RELAY_URLS = os.getenv("RELAY_URLS", "wss://relay.damus.io,wss://relay.primal.net").split(',')
+RELAY_URLS = os.getenv("RELAY_URLS", "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub").split(',')
 CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
 REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 WAVLAKE_API_BASE = "https://wavlake.com/api/v1"
