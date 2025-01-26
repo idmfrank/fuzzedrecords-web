@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const validationResult = await response.json();
             if (validationResult.content) {
-                console.log("Validation Result prior to Validation:", validationResult.content.JSON);
+                console.log("Validation Result prior to Validation:", validationResult.stringify);
                 displayProfile(validationResult);
                 if (validationResult.content.nip05 && validationResult.content.nip05.includes("fuzzedrecords.com")) {
                     menuAdmin.classList.remove('admin-only');
