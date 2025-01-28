@@ -1,6 +1,6 @@
 # Fuzzed Records
 
-Fuzzed Records is a modern music platform that integrates decentralized authentication with music streaming. It allows users to explore a library of songs, manage their profiles, and (for admins) create events. The platform leverages **Nostr Wallet** for decentralized authentication and **Wavlake** for music distribution.
+Fuzzed Records is a modern music platform that integrates decentralized authentication with music streaming. It allows users to explore a library of songs, manage their profiles, and (for admins) create events. The platform leverages **Nostr Wallet** for decentralized authentication and **Wavlake** for music distribution by Fuzzed Records.
 
 ---
 
