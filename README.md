@@ -47,12 +47,12 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 
 ```
 fuzzedrecords/
-├── index.html               # Main HTML file for the website
-├── profile.js               # JavaScript for user interactions and authentication
-├── style.css                # CSS for styling the website
-├── app.py                   # Flask backend for API and logic
-├── requirements.txt         # Python dependencies
-├── startup.sh               # Deployment script for Azure
+├── templates/index.html      # Main HTML file for the website
+├── static/scripts/profile.js # JavaScript for user interactions and authentication
+├── static/style.css          # CSS for styling the website
+├── app.py                    # Flask backend for API and logic
+├── requirements.txt          # Python dependencies
+├── startup.sh                # Deployment script for Azure
 ```
 
 ---
