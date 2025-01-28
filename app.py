@@ -187,6 +187,8 @@ def create_event():
             tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]],
         )
 
+        logger.info(f"Create Event Data: {event}")
+
         if not event.verify(data["sig"]):
             return error_response("Invalid signature", 403)
 
