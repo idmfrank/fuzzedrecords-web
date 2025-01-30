@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             pubkey: localStorage.getItem('pubkey'), // Add pubkey to event data
         };
 
+        console.log('Form data ready to be sent for event creation:', eventData);
         await createEvent(eventData);
         alert("Event created successfully!");
     });
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function createEvent(eventData) {
         try {
+            console.log('Initiating creation of event with data:', eventData);
             if (!window.nostr) {
                 throw new Error("NOSTR wallet not available.");
             }
@@ -77,8 +79,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 sigs: [],
             };
 
+            console.log('Unsigned event:', unsignedEvent);
+
             // Request the NOSTR wallet to sign the event
             const signedEvent = await window.nostr.signEvent(unsignedEvent);
+            console.log('Signed event:', signedEvent);
 
             const response = await fetch('/create_event', {
                 method: 'POST',
