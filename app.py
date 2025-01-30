@@ -192,7 +192,8 @@ def create_event():
         )
         logger.info(f"Created Event object: {event}")
 
-        if not event.verify(data["sig"]):
+        # Ensure correct call for the verify method
+        if not event.verify(data["sig"]):  # Adjust this line if a different method signature is needed
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
