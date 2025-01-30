@@ -68,10 +68,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function createEvent(eventData) {
         try {
+            if (!window.nostr) {
+                throw new Error("NOSTR wallet not available.");
+            }
+
+            const unsignedEvent = {
+                ...eventData,
+                sigs: [],
+            };
+
+            // Request the NOSTR wallet to sign the event
+            const signedEvent = await window.nostr.signEvent(unsignedEvent);
+
             const response = await fetch('/create_event', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(eventData),
+                body: JSON.stringify(signedEvent),
             });
     
             if (!response.ok) {
