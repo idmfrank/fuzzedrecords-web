@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from pynostr.event import Event
 from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
-from pynostr.event import EventKind, Event
+from pynostr import nostr
 from functools import wraps
 from datetime import datetime, timezone
 from msal import ConfidentialClientApplication
@@ -183,7 +184,7 @@ def create_event():
 
         parsed_date = datetime.fromisoformat(data["date"].replace("Z", "+00:00")).astimezone(timezone.utc)
         logger.debug(f"Parsed date: {parsed_date}")
-        
+
         event = Event(
             kind=52,
             pubkey=data["pubkey"],
@@ -193,7 +194,7 @@ def create_event():
         logger.info(f"Created Event object: {event}")
 
         # Ensure correct call for the verify method
-        if not event.verify(data["sig"]):  # Adjust this line if a different method signature is needed
+        if not nostr.verify_signature(event, data["sig"])  # Assuming nostr utility
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
