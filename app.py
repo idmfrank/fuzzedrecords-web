@@ -175,25 +175,34 @@ def require_nip05_verification(required_domain):
 def create_event():
     try:
         data = request.json
+        logger.debug(f"Received request data: {data}")
         required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig"]
         if not all(field in data for field in required_fields):
+            logger.warning("Missing required fields in request data.")
             return error_response("Missing required fields")
 
         parsed_date = datetime.fromisoformat(data["date"].replace("Z", "+00:00")).astimezone(timezone.utc)
+        logger.debug(f"Parsed date: {parsed_date}")
+        
         event = Event(
             kind=52,
             pubkey=data["pubkey"],
             content=data["description"],
-            tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]],
+            tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]]
         )
-
-        logger.info(f"Create Event Data: {event}")
+        logger.info(f"Created Event object: {event}")
 
         if not event.verify(data["sig"]):
+            logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
         for relay in RELAY_URLS:
-            requests.post(f"{relay}/publish", json=event.to_dict())
+            try:
+                logger.debug(f"Publishing to relay: {relay}")
+                response = requests.post(f"{relay}/publish", json=event.to_dict())
+                logger.debug(f"Relay response: {response.status_code}")
+            except Exception as e:
+                logger.error(f"Failed to publish to relay {relay}: {e}")
 
         return jsonify({"message": "Event created successfully", "event_id": event.id})
     except Exception as e:
@@ -245,7 +254,7 @@ def fetch_and_validate_profile(pubkey, required_domain):
             return False
 
         # Ensure the domain matches
-        domain = nip05.split("@")[-1]
+        domain = nip05.split("@")[1]
         if domain != required_domain:
             logger.warning(f"NIP-05 domain mismatch. Expected {required_domain}, got {domain}")
             return False
