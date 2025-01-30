@@ -74,15 +74,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error("NOSTR wallet not available.");
             }
 
-            const unsignedEvent = {
-                ...eventData,
-                sigs: [],
+            const eventTemplate = {
+                tags: [],
+                created_at: Math.floor(Date.now() / 1000),
+                kind: 1, // standard event kind for nostr
+                content: JSON.stringify(eventData),
+                ...eventData
             };
 
-            console.log('Unsigned event:', unsignedEvent);
+            console.log('Event template before signing:', eventTemplate);
 
-            // Request the NOSTR wallet to sign the event
-            const signedEvent = await window.nostr.signEvent(unsignedEvent);
+            // Request the NOSTR wallet to sign the event template
+            const signedEvent = await window.nostr.signEvent(eventTemplate);
             console.log('Signed event:', signedEvent);
 
             const response = await fetch('/create_event', {
