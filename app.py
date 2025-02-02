@@ -176,6 +176,7 @@ def create_event():
     try:
         data = request.json
         logger.debug(f"Received request data: {data}")
+        
         required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig"]
         if not all(field in data for field in required_fields):
             logger.warning("Missing required fields in request data.")
@@ -192,23 +193,23 @@ def create_event():
         )
         logger.info(f"Created Event object: {event}")
 
-        # Ensure signature verification checks the full event structure
-        if not event.verify_signature():
+        # Correct signature verification using the provided signature
+        if not event.verify(data["sig"]):
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
         relay_manager = initialize_relay_manager()
         relay_manager.publish_event(event)
         relay_manager.run_sync()
-        time.sleep(5) # allow the messages to send
+        
+        time.sleep(5)  # Allow time for the messages to send
+        
         while relay_manager.message_pool.has_ok_notices():
             ok_msg = relay_manager.message_pool.get_ok_notice()
-            logger.debug(f"OK Message ... : {ok_msg}")
-        while relay_manager.message_pool.has_events():
-            event_msg = relay_manager.message_pool.get_event()
-            logger.debug(f"Event Message ...: {event_msg}")
+            logger.debug(f"OK Message: {ok_msg}")
+        
+        return jsonify({"message": "Event created successfully"})
 
-        return jsonify({"message": "Event created successfully", "event_msg": event_msg})
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
         return error_response("An internal error occurred", 500)
