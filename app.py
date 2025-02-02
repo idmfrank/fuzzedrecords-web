@@ -176,13 +176,25 @@ def create_event():
     try:
         data = request.json
         logger.debug(f"Received request data: {data}")
-        
-        required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig", "created_at", "kind"]
+
+        # Ensure the required fields are present in the incoming data
+        required_fields = ["kind", "created_at", "tags", "content", "pubkey", "sig"]
         if not all(field in data for field in required_fields):
             logger.warning("Missing required fields in request data.")
             return error_response("Missing required fields")
 
-        # Use exact event data from the client
+        # Extract values from tags
+        tags_dict = {tag[0]: tag[1] for tag in data["tags"]}
+        title = tags_dict.get("title")
+        venue = tags_dict.get("venue")
+        date = tags_dict.get("date")
+        price = tags_dict.get("price")
+
+        if not all([title, venue, date, price]):
+            logger.warning("One or more required tag fields are missing.")
+            return error_response("Missing required event details in tags")
+
+        # Create the event object
         event = Event(
             kind=data["kind"],
             created_at=data["created_at"],
@@ -190,7 +202,7 @@ def create_event():
             content=data["content"],
             tags=data["tags"]
         )
-        
+
         # Assign the signature from the client
         event.sig = data["sig"]
         logger.info(f"Created Event object: {event}")
@@ -200,28 +212,12 @@ def create_event():
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
-        # Publish the event to the relay
+        # Publish event to the relay
         relay_manager = initialize_relay_manager()
         relay_manager.publish_event(event)
         relay_manager.run_sync()
 
-        # Wait for acknowledgment with a timeout (e.g., 10 seconds)
-        timeout = time.time() + 10  # Timeout set to 10 seconds
-        acknowledged = False
-
-        while time.time() < timeout:
-            if relay_manager.message_pool.has_ok_notices():
-                ok_msg = relay_manager.message_pool.get_ok_notice()
-                logger.debug(f"Relay acknowledgment received: {ok_msg}")
-                acknowledged = True
-                break  # Exit loop if acknowledgment received
-            time.sleep(1)  # Check every second
-
-        if not acknowledged:
-            logger.warning("Relay did not acknowledge the event within the timeout period.")
-            return error_response("Relay did not acknowledge the event in time", 504)
-
-        return jsonify({"message": "Event created and acknowledged successfully"})
+        return jsonify({"message": "Event created successfully"})
 
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
