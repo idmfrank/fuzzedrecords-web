@@ -80,16 +80,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 data.events.forEach(event => {
                     const eventElement = document.createElement("div");
                     eventElement.classList.add("event-item");
+                
+                    // Display event details
                     eventElement.innerHTML = `
                         <h3>${getTagValue(event.tags, 'title')}</h3>
                         <p><strong>Venue:</strong> ${getTagValue(event.tags, 'venue')}</p>
                         <p><strong>Date:</strong> ${new Date(getTagValue(event.tags, 'date')).toLocaleString()}</p>
                         <p><strong>Fee:</strong> $${getTagValue(event.tags, 'fee')}</p>
                         <p>${event.content}</p>
-                        <button onclick="generateTicketWithQRCode(${JSON.stringify(event)})">Generate Ticket</button>
+                        <button class="generate-ticket-btn" data-event='${JSON.stringify(event)}'>Generate Ticket</button>
                     `;
+                
                     eventsSection.appendChild(eventElement);
                 });
+                
+                // Add Event Listener for all 'Generate Ticket' buttons
+                document.addEventListener('click', function (e) {
+                    if (e.target && e.target.classList.contains('generate-ticket-btn')) {
+                        const eventData = JSON.parse(e.target.getAttribute('data-event'));
+                        generateTicketWithQRCode(eventData);
+                    }
+                });
+                
             } else {
                 eventsSection.innerHTML = "<p>No events found from fuzzedrecords.com accounts.</p>";
             }
