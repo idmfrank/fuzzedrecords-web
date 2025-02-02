@@ -73,25 +73,30 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!window.nostr) {
                 throw new Error("NOSTR wallet not available.");
             }
-
+    
             const eventTemplate = {
-                tags: [],
+                kind: 52, // Custom event kind for your app
                 created_at: Math.floor(Date.now() / 1000),
-                kind: 1, // standard event kind for nostr
+                tags: [],
                 content: JSON.stringify(eventData),
-                ...eventData
+                pubkey: eventData.pubkey
             };
-
+    
             console.log('Event template before signing:', eventTemplate);
-
-            // Request the NOSTR wallet to sign the event template
+    
+            // Sign the event using the NOSTR wallet
             const signedEvent = await window.nostr.signEvent(eventTemplate);
+    
             console.log('Signed event:', signedEvent);
-
+    
+            // Send the signed event to the server
             const response = await fetch('/create_event', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signedEvent),
+                body: JSON.stringify({
+                    ...eventData,
+                    sig: signedEvent.sig // Add the signature to the event data
+                }),
             });
     
             if (!response.ok) {
@@ -108,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('An error occurred while creating the event:', error);
             alert('An error occurred while creating the event.');
         }
-    }    
+    }        
 
     function displayProfile(profileData) {
         const profileContainer = document.getElementById('profile-container');
