@@ -188,9 +188,9 @@ def create_event():
         title = tags_dict.get("title")
         venue = tags_dict.get("venue")
         date = tags_dict.get("date")
-        price = tags_dict.get("price")
+        fee = tags_dict.get("fee")
 
-        if not all([title, venue, date, price]):
+        if not all([title, venue, date, fee]):
             logger.warning("One or more required tag fields are missing.")
             return error_response("Missing required event details in tags")
 

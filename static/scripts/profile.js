@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
             title: formData.get('event-title'),
             venue: formData.get('event-venue'),
             date: formData.get('event-date'),
-            price: formData.get('event-price'),
+            fee: formData.get('event-fee'),
             description: formData.get('event-description'),
             pubkey: localStorage.getItem('pubkey'), // Add pubkey to event data
         };
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <h3>${getTagValue(event.tags, 'title')}</h3>
                         <p><strong>Venue:</strong> ${getTagValue(event.tags, 'venue')}</p>
                         <p><strong>Date:</strong> ${new Date(getTagValue(event.tags, 'date')).toLocaleString()}</p>
-                        <p><strong>Price:</strong> $${getTagValue(event.tags, 'price')}</p>
+                        <p><strong>Fee:</strong> $${getTagValue(event.tags, 'fee')}</p>
                         <p>${event.content}</p>
                     `;
                     eventsSection.appendChild(eventElement);
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ["title", eventData.title],
                     ["venue", eventData.venue],
                     ["date", eventData.date],
-                    ["price", String(eventData.price)]
+                    ["fee", String(eventData.fee)]
                 ],
                 content: eventData.description,
                 pubkey: eventData.pubkey
