@@ -185,19 +185,25 @@ def create_event():
         parsed_date = datetime.fromisoformat(data["date"].replace("Z", "+00:00")).astimezone(timezone.utc)
         logger.debug(f"Parsed date: {parsed_date}")
 
+        # Create the event
         event = Event(
             kind=52,
             pubkey=data["pubkey"],
             content=data["description"],
             tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]]
         )
+        
+        # Set the signature explicitly
+        event.sig = data["sig"]
+        
         logger.info(f"Created Event object: {event}")
 
-        # Correct signature verification using the provided signature
-        if not event.verify(data["sig"]):
+        # Verify the event without passing an argument
+        if not event.verify():
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
+        # Publish to relay
         relay_manager = initialize_relay_manager()
         relay_manager.publish_event(event)
         relay_manager.run_sync()
