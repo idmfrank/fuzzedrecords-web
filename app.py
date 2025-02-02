@@ -197,15 +197,18 @@ def create_event():
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
-        for relay in RELAY_URLS:
-            try:
-                logger.debug(f"Publishing to relay: {relay}")
-                response = requests.post(f"{relay}/publish", json=event.to_dict())
-                logger.debug(f"Relay response: {response.status_code}")
-            except Exception as e:
-                logger.error(f"Failed to publish to relay {relay}: {e}")
+        relay_manager = initialize_relay_manager()
+        relay_manager.publish_event(event)
+        relay_manager.run_sync()
+        time.sleep(5) # allow the messages to send
+        while relay_manager.message_pool.has_ok_notices():
+            ok_msg = relay_manager.message_pool.get_ok_notice()
+            logger.debug(f"OK Message ... : {ok_msg}")
+        while relay_manager.message_pool.has_events():
+            event_msg = relay_manager.message_pool.get_event()
+            logger.debug(f"Event Message ...: {event_msg}")
 
-        return jsonify({"message": "Event created successfully", "event_id": event.id})
+        return jsonify({"message": "Event created successfully", "event_msg": event_msg})
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
         return error_response("An internal error occurred", 500)
