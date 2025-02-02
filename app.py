@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_restful import Resource, Api
 from flask_cors import CORS
-from pynostr.event import Event
+from pynostr.event import EventKind, Event
 from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
 from pynostr import nostr
@@ -194,7 +194,7 @@ def create_event():
         logger.info(f"Created Event object: {event}")
 
         # Ensure correct call for the verify method
-        if not nostr.verify_signature(event, data["sig"])  # Assuming nostr utility
+        if not nostr.verify_signature(event, data["sig"]):  # Assuming nostr utility
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
