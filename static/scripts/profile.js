@@ -67,6 +67,46 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Fetch and Display Events from fuzzedrecords.com accounts
+    async function fetchFuzzedEvents() {
+        try {
+            const response = await fetch("/fuzzed_events");
+            const data = await response.json();
+
+            const eventsSection = document.getElementById("events-section");
+            eventsSection.innerHTML = "";
+
+            if (data.events && data.events.length > 0) {
+                data.events.forEach(event => {
+                    const eventElement = document.createElement("div");
+                    eventElement.classList.add("event-item");
+                    eventElement.innerHTML = `
+                        <h3>${getTagValue(event.tags, 'title')}</h3>
+                        <p><strong>Venue:</strong> ${getTagValue(event.tags, 'venue')}</p>
+                        <p><strong>Date:</strong> ${new Date(getTagValue(event.tags, 'date')).toLocaleString()}</p>
+                        <p><strong>Price:</strong> $${getTagValue(event.tags, 'price')}</p>
+                        <p>${event.content}</p>
+                    `;
+                    eventsSection.appendChild(eventElement);
+                });
+            } else {
+                eventsSection.innerHTML = "<p>No events found from fuzzedrecords.com accounts.</p>";
+            }
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            document.getElementById("events-section").innerHTML = "<p>Error loading events.</p>";
+        }
+    }
+
+    // Helper function to extract tag values
+    function getTagValue(tags, key) {
+        const tag = tags.find(t => t[0] === key);
+        return tag ? tag[1] : 'N/A';
+    }
+
+    // Call this function when the page loads or on button click
+    fetchFuzzedEvents();
+
     async function createEvent(eventData) {
         try {
             console.log('Initiating creation of event with data:', eventData);

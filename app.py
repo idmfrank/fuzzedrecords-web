@@ -223,6 +223,49 @@ def create_event():
         logger.error(f"Error in create_event: {e}")
         return error_response("An internal error occurred", 500)
 
+@app.route('/fuzzed_events', methods=['GET'])
+def get_fuzzed_events():
+    try:
+        relay_manager = initialize_relay_manager()
+        filters = FiltersList([Filters(kinds=[52])])  # Fetch all kind 52 events
+        subscription_id = uuid.uuid1().hex
+        relay_manager.add_subscription_on_all_relays(subscription_id, filters)
+        relay_manager.run_sync()
+
+        events = []
+        seen_pubkeys = set()
+
+        # Fetch events from relays
+        while relay_manager.message_pool.has_events():
+            event_msg = relay_manager.message_pool.get_event()
+            event_data = {
+                "id": event_msg.event.id,
+                "pubkey": event_msg.event.pubkey,
+                "content": event_msg.event.content,
+                "tags": event_msg.event.tags,
+                "created_at": event_msg.event.created_at
+            }
+
+            pubkey = event_msg.event.pubkey
+
+            # Validate NIP-05 for fuzzedrecords.com if not already checked
+            if pubkey not in seen_pubkeys:
+                is_valid = fetch_and_validate_profile(pubkey, REQUIRED_DOMAIN)
+                if is_valid:
+                    events.append(event_data)
+                seen_pubkeys.add(pubkey)
+
+        relay_manager.close_all_relay_connections()
+
+        if not events:
+            return jsonify({"message": "No events found from fuzzedrecords.com accounts."})
+
+        return jsonify({"events": events})
+
+    except Exception as e:
+        logger.error(f"Error in fetching fuzzed events: {e}")
+        return error_response("An internal error occurred while fetching events", 500)
+
 def fetch_and_validate_profile(pubkey, required_domain):
     """
     Fetch the profile for a given pubkey and validate that it matches the required domain.
