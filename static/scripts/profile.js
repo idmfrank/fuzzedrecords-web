@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <p><strong>Venue:</strong> ${getTagValue(event.tags, 'venue')}</p>
                         <p><strong>Date:</strong> ${new Date(getTagValue(event.tags, 'date')).toLocaleString()}</p>
                         <p><strong>Fee:</strong> $${getTagValue(event.tags, 'fee')}</p>
+                        <button onclick="generateTicketWithQRCode(${JSON.stringify(event)})">Generate Ticket</button>
                         <p>${event.content}</p>
                     `;
                     eventsSection.appendChild(eventElement);
@@ -238,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
             profileContainer.innerHTML = "<p class='empty-profile'>No profile data available.</p>";
         }
     }
-    
+
     async function sendTicketViaNostrDM(ticketData, qrDataUrl) {
         const recipientPubKey = ticketData.pubkey;
         const messageContent = `Here is your ticket for event ${ticketData.event_id}!`;
