@@ -177,44 +177,51 @@ def create_event():
         data = request.json
         logger.debug(f"Received request data: {data}")
         
-        required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig"]
+        required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig", "created_at", "kind"]
         if not all(field in data for field in required_fields):
             logger.warning("Missing required fields in request data.")
             return error_response("Missing required fields")
 
-        parsed_date = datetime.fromisoformat(data["date"].replace("Z", "+00:00")).astimezone(timezone.utc)
-        logger.debug(f"Parsed date: {parsed_date}")
-
-        # Create the event
+        # Use exact event data from the client
         event = Event(
-            kind=52,
+            kind=data["kind"],
+            created_at=data["created_at"],
             pubkey=data["pubkey"],
-            content=data["description"],
-            tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]]
+            content=data["content"],
+            tags=data["tags"]
         )
         
-        # Set the signature explicitly
+        # Assign the signature from the client
         event.sig = data["sig"]
-        
         logger.info(f"Created Event object: {event}")
 
-        # Verify the event without passing an argument
+        # Verify the event signature
         if not event.verify():
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
-        # Publish to relay
+        # Publish the event to the relay
         relay_manager = initialize_relay_manager()
         relay_manager.publish_event(event)
         relay_manager.run_sync()
-        
-        time.sleep(5)  # Allow time for the messages to send
-        
-        while relay_manager.message_pool.has_ok_notices():
-            ok_msg = relay_manager.message_pool.get_ok_notice()
-            logger.debug(f"OK Message: {ok_msg}")
-        
-        return jsonify({"message": "Event created successfully"})
+
+        # Wait for acknowledgment with a timeout (e.g., 10 seconds)
+        timeout = time.time() + 10  # Timeout set to 10 seconds
+        acknowledged = False
+
+        while time.time() < timeout:
+            if relay_manager.message_pool.has_ok_notices():
+                ok_msg = relay_manager.message_pool.get_ok_notice()
+                logger.debug(f"Relay acknowledgment received: {ok_msg}")
+                acknowledged = True
+                break  # Exit loop if acknowledgment received
+            time.sleep(1)  # Check every second
+
+        if not acknowledged:
+            logger.warning("Relay did not acknowledge the event within the timeout period.")
+            return error_response("Relay did not acknowledge the event in time", 504)
+
+        return jsonify({"message": "Event created and acknowledged successfully"})
 
     except Exception as e:
         logger.error(f"Error in create_event: {e}")

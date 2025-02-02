@@ -75,18 +75,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
     
             const eventTemplate = {
-                kind: 52, // Custom event kind for your app
+                kind: 52, // Must match server-side kind
                 created_at: Math.floor(Date.now() / 1000),
-                tags: [],
-                content: JSON.stringify(eventData),
+                tags: [
+                    ["title", eventData.title],
+                    ["venue", eventData.venue],
+                    ["date", eventData.date],
+                    ["price", String(eventData.price)]
+                ],
+                content: eventData.description,
                 pubkey: eventData.pubkey
             };
     
             console.log('Event template before signing:', eventTemplate);
     
-            // Sign the event using the NOSTR wallet
+            // Request the NOSTR wallet to sign the event template
             const signedEvent = await window.nostr.signEvent(eventTemplate);
-    
             console.log('Signed event:', signedEvent);
     
             // Send the signed event to the server
@@ -94,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...eventData,
-                    sig: signedEvent.sig // Add the signature to the event data
+                    ...eventTemplate,
+                    sig: signedEvent.sig  // Include the signature
                 }),
             });
     
@@ -113,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('An error occurred while creating the event:', error);
             alert('An error occurred while creating the event.');
         }
-    }        
+    }            
 
     function displayProfile(profileData) {
         const profileContainer = document.getElementById('profile-container');
