@@ -4,7 +4,6 @@ from flask_cors import CORS
 from pynostr.event import EventKind, Event
 from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
-from pynostr import nostr
 from functools import wraps
 from datetime import datetime, timezone
 from msal import ConfidentialClientApplication
@@ -194,7 +193,7 @@ def create_event():
         logger.info(f"Created Event object: {event}")
 
         # Ensure correct call for the verify method
-        if not nostr.verify_signature(event, data["sig"]):  # Assuming nostr utility
+        if not event.verify(data["sig"]):
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
