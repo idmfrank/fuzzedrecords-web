@@ -266,6 +266,39 @@ def get_fuzzed_events():
         logger.error(f"Error in fetching fuzzed events: {e}")
         return error_response("An internal error occurred while fetching events", 500)
 
+@app.route('/send_dm', methods=['POST'])
+def send_dm():
+    try:
+        data = request.json
+
+        # Initialize the relay manager
+        relay_manager = initialize_relay_manager()
+
+        # Create the event using the provided signed data
+        event = Event(
+            kind=data["kind"],
+            created_at=data["created_at"],
+            pubkey=data["pubkey"],
+            content=data["content"],
+            tags=data["tags"]
+        )
+        event.sig = data["sig"]
+
+        # Verify the signature before publishing
+        if not event.verify():
+            logger.warning("DM signature verification failed.")
+            return error_response("Invalid DM signature", 403)
+
+        # Publish to relays
+        relay_manager.publish_event(event)
+        relay_manager.run_sync()
+
+        return jsonify({"message": "DM sent successfully"})
+
+    except Exception as e:
+        logger.error(f"Error sending DM: {e}")
+        return error_response("An error occurred while sending the DM", 500)
+
 def fetch_and_validate_profile(pubkey, required_domain):
     """
     Fetch the profile for a given pubkey and validate that it matches the required domain.

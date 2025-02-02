@@ -98,6 +98,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    async function generateTicketWithQRCode(eventData) {
+        const ticketData = {
+            ticket_id: crypto.randomUUID(),
+            event_id: eventData.event_id,
+            pubkey: localStorage.getItem('pubkey')
+        };
+    
+        const qrContainer = document.getElementById('qr-code');
+        qrContainer.innerHTML = '';  // Clear previous QR code
+    
+        new QRCode(qrContainer, {
+            text: JSON.stringify(ticketData),
+            width: 256,
+            height: 256
+        });
+    
+        // Convert QR code to data URL for DM
+        const qrCanvas = qrContainer.querySelector('canvas');
+        const qrDataUrl = qrCanvas.toDataURL();
+    
+        // Send ticket via Nostr DM
+        await sendTicketViaNostrDM(ticketData, qrDataUrl);
+    }    
+
     // Helper function to extract tag values
     function getTagValue(tags, key) {
         const tag = tags.find(t => t[0] === key);
@@ -214,7 +238,35 @@ document.addEventListener('DOMContentLoaded', function () {
             profileContainer.innerHTML = "<p class='empty-profile'>No profile data available.</p>";
         }
     }
-
+    
+    async function sendTicketViaNostrDM(ticketData, qrDataUrl) {
+        const recipientPubKey = ticketData.pubkey;
+        const messageContent = `Here is your ticket for event ${ticketData.event_id}!`;
+        const qrMessage = `${messageContent}\nQR Code: ${qrDataUrl}`;
+    
+        // Encrypt message using NIP-04
+        const encryptedMessage = await window.nostr.nip04.encrypt(recipientPubKey, qrMessage);
+    
+        // Create DM event (kind: 4)
+        const dmEvent = {
+            kind: 4,
+            created_at: Math.floor(Date.now() / 1000),
+            tags: [["p", recipientPubKey]],
+            content: encryptedMessage,
+            pubkey: localStorage.getItem('pubkey')
+        };
+    
+        // Sign the event
+        const signedDM = await window.nostr.signEvent(dmEvent);
+    
+        // Send signed event to the backend
+        await fetch('/send_dm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(signedDM)
+        });
+    }
+    
     // Fetch and Display Songs
     fetch("/tracks")
         .then(response => response.json())
