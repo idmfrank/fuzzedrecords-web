@@ -255,7 +255,11 @@ document.addEventListener('DOMContentLoaded', function () {
     async function sendTicketViaNostrDM(ticketData, qrDataUrl) {
         const recipientPubKey = ticketData.pubkey;
         const messageContent = `Here is your ticket for event ${ticketData.event_id}!`;
-        const qrMessage = `${messageContent}\nQR Code: ${qrDataUrl}`;
+        const qrLink = `https://fuzzedrecords.com/generate_qr?ticket_id=${ticketData.ticket_id}&event_id=${ticketData.event_id}`;
+        const qrMessage = `
+            Here is your ticket for event ${ticketData.event_id}!
+            Click here to view your ticket QR code: ${qrLink}
+        `;
     
         // Encrypt message using NIP-04
         const encryptedMessage = await window.nostr.nip04.encrypt(recipientPubKey, qrMessage);

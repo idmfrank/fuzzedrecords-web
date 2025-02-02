@@ -4,3 +4,4 @@ flask-cors==4.0.1
 pynostr==0.6.2
 requests==2.31.0
 msal==1.21.0
+qrcode==7.4.2

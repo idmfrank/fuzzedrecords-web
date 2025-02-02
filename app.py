@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from pynostr.event import EventKind, Event
@@ -7,8 +7,10 @@ from pynostr.filters import FiltersList, Filters
 from functools import wraps
 from datetime import datetime, timezone
 from msal import ConfidentialClientApplication
+from io import BytesIO
 import os, json, time, uuid, requests
 import logging
+import qrcode
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -101,6 +103,23 @@ def fetch_profile():
     except Exception as e:
         logger.error(f'Error in fetch-profile: {e}')
         return error_response(str(e), 500)
+
+@app.route('/generate_qr')
+def generate_qr():
+    ticket_id = request.args.get('ticket_id')
+    event_id = request.args.get('event_id')
+
+    qr_data = {
+        "ticket_id": ticket_id,
+        "event_id": event_id
+    }
+
+    qr = qrcode.make(json.dumps(qr_data))
+    img_io = BytesIO()
+    qr.save(img_io, 'PNG')
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype='image/png')
 
 @app.route('/tracks', methods=['GET'])
 def get_tracks():
