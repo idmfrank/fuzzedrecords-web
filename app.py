@@ -290,10 +290,11 @@ def send_dm():
     try:
         data = request.json
 
-        # Initialize the relay manager
-        relay_manager = initialize_relay_manager()
+        # Ensure this is a NIP-17 DM event (kind: 14)
+        if data["kind"] != 14:
+            return error_response("Invalid event kind for DM", 400)
 
-        # Create the event using the provided signed data
+        # Create the event
         event = Event(
             kind=data["kind"],
             created_at=data["created_at"],
@@ -303,12 +304,13 @@ def send_dm():
         )
         event.sig = data["sig"]
 
-        # Verify the signature before publishing
+        # Verify the event signature before publishing
         if not event.verify():
             logger.warning("DM signature verification failed.")
             return error_response("Invalid DM signature", 403)
 
         # Publish to relays
+        relay_manager = initialize_relay_manager()
         relay_manager.publish_event(event)
         relay_manager.run_sync()
 

@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 data.events.forEach(event => {
                     const eventElement = document.createElement("div");
                     eventElement.classList.add("event-item");
-                
+
                     // Display event details
                     eventElement.innerHTML = `
                         <h3>${getTagValue(event.tags, 'title')}</h3>
@@ -108,10 +108,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             <p>Please connect your Nostr wallet to register for this event.</p>
                         `;
                     }
-                
+
                     eventsSection.appendChild(eventElement);
                 });
-                
+
                 // Add Event Listener for all 'Generate Ticket' buttons
                 document.addEventListener('click', function (e) {
                     if (e.target && e.target.classList.contains('generate-ticket-btn')) {
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         generateTicketWithQRCode(eventData);
                     }
                 });
-                
+
             } else {
                 eventsSection.innerHTML = "<p>No events found from fuzzedrecords.com accounts.</p>";
             }
@@ -130,33 +130,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function generateTicketWithQRCode(eventData) {
+        const ticket_id = crypto.randomUUID();
+        const event_id = eventData.id;
+        const event_name = getTagValue(eventData.tags, 'title');
+
         const ticketData = {
-            ticket_id: crypto.randomUUID(),
-            event_id: eventData.id,
-            pubkey: localStorage.getItem('pubkey')
+            ticket_id: ticket_id,
+            event_id: event_id,
+            pubkey: localStorage.getItem('pubkey'),
+            event_name: event_name
         };
 
-        console.info("Ticket Data: ", ticketData);
-    
-        const qrContainer = document.getElementById('qr-code');
-        qrContainer.innerHTML = '';  // Clear previous QR code
+        const qrLink = `https://fuzzedrecords.com/generate_qr?ticket_id=${ticket_id}&event_id=${event_id}`;
 
-        const qrLink = `https://fuzzedrecords.com/generate_qr?ticket_id=${ticketData.ticket_id}&event_id=${ticketData.event_id}`;
-    
-        new QRCode(qrContainer, {
-            text: qrLink,  // Ensure this link is concise
-            width: 256,
-            height: 256,
-            correctLevel: QRCode.CorrectLevel.L  // Lower error correction to fit more data
-        });
-    
-        // Convert QR code to data URL for DM
-        const qrCanvas = qrContainer.querySelector('canvas');
-        const qrDataUrl = qrCanvas.toDataURL();
-    
-        // Send ticket via Nostr DM
-        await sendTicketViaNostrDM(ticketData, qrDataUrl);
-    }    
+        const qrContainer = document.getElementById('qr-code');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, { text: qrLink, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
+
+        await sendTicketViaNostrDM(ticketData, qrLink);
+    }
 
     // Helper function to extract tag values
     function getTagValue(tags, key) {
@@ -170,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!window.nostr) {
                 throw new Error("NOSTR wallet not available.");
             }
-    
+
             const eventTemplate = {
                 kind: 52, // Must match server-side kind
                 created_at: Math.floor(Date.now() / 1000),
@@ -183,13 +175,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 content: eventData.description,
                 pubkey: eventData.pubkey
             };
-    
+
             console.log('Event template before signing:', eventTemplate);
-    
+
             // Request the NOSTR wallet to sign the event template
             const signedEvent = await window.nostr.signEvent(eventTemplate);
             console.log('Signed event:', signedEvent);
-    
+
             // Send the signed event to the server
             const response = await fetch('/create_event', {
                 method: 'POST',
@@ -199,14 +191,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     sig: signedEvent.sig  // Include the signature
                 }),
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Error creating event:', errorData);
                 alert('Failed to create event: ' + (errorData.error || 'Unknown error'));
                 return;
             }
-    
+
             const result = await response.json();
             console.log('Event created successfully:', result);
             alert('Event created successfully!');
@@ -214,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('An error occurred while creating the event:', error);
             alert('An error occurred while creating the event.');
         }
-    }            
+    }
 
     function displayProfile(profileData) {
         const profileContainer = document.getElementById('profile-container');
@@ -272,38 +264,46 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function sendTicketViaNostrDM(ticketData, qrDataUrl) {
-        const recipientPubKey = ticketData.pubkey;
-        const messageContent = `Here is your ticket for event ${ticketData.event_id}!`;
-        const qrLink = `https://fuzzedrecords.com/generate_qr?ticket_id=${ticketData.ticket_id}&event_id=${ticketData.event_id}`;
-        const qrMessage = `
-            Here is your ticket for event ${ticketData.event_id}!
-            Click here to view your ticket QR code: ${qrLink}
+    async function sendTicketViaNostrDM(ticketData, qrLink) {
+        if (!window.nostr) return console.error("NOSTR wallet not available.");
+
+        const messageContent = `
+            [EVENT_ID]: ${ticketData.event_id}
+            [TICKET_ID]: ${ticketData.ticket_id}
+            Event: ${ticketData.event_name}
+            Your ticket QR code: ${qrLink}
         `;
-    
-        // Encrypt message using NIP-04
-        const encryptedMessage = await window.nostr.nip04.encrypt(recipientPubKey, qrMessage);
-    
-        // Create DM event (kind: 4)
+
+        const encryptedMessage = await window.nostr.nip44.encrypt(ticketData.pubkey, messageContent);
+
         const dmEvent = {
-            kind: 4,
+            kind: 14,
             created_at: Math.floor(Date.now() / 1000),
-            tags: [["p", recipientPubKey]],
+            tags: [["p", ticketData.pubkey]],
             content: encryptedMessage,
             pubkey: localStorage.getItem('pubkey')
         };
-    
-        // Sign the event
+
         const signedDM = await window.nostr.signEvent(dmEvent);
-    
-        // Send signed event to the backend
+
         await fetch('/send_dm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedDM)
-        });
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.message === "DM sent successfully") {
+                    document.getElementById('registration-status').innerText = "You are successfully registered for this event!";
+                    // Optionally display QR code immediately
+                }
+            })
+            .catch(error => {
+                console.error("Error sending DM:", error);
+                document.getElementById('registration-status').innerText = "Registration failed. Please try again.";
+            });
     }
-    
+
     // Fetch and Display Songs
     fetch("/tracks")
         .then(response => response.json())
