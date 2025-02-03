@@ -122,11 +122,14 @@ document.addEventListener('DOMContentLoaded', function () {
     
         const qrContainer = document.getElementById('qr-code');
         qrContainer.innerHTML = '';  // Clear previous QR code
+
+        const qrLink = `https://fuzzedrecords.com/generate_qr?ticket_id=${ticketData.ticket_id}&event_id=${ticketData.event_id}`;
     
         new QRCode(qrContainer, {
-            text: JSON.stringify(ticketData),
+            text: qrLink,  // Ensure this link is concise
             width: 256,
-            height: 256
+            height: 256,
+            correctLevel: QRCode.CorrectLevel.L  // Lower error correction to fit more data
         });
     
         // Convert QR code to data URL for DM
