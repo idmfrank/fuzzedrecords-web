@@ -278,7 +278,7 @@ def get_fuzzed_events():
 
         if not events:
             return jsonify({"message": "No events found from fuzzedrecords.com accounts."})
-
+        logger.info(f"Events found: {events}")
         return jsonify({"events": events})
 
     except Exception as e:
