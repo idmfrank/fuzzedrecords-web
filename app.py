@@ -358,8 +358,8 @@ def fetch_and_validate_profile(pubkey, required_domain):
 
         # Validate NIP-05 if available
         nip05 = profile_data["content"].get("nip05")
-        if not nip05:
-            logger.warning(f"Profile does not have NIP-05 for pubkey: {pubkey}")
+        if not nip05 or "@" not in nip05:
+            logger.warning(f"Invalid or missing NIP-05 for pubkey: {pubkey}")
             return False
 
         # Ensure the domain matches
