@@ -112,12 +112,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function generateTicketWithQRCode(eventData) {
-        const eventId = getTagValue(eventData.tags, 'e');
         const ticketData = {
             ticket_id: crypto.randomUUID(),
-            event_id: eventId,
+            event_id: eventData.id,
             pubkey: localStorage.getItem('pubkey')
         };
+
+        console.info("Ticket Data: ", ticketData);
     
         const qrContainer = document.getElementById('qr-code');
         qrContainer.innerHTML = '';  // Clear previous QR code
