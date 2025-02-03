@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function authenticateWithNostr() {
         if (!window.nostr) {
             console.error("NOSTR wallet not available.");
+            fetchFuzzedEvents(userProfile);
             return;
         }
 
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Call this function when the page loads or on button click
             fetchFuzzedEvents(userProfile);
-            
+
         } catch (error) {
             console.error("An error occurred during authentication:", error);
         }
