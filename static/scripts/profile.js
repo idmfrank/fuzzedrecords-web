@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function () {
         alert("Event created successfully!");
     });
 
+    // User Profile object to be used throughout the script
+    let userProfile = null;
+
     // Authentication with NOSTR
     authenticateWithNostr();
 
@@ -54,13 +57,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const validationResult = await response.json();
             if (validationResult.content) {
-                console.log("Validation Result prior to Validation for username: ", validationResult.content.name);
-                displayProfile(validationResult);
-                if (validationResult.content.nip05 && validationResult.content.nip05.includes("fuzzedrecords.com")) {
+                userProfile = validationResult;
+                console.log("Validation Result prior to Validation for username: ", userProfile.content.name);
+                displayProfile(userProfile);
+                if (userProfile.content.nip05 && userProfile.content.nip05.includes("fuzzedrecords.com")) {
                     menuAdmin.classList.remove('admin-only');
                 }
             } else {
-                console.error("Profile validation failed or content is missing:", validationResult);
+                console.error("Profile validation failed or content is missing:", userProfile);
             }
         } catch (error) {
             console.error("An error occurred during authentication:", error);
@@ -88,8 +92,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         <p><strong>Date:</strong> ${new Date(getTagValue(event.tags, 'date')).toLocaleString()}</p>
                         <p><strong>Fee:</strong> $${getTagValue(event.tags, 'fee')}</p>
                         <p>${event.content}</p>
-                        <button class="generate-ticket-btn" data-event='${JSON.stringify(event)}'>Generate Ticket</button>
                     `;
+
+                    if (userProfile) {  // Only show the button if the user has a valid profile
+                        eventElement.innerHTML += `
+                            <button class="generate-ticket-btn" data-event='${JSON.stringify(event)}'>Generate Ticket</button>
+                        `;
+                    } else {
+                        eventElement.innerHTML += `
+                            <p>Please connect your Nostr wallet to register for this event.</p>
+                        `;
+                    }
                 
                     eventsSection.appendChild(eventElement);
                 });
