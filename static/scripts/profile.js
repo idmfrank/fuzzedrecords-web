@@ -66,12 +66,13 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 console.error("Profile validation failed or content is missing:", userProfile);
             }
+
+            // Call this function when the page loads or on button click
+            fetchFuzzedEvents(userProfile);
+            
         } catch (error) {
             console.error("An error occurred during authentication:", error);
         }
-
-        // Call this function when the page loads or on button click
-        fetchFuzzedEvents(userProfile);
     }
 
     // Fetch and Display Events from fuzzedrecords.com accounts
