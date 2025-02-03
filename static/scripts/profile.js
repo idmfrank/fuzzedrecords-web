@@ -112,9 +112,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function generateTicketWithQRCode(eventData) {
+        const eventId = getTagValue(eventData.tags, 'e');
         const ticketData = {
             ticket_id: crypto.randomUUID(),
-            event_id: eventData.event_id,
+            event_id: eventId,
             pubkey: localStorage.getItem('pubkey')
         };
     
