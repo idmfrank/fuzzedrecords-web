@@ -69,10 +69,13 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error("An error occurred during authentication:", error);
         }
+
+        // Call this function when the page loads or on button click
+        fetchFuzzedEvents(userProfile);
     }
 
     // Fetch and Display Events from fuzzedrecords.com accounts
-    async function fetchFuzzedEvents() {
+    async function fetchFuzzedEvents(userProfile) {
         try {
             const response = await fetch("/fuzzed_events");
             const data = await response.json();
@@ -158,9 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const tag = tags.find(t => t[0] === key);
         return tag ? tag[1] : 'N/A';
     }
-
-    // Call this function when the page loads or on button click
-    fetchFuzzedEvents();
 
     async function createEvent(eventData) {
         try {
