@@ -1,72 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fuzzed Records</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzzed Records</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Navigation Menu -->
-  <header>
-    <nav id="main-nav">
-      <button id="menu-library" class="nav-btn active">Library</button>
-      <button id="menu-profile" class="nav-btn">Nostr Login</button>
-      <button id="menu-admin" class="nav-btn admin-only" style="display: none;">Admin</button>
-    </nav>
-  </header>
+    <header>
+        <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
+    </header>
 
-  <!-- Main Content Sections -->
-  <main>
-    <!-- Library Section (Always visible) -->
-    <section id="library-section" class="content-section active">
-      <h2>Music Library</h2>
-      <div id="songs-section">
-        <!-- Songs will be loaded here -->
-        <p>Loading tracks...</p>
-      </div>
-    </section>
+    <nav class="menu">
+        <button id="menu-library" class="active">Library</button>
+        <button id="menu-profile">Profile</button>
+        <button id="menu-admin" class="admin-only">Admin</button>
+    </nav>    
 
-    <!-- Profile Section (Shown after login) -->
-    <section id="profile-section" class="content-section">
-      <h2>User Profile</h2>
-      <div id="profile-container">
-        <!-- Profile details will appear here -->
-        <p>Please log in to view your profile.</p>
-      </div>
-      <div id="events-section">
-        <!-- Events loaded for authenticated users will appear here -->
-        <p>Events will appear here once you log in.</p>
-      </div>
-    </section>
+    <main>
+        <section id="library-section" class="active">
+            <h2>Upcoming Events</h2>
+            <div id="events-section">
+                <p>Loading events...</p>
+                <div id="registration-status"></div>
+            </div>
+            <h2>
+                Songs in our Library at:  
+                <a href="https://wavlake.com" target="_blank">
+                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" class="external-logo">
+                     Wavlake
+                </a>
+            </h2>
+            <div id="songs-section">
+                <p>Loading songs...</p>
+            </div>
+            <div id="qr-code"></div>
+        </section>
 
-    <!-- Admin Section (Shown only for admin users) -->
-    <section id="admin-section" class="content-section">
-      <h2>Admin Panel</h2>
-      <form id="event-form">
-        <label for="event-title">Event Title:</label>
-        <input type="text" name="event-title" id="event-title" required>
-        <label for="event-venue">Venue:</label>
-        <input type="text" name="event-venue" id="event-venue" required>
-        <label for="event-date">Date:</label>
-        <input type="datetime-local" name="event-date" id="event-date" required>
-        <label for="event-fee">Fee:</label>
-        <input type="number" name="event-fee" id="event-fee" required>
-        <label for="event-description">Description:</label>
-        <textarea name="event-description" id="event-description" required></textarea>
-        <button type="submit">Create Event</button>
-      </form>
-    </section>
-  </main>
+        <section id="profile-section">
+            <h2>Profile Details</h2>
+            <div id="profile-container">
+                <p class="empty-profile">No profile information available. Please authenticate with a #Nostr Wallet to display your profile.</p>
+            </div>
+        </section>
 
-  <!-- QR Code and Registration Status Section (for ticket generation) -->
-  <aside id="qr-code-container">
-    <h2>Your Ticket QR Code</h2>
-    <div id="qr-code"></div>
-    <p id="registration-status"></p>
-  </aside>
+        <section id="admin-section">
+            <h2>Admin</h2>
+            <form id="event-form">
+                <div class="form-group">
+                    <label for="event-title">Title:</label>
+                    <input type="text" id="event-title" name="event-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-venue">Venue:</label>
+                    <input type="text" id="event-venue" name="event-venue" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-date">Date:</label>
+                    <input type="datetime-local" id="event-date" name="event-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-fee">Fee:</label>
+                    <input type="number" id="event-fee" name="event-fee" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-description">Description:</label>
+                    <textarea id="event-description" name="event-description" required></textarea>
+                </div>
+                <button type="submit">Create Event</button>
+            </form>
+        </section>
+    </main>
 
-  <!-- Include the profile script -->
-  <script src="static/scripts/profile.js"></script>
+    <footer>
+        <p>© 2025 Fuzzed Records. All rights reserved.</p>
+    </footer>
+
+    <script src="/static/scripts/profile.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>
