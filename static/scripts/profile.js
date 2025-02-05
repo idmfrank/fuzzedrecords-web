@@ -311,43 +311,54 @@ document.addEventListener('DOMContentLoaded', function () {
   
     // Send a ticket via Nostr DM (unchanged)
     async function sendTicketViaNostrDM(ticketData, qrLink) {
-      if (!window.nostr) return console.error("NOSTR wallet not available.");
-      const messageContent = `
-        [EVENT_ID]: ${ticketData.event_id}
-        [TICKET_ID]: ${ticketData.ticket_id}
-        Event: ${ticketData.event_name}
-        Your ticket QR code: ${qrLink}
-      `;
-      try {
-        const encryptedMessage = window.nostr.nip44 && typeof window.nostr.nip44.encrypt === 'function'
-          ? await window.nostr.nip44.encrypt(ticketData.pubkey, messageContent)
-          : messageContent;
-        const dmEvent = {
-          kind: 14,
-          created_at: Math.floor(Date.now() / 1000),
-          tags: [["p", ticketData.pubkey]],
-          content: encryptedMessage,
-          pubkey: localStorage.getItem('pubkey')
-        };
-        const signedDM = await window.nostr.signEvent(dmEvent);
-        await fetch('/send_dm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(signedDM)
-        })
-        .then(response => response.json())
-        .then(result => {
-          if (result.message === "DM sent successfully") {
-            document.getElementById('registration-status').innerText = "You are successfully registered for this event!";
-          }
-        })
-        .catch(error => {
-          console.error("Error sending DM:", error);
-          document.getElementById('registration-status').innerText = "Registration failed. Please try again.";
-        });
-      } catch (error) {
-        console.error("Error in sendTicketViaNostrDM:", error);
-      }
-    }
+        if (!window.nostr) return console.error("NOSTR wallet not available.");
+      
+        const messageContent = `
+          [EVENT_ID]: ${ticketData.event_id}
+          [TICKET_ID]: ${ticketData.ticket_id}
+          Event: ${ticketData.event_name}
+          Your ticket QR code: ${qrLink}
+        `;
+      
+        try {
+          const encryptedMessage = (window.nostr.nip44 && typeof window.nostr.nip44.encrypt === 'function')
+            ? await window.nostr.nip44.encrypt(ticketData.pubkey, messageContent)
+            : messageContent;
+      
+          const dmEvent = {
+            kind: 14,
+            created_at: Math.floor(Date.now() / 1000),
+            tags: [["p", ticketData.pubkey]],
+            content: encryptedMessage,
+            pubkey: localStorage.getItem('pubkey')
+          };
+      
+          const signedDM = await window.nostr.signEvent(dmEvent);
+      
+          await fetch('/send_dm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(signedDM)
+          })
+          .then(response => response.json())
+          .then(result => {
+            if (result.message === "DM sent successfully") {
+              const regStatus = document.getElementById('registration-status');
+              if (regStatus) {
+                regStatus.innerText = "You are successfully registered for this event!";
+              }
+            }
+          })
+          .catch(error => {
+            console.error("Error sending DM:", error);
+            const regStatus = document.getElementById('registration-status');
+            if (regStatus) {
+              regStatus.innerText = "Registration failed. Please try again.";
+            }
+          });
+        } catch (error) {
+          console.error("Error in sendTicketViaNostrDM:", error);
+        }
+      }      
   });
   
