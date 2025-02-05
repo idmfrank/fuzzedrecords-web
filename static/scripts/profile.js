@@ -156,15 +156,16 @@ document.addEventListener('DOMContentLoaded', function () {
   
     // Fetch and display events (only for authenticated users)
     async function fetchFuzzedEvents(userProfile) {
-      const eventsSection = document.getElementById("events-section");
+      const eventsContainer = document.getElementById("events-section-content");
       if (!userProfile) {
-        eventsSection.innerHTML = "<p>Please log in to see events.</p>";
+        eventsContainer.innerHTML = "<p>Please log in to see events.</p>";
         return;
       }
       try {
         const response = await fetch("/fuzzed_events");
         const data = await response.json();
-        eventsSection.innerHTML = "";
+        console.log("Fetched events data:", data); // <-- Debug log
+        eventsContainer.innerHTML = "";
         if (data.events && data.events.length > 0) {
           data.events.forEach(event => {
             const eventElement = document.createElement("div");
@@ -179,9 +180,9 @@ document.addEventListener('DOMContentLoaded', function () {
             eventElement.innerHTML += `
               <button class="generate-ticket-btn" data-event='${JSON.stringify(event)}'>Generate Ticket</button>
             `;
-            eventsSection.appendChild(eventElement);
+            eventsContainer.appendChild(eventElement);
           });
-          // Delegate event handler for ticket buttons
+          // Attach event listener for the Generate Ticket buttons
           document.addEventListener('click', function (e) {
             if (e.target && e.target.classList.contains('generate-ticket-btn')) {
               const eventData = JSON.parse(e.target.getAttribute('data-event'));
@@ -189,13 +190,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           });
         } else {
-          eventsSection.innerHTML = "<p>No events found from fuzzedrecords.com accounts.</p>";
+          eventsContainer.innerHTML = "<p>No events found from fuzzedrecords.com accounts.</p>";
         }
       } catch (error) {
         console.error("Error fetching events:", error);
-        eventsSection.innerHTML = "<p>Error loading events.</p>";
+        eventsContainer.innerHTML = "<p>Error loading events.</p>";
       }
-    }
+    }    
   
     // Generate a ticket, display a QR code, and send a DM via Nostr
     async function generateTicketWithQRCode(eventData) {
