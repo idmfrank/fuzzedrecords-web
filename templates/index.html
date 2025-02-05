@@ -16,8 +16,9 @@
 
     <nav class="menu">
         <button id="menu-library" class="nav-btn active">Library</button>
-        <!-- Profile and Events buttons are hidden until authenticated -->
-        <button id="menu-profile" class="nav-btn" style="display: none;">Nostr Login</button>
+        <!-- Profile button is always visible so the user can trigger login -->
+        <button id="menu-profile" class="nav-btn">Nostr Login</button>
+        <!-- Events and Admin remain hidden until authentication -->
         <button id="menu-events" class="nav-btn" style="display: none;">Events</button>
         <button id="menu-admin" class="nav-btn admin-only" style="display: none;">Admin</button>
     </nav>

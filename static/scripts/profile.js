@@ -23,15 +23,13 @@ document.addEventListener('DOMContentLoaded', function () {
     menuLibrary.addEventListener('click', () => showSection('library'));
   
     menuProfile.addEventListener('click', async () => {
-      // If user is not authenticated, trigger authentication on click
       if (!userProfile) {
         menuProfile.textContent = "Signing in...";
         await authenticateWithNostr();
         if (userProfile) {
           menuProfile.textContent = "Profile";
+          // After successful login, also show the Events button
           menuEvents.style.display = "inline-block";
-          // Load events only after successful login
-          fetchFuzzedEvents(userProfile);
         } else {
           menuProfile.textContent = "Nostr Login";
         }
