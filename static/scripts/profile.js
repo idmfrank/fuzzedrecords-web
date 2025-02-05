@@ -36,7 +36,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       showSection('profile');
     });
-  
+
+    menuEvents.addEventListener('click', () => showSection('events'));
+
     menuAdmin.addEventListener('click', () => showSection('admin'));
   
     // Event Listener for Event Form Submission (for Admins)
