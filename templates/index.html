@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,41 +8,47 @@
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <header>
         <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
     </header>
 
     <nav class="menu">
-        <button id="menu-library" class="active">Library</button>
-        <button id="menu-profile">Profile</button>
-        <button id="menu-admin" class="admin-only">Admin</button>
-    </nav>    
+        <button id="menu-library" class="nav-btn active">Library</button>
+        <!-- Profile and Events buttons are hidden until authenticated -->
+        <button id="menu-profile" class="nav-btn" style="display: none;">Nostr Login</button>
+        <button id="menu-events" class="nav-btn" style="display: none;">Events</button>
+        <button id="menu-admin" class="nav-btn admin-only" style="display: none;">Admin</button>
+    </nav>
 
     <main>
-        <section id="library-section" class="active">
-            <h2>Upcoming Events</h2>
-            <div id="events-section">
-                <p>Loading events...</p>
-                <div id="registration-status"></div>
-            </div>
+        <section id="library-section" class="content-section active">
             <h2>
-                Songs in our Library at:  
+                Songs in our Library at:
                 <a href="https://wavlake.com" target="_blank">
                     <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" class="external-logo">
-                     Wavlake
+                    Wavlake
                 </a>
             </h2>
             <div id="songs-section">
                 <p>Loading songs...</p>
             </div>
-            <div id="qr-code"></div>
         </section>
 
         <section id="profile-section">
             <h2>Profile Details</h2>
             <div id="profile-container">
-                <p class="empty-profile">No profile information available. Please authenticate with a #Nostr Wallet to display your profile.</p>
+                <p class="empty-profile">No profile information available. Please authenticate with a #Nostr Wallet to
+                    display your profile.</p>
+            </div>
+        </section>
+
+        <!-- Events Section (shown only when authenticated) -->
+        <section id="events-section" class="content-section">
+            <h2>Events</h2>
+            <div id="events-section-content">
+                <p>Events will appear here once you log in.</p>
             </div>
         </section>
 
@@ -80,4 +87,5 @@
     <script src="/static/scripts/profile.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
+
 </html>

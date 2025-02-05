@@ -3,11 +3,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Menu elements
     const menuLibrary = document.getElementById('menu-library');
     const menuProfile = document.getElementById('menu-profile');
+    const menuEvents = document.getElementById('menu-events');
     const menuAdmin = document.getElementById('menu-admin');
   
     // Section elements
     const librarySection = document.getElementById('library-section');
     const profileSection = document.getElementById('profile-section');
+    const eventsSection = document.getElementById('events-section');
     const adminSection = document.getElementById('admin-section');
   
     // Other elements
@@ -27,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await authenticateWithNostr();
         if (userProfile) {
           menuProfile.textContent = "Profile";
+          menuEvents.style.display = "inline-block";
           // Load events only after successful login
           fetchFuzzedEvents(userProfile);
         } else {
@@ -70,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
       adminSection.classList.remove('active');
       menuLibrary.classList.remove('active');
       menuProfile.classList.remove('active');
+      menuEvents.classList.remove('active');
       menuAdmin.classList.remove('active');
   
       if (section === 'library') {
@@ -78,6 +82,9 @@ document.addEventListener('DOMContentLoaded', function () {
       } else if (section === 'profile') {
         profileSection.classList.add('active');
         menuProfile.classList.add('active');
+      } else if (section === 'events') {
+        eventsSection.classList.add('active');
+        menuEvents.classList.add('active');
       } else if (section === 'admin') {
         adminSection.classList.add('active');
         menuAdmin.classList.add('active');
