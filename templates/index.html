@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,24 +8,28 @@
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <header>
         <img src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
     </header>
 
     <nav class="menu">
-        <button id="menu-library" class="active">Library</button>
-        <button id="menu-profile">Profile</button>
-        <button id="menu-admin" class="admin-only">Admin</button>
-    </nav>    
+        <button id="menu-library" class="nav-btn active">Library</button>
+        <!-- Profile button is always visible so the user can trigger login -->
+        <button id="menu-profile" class="nav-btn">Nostr Login</button>
+        <!-- Events and Admin remain hidden until authentication -->
+        <button id="menu-events" class="nav-btn" style="display: none;">Events</button>
+        <button id="menu-admin" class="nav-btn admin-only" style="display: none;">Admin</button>
+    </nav>
 
     <main>
-        <section id="library-section" class="active">
+        <section id="library-section" class="content-section active">
             <h2>
-                Songs in our Library at:  
+                Songs in our Library at:
                 <a href="https://wavlake.com" target="_blank">
                     <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" class="external-logo">
-                     Wavlake
+                    Wavlake
                 </a>
             </h2>
             <div id="songs-section">
@@ -35,7 +40,36 @@
         <section id="profile-section">
             <h2>Profile Details</h2>
             <div id="profile-container">
-                <p class="empty-profile">No profile information available. Please authenticate with a #Nostr Wallet to display your profile.</p>
+                <div>
+                    <p class="empty-profile">
+                        No profile information available. Please authenticate with a (#Nostr) NIP-07 capable wallet such as 
+                        <a href="https://getalby.com/products/browser-extension" target="_blank"
+                            rel="noopener noreferrer">
+                            <img src="/static/images/thumb_Alby-logo-figure-400.png" alt="Alby Logo"
+                                class="inline-icon">
+                            Alby
+                        </a>
+                        after you create a Nostr account using one of the many clients such as
+                        <a href="https://damus.io" target="_blank" rel="noopener noreferrer">
+                            <img src="/static/images/damus.png" alt="Damus Logo" class="inline-icon">
+                            Damus (for iOS)
+                        </a> or
+                        <a href="https://primal.net" target="_blank" rel="noopener noreferrer">
+                            <img src="/static/images/primal_400x400.png" alt="Primal Logo" class="inline-icon">
+                            Primal (for iOS or Android or Desktop)
+                        </a>.
+                    </p>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Events Section (shown only when authenticated) -->
+        <section id="events-section" class="content-section">
+            <h2>Events</h2>
+            <div id="events-section-content">
+                <div id="qr-code"></div>
+                <p>Events will appear here once you log in.</p>
             </div>
         </section>
 
@@ -55,8 +89,8 @@
                     <input type="datetime-local" id="event-date" name="event-date" required>
                 </div>
                 <div class="form-group">
-                    <label for="event-price">Price:</label>
-                    <input type="number" id="event-price" name="event-price" required>
+                    <label for="event-fee">Fee:</label>
+                    <input type="number" id="event-fee" name="event-fee" required>
                 </div>
                 <div class="form-group">
                     <label for="event-description">Description:</label>
@@ -72,5 +106,7 @@
     </footer>
 
     <script src="/static/scripts/profile.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
+
 </html>

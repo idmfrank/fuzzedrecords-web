@@ -1,15 +1,16 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_restful import Resource, Api
 from flask_cors import CORS
-from pynostr.event import Event
+from pynostr.event import EventKind, Event
 from pynostr.relay_manager import RelayManager
 from pynostr.filters import FiltersList, Filters
-from pynostr import nostr
 from functools import wraps
 from datetime import datetime, timezone
 from msal import ConfidentialClientApplication
+from io import BytesIO
 import os, json, time, uuid, requests
 import logging
+import qrcode
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -103,6 +104,23 @@ def fetch_profile():
         logger.error(f'Error in fetch-profile: {e}')
         return error_response(str(e), 500)
 
+@app.route('/generate_qr')
+def generate_qr():
+    ticket_id = request.args.get('ticket_id')
+    event_id = request.args.get('event_id')
+
+    qr_data = {
+        "ticket_id": ticket_id,
+        "event_id": event_id
+    }
+
+    qr = qrcode.make(json.dumps(qr_data))
+    img_io = BytesIO()
+    qr.save(img_io, 'PNG')
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype='image/png')
+
 @app.route('/tracks', methods=['GET'])
 def get_tracks():
     try:
@@ -177,39 +195,130 @@ def create_event():
     try:
         data = request.json
         logger.debug(f"Received request data: {data}")
-        required_fields = ["title", "venue", "date", "price", "description", "pubkey", "sig"]
+
+        # Ensure the required fields are present in the incoming data
+        required_fields = ["kind", "created_at", "tags", "content", "pubkey", "sig"]
         if not all(field in data for field in required_fields):
             logger.warning("Missing required fields in request data.")
             return error_response("Missing required fields")
 
-        parsed_date = datetime.fromisoformat(data["date"].replace("Z", "+00:00")).astimezone(timezone.utc)
-        logger.debug(f"Parsed date: {parsed_date}")
+        # Extract values from tags
+        tags_dict = {tag[0]: tag[1] for tag in data["tags"]}
+        title = tags_dict.get("title")
+        venue = tags_dict.get("venue")
+        date = tags_dict.get("date")
+        fee = tags_dict.get("fee")
 
+        if not all([title, venue, date, fee]):
+            logger.warning("One or more required tag fields are missing.")
+            return error_response("Missing required event details in tags")
+
+        # Create the event object
         event = Event(
-            kind=52,
+            kind=data["kind"],
+            created_at=data["created_at"],
             pubkey=data["pubkey"],
-            content=data["description"],
-            tags=[["title", data["title"]], ["venue", data["venue"]], ["date", parsed_date.isoformat()], ["price", str(data["price"])]]
+            content=data["content"],
+            tags=data["tags"]
         )
+
+        # Assign the signature from the client
+        event.sig = data["sig"]
         logger.info(f"Created Event object: {event}")
 
-        # Ensure correct call for the verify method
-        if not nostr.verify_signature(event, data["sig"])  # Assuming nostr utility
+        # Verify the event signature
+        if not event.verify():
             logger.warning("Event signature verification failed.")
             return error_response("Invalid signature", 403)
 
-        for relay in RELAY_URLS:
-            try:
-                logger.debug(f"Publishing to relay: {relay}")
-                response = requests.post(f"{relay}/publish", json=event.to_dict())
-                logger.debug(f"Relay response: {response.status_code}")
-            except Exception as e:
-                logger.error(f"Failed to publish to relay {relay}: {e}")
+        # Publish event to the relay
+        relay_manager = initialize_relay_manager()
+        relay_manager.publish_event(event)
+        relay_manager.run_sync()
 
-        return jsonify({"message": "Event created successfully", "event_id": event.id})
+        return jsonify({"message": "Event created successfully"})
+
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
         return error_response("An internal error occurred", 500)
+
+@app.route('/fuzzed_events', methods=['GET'])
+def get_fuzzed_events():
+    try:
+        relay_manager = initialize_relay_manager()
+        filters = FiltersList([Filters(kinds=[52])])  # Fetch all kind 52 events
+        subscription_id = uuid.uuid1().hex
+        relay_manager.add_subscription_on_all_relays(subscription_id, filters)
+        relay_manager.run_sync()
+
+        events = []
+        seen_pubkeys = set()
+
+        # Fetch events from relays
+        while relay_manager.message_pool.has_events():
+            event_msg = relay_manager.message_pool.get_event()
+            event_data = {
+                "id": event_msg.event.id,
+                "pubkey": event_msg.event.pubkey,
+                "content": event_msg.event.content,
+                "tags": event_msg.event.tags,
+                "created_at": event_msg.event.created_at
+            }
+
+            pubkey = event_msg.event.pubkey
+
+            # Validate NIP-05 for fuzzedrecords.com if not already checked
+            if pubkey not in seen_pubkeys:
+                is_valid = fetch_and_validate_profile(pubkey, REQUIRED_DOMAIN)
+                if is_valid:
+                    events.append(event_data)
+                seen_pubkeys.add(pubkey)
+
+        relay_manager.close_all_relay_connections()
+
+        if not events:
+            return jsonify({"message": "No events found from fuzzedrecords.com accounts."})
+        logger.info(f"Events found: {events}")
+        return jsonify({"events": events})
+
+    except Exception as e:
+        logger.error(f"Error in fetching fuzzed events: {e}")
+        return error_response("An internal error occurred while fetching events", 500)
+
+@app.route('/send_dm', methods=['POST'])
+def send_dm():
+    try:
+        data = request.json
+
+        # Ensure this is a NIP-17 DM event (kind: 14)
+        if data["kind"] != 14:
+            return error_response("Invalid event kind for DM", 400)
+
+        # Create the event
+        event = Event(
+            kind=data["kind"],
+            created_at=data["created_at"],
+            pubkey=data["pubkey"],
+            content=data["content"],
+            tags=data["tags"]
+        )
+        event.sig = data["sig"]
+
+        # Verify the event signature before publishing
+        if not event.verify():
+            logger.warning("DM signature verification failed.")
+            return error_response("Invalid DM signature", 403)
+
+        # Publish to relays
+        relay_manager = initialize_relay_manager()
+        relay_manager.publish_event(event)
+        relay_manager.run_sync()
+
+        return jsonify({"message": "DM sent successfully"})
+
+    except Exception as e:
+        logger.error(f"Error sending DM: {e}")
+        return error_response("An error occurred while sending the DM", 500)
 
 def fetch_and_validate_profile(pubkey, required_domain):
     """
@@ -251,8 +360,8 @@ def fetch_and_validate_profile(pubkey, required_domain):
 
         # Validate NIP-05 if available
         nip05 = profile_data["content"].get("nip05")
-        if not nip05:
-            logger.warning(f"Profile does not have NIP-05 for pubkey: {pubkey}")
+        if not nip05 or "@" not in nip05:
+            logger.warning(f"Invalid or missing NIP-05 for pubkey: {pubkey}")
             return False
 
         # Ensure the domain matches
