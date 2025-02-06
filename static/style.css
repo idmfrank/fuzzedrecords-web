@@ -157,6 +157,14 @@ body {
     box-sizing: border-box; /* Include padding in width calculation */
 }
 
+.inline-icon {
+    width: 18px; /* Adjust size as needed */
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 5px;
+    border-radius: 4px; /* Optional: for rounded logos */
+}
+
 button[type="submit"] {
     padding: 10px 20px;
     font-size: 16px;
