@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
           userProfile = validationResult;
           console.log("Profile validated:", userProfile.content.name);
           displayProfile(userProfile);
+          fetchFuzzedEvents(userProfile);
           // If the nip05 field contains your domain, reveal the admin menu
           if (userProfile.content.nip05 && userProfile.content.nip05.includes("fuzzedrecords.com")) {
             menuAdmin.classList.remove('admin-only');
