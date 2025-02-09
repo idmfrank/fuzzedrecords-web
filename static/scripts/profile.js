@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
   
     // Other elements
     const eventForm = document.getElementById('event-form');
+    const qrContainer = document.getElementById('qr-code');
   
     // Set default view: show library; Profile button initially reads "Nostr Login"
     showSection('library');
@@ -213,10 +214,13 @@ document.addEventListener('DOMContentLoaded', function () {
         event_name: event_name
       };
       const qrLink = `https://fuzzedrecords.com/generate_qr?ticket_id=${ticket_id}&event_id=${event_id}`;
-      const qrContainer = document.getElementById('qr-code');
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, { text: qrLink, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
-      await sendTicketViaNostrDM(ticketData, qrLink);
+      if (qrContainer) {
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, { text: qrLink, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
+        await sendTicketViaNostrDM(ticketData, qrLink);
+      } else {
+        console.error("QR Container not found.");
+      }
     }
   
     // Helper to extract a tag's value from an event
