@@ -39,7 +39,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
   - Pynostr for Nostr relay interactions
 - **Authentication**:
   - Nostr Wallet for decentralized authentication
-  - NIP-07 authentication protocol for user login
+  - NIP-07 compatible wallet integration for user login
   - NIP-05 verification for admin access
 - **Hosting**:
   - Microsoft Azure
@@ -181,7 +181,7 @@ fuzzedrecords/
    - Users can authenticate using their Nostr Wallet to view their profile.
 
 2. **Authentication**:
-   - Users click the "Profile" button and authenticate with their Nostr Wallet.
+   - Users click the "Profile" button and authenticate with their Nostr Wallet using NIP-07.
    - The backend fetches and validates their profile data.
 
 3. **Admin Actions**:
