@@ -217,6 +217,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (qrContainer) {
         qrContainer.innerHTML = '';
         new QRCode(qrContainer, { text: qrLink, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
+        console.log("QR Link: ", qrLink);
+        console.log("Ticket Data: ", ticketData);
         await sendTicketViaNostrDM(ticketData, qrLink);
       } else {
         console.error("QR Container not found.");
@@ -347,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
           };
       
           const signedDM = await window.nostr.signEvent(dmEvent);
-      
+          console.log("Signed Message: ", signedDM);
           await fetch('/send_dm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

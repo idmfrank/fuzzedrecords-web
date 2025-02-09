@@ -290,6 +290,8 @@ def send_dm():
     try:
         data = request.json
 
+        logger.info(f"Entering Send Event with data: {data}")
+
         # Ensure this is a NIP-17 DM event (kind: 14)
         if data["kind"] != 14:
             return error_response("Invalid event kind for DM", 400)
