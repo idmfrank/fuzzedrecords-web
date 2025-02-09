@@ -306,6 +306,8 @@ def send_dm():
         )
         event.sig = data["sig"]
 
+        logger.info(f"Signed Event: {event}")
+
         # Verify the event signature before publishing
         if not event.verify():
             logger.warning("DM signature verification failed.")
@@ -316,8 +318,10 @@ def send_dm():
         relay_manager.publish_event(event)
         relay_manager.run_sync()
 
-        return jsonify({"message": "DM sent successfully"})
+        logger.info("Event sent as a DM message!")
 
+        return jsonify({"message": "DM sent successfully"})
+    
     except Exception as e:
         logger.error(f"Error sending DM: {e}")
         return error_response("An error occurred while sending the DM", 500)
