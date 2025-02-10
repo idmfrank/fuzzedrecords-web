@@ -61,7 +61,7 @@ def favicon():
 @app.route('/fetch-profile', methods=['POST'])
 async def fetch_profile():
     try:
-        data = await request.json
+        data = request.json
         pubkey_hex = data['pubkey']
         logger.info(f'Received request to fetch profile for pubkey: {pubkey_hex}')
 
