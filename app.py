@@ -74,7 +74,7 @@ async def fetch_profile():
         client = await initialize_client()
 
         # Define filter correctly
-        filters = [Filter(authors=[pubkey_hex], kinds=[0])]  # Metadata event kind is 0
+        filters = [Filter(pubkeys=[pubkey_hex], kinds=[0])]  # Metadata event kind is 0
 
         # Store profile data
         profile_data = {}
@@ -303,7 +303,7 @@ async def fetch_and_validate_profile(pubkey, required_domain):
     """
     try:
         client = initialize_client()
-        filters = [Filter(authors=[pubkey], kinds=[0])]  # Kind 0 is used for metadata events
+        filters = [Filter(pubkeys=[pubkey], kinds=[0])]  # Kind 0 is used for metadata events
 
         profile_data = {}
 
