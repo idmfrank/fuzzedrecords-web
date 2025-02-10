@@ -74,7 +74,7 @@ async def fetch_profile():
         client = await initialize_client()
 
         # Define filter correctly
-        filters = [Filter(pubkeys=[pubkey_hex], kinds=[0])]  # Metadata event kind is 0
+        filters = [Filter(authors=[pubkey_hex], kinds=[0])]  # Metadata event kind is 0
 
         # Store profile data
         profile_data = {}
@@ -133,7 +133,7 @@ def get_tracks():
 @app.route('/validate-profile', methods=['POST'])
 def validate_profile():
     """
-    Validate the NIP-05 for a given pubkey and ensure it's within the fuzzedrecords.com domain.
+    Validate the NIP-05 for a given pubkey and ensure it's within the REQUIRED_DOMAIN domain.
     """
     try:
         data = request.json
@@ -143,7 +143,7 @@ def validate_profile():
             return jsonify({"error": "Missing pubkey"}), 400
 
         # Fetch and validate profile
-        is_valid = fetch_and_validate_profile(pubkey, "fuzzedrecords.com")
+        is_valid = fetch_and_validate_profile(pubkey, REQUIRED_DOMAIN)
 
         if is_valid:
             return jsonify({"message": "Profile is valid and verified.", 
@@ -254,7 +254,7 @@ async def get_fuzzed_events():
         await client.close()
 
         if not event_list:
-            return jsonify({"message": "No events found from fuzzedrecords.com accounts."})
+            return jsonify({"message": "No events found from " + REQUIRED_DOMAIN + " accounts."})
 
         logger.info(f"Events found: {event_list}")
         return jsonify({"events": event_list})
@@ -303,7 +303,7 @@ async def fetch_and_validate_profile(pubkey, required_domain):
     """
     try:
         client = initialize_client()
-        filters = [Filter(pubkeys=[pubkey], kinds=[0])]  # Kind 0 is used for metadata events
+        filters = [Filter(authors=[pubkey], kinds=[0])]  # Kind 0 is used for metadata events
 
         profile_data = {}
 
