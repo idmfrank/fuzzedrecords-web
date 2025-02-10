@@ -3,10 +3,9 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from nostr_sdk import Client, EventBuilder, Filter
 from functools import wraps
-from datetime import datetime, timezone
 from msal import ConfidentialClientApplication
 from io import BytesIO
-import os, json, time, uuid, requests
+import os, json, time, requests, asyncio
 import logging
 import qrcode
 
@@ -17,7 +16,6 @@ api = Api(app)
 
 # Configuration
 RELAY_URLS = os.getenv("RELAY_URLS", "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub").split(',')
-RELAY_WAIT_TIME = int(os.getenv("RELAY_WAIT_TIME", 2))  # Default to 2 seconds
 CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
 REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 WAVLAKE_API_BASE = "https://wavlake.com/api/v1"
@@ -40,15 +38,15 @@ def get_cached_item(cache_key):
 def set_cached_item(cache_key, item):
     cache[cache_key] = (item, time.time())
 
-def initialize_client():
-    client = Client()  # Initialize client without arguments
-    for relay in RELAY_URLS:
-        client.add_relay(relay)  # Manually add relays
-    client.connect()  # Establish connection
-    return client
-
 def error_response(message, status_code=400):
     return jsonify({"error": message}), status_code
+
+async def initialize_client():
+    client = Client()
+    for relay in RELAY_URLS:
+        await client.add_relay(relay)  # Await async call
+    await client.connect()  # Await async call
+    return client
 
 @app.route('/')
 def index():
@@ -61,9 +59,9 @@ def favicon():
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/fetch-profile', methods=['POST'])
-def fetch_profile():
+async def fetch_profile():
     try:
-        data = request.json
+        data = await request.json
         pubkey_hex = data['pubkey']
         logger.info(f'Received request to fetch profile for pubkey: {pubkey_hex}')
 
@@ -72,11 +70,11 @@ def fetch_profile():
             logger.info(f'Profile for {pubkey_hex} returned from cache.')
             return jsonify(cached_profile)
 
-        # Initialize client
-        client = initialize_client()
+        # Initialize client asynchronously
+        client = await initialize_client()
 
-        # Define the filter for metadata events
-        filters = [Filter(authors=[pubkey_hex], kinds=[0])]  # Kind 0 is used for metadata events
+        # Define filter correctly
+        filters = [Filter(authors=[pubkey_hex], kinds=[0])]  # Metadata event kind is 0
 
         # Store profile data
         profile_data = {}
@@ -92,10 +90,8 @@ def fetch_profile():
             })
 
         # Subscribe and wait for response
-        client.subscribe(filters, handle_event)
-        time.sleep(RELAY_WAIT_TIME)  # Wait for events to be processed
-
-        client.close()
+        await client.subscribe(filters, handle_event)
+        await client.close()
 
         if profile_data:
             set_cached_item(pubkey_hex, profile_data)
@@ -194,7 +190,7 @@ def require_nip05_verification(required_domain):
 
 @app.route('/create_event', methods=['POST'])
 @require_nip05_verification(REQUIRED_DOMAIN)
-def create_event():
+async def create_event():
     try:
         data = request.json
         logger.debug(f"Received signed event: {data}")
@@ -217,9 +213,8 @@ def create_event():
 
         # Use Client to broadcast event
         client = initialize_client()
-        client.send_event(event)
-        time.sleep(RELAY_WAIT_TIME)  # Allow relays to process
-        client.close()
+        await client.send_event(event)
+        await client.close()
 
         return jsonify({"message": "Event successfully broadcasted"})
 
@@ -228,7 +223,7 @@ def create_event():
         return error_response("An internal error occurred", 500)
 
 @app.route('/fuzzed_events', methods=['GET'])
-def get_fuzzed_events():
+async def get_fuzzed_events():
     try:
         client = initialize_client()
 
@@ -255,10 +250,8 @@ def get_fuzzed_events():
                 seen_pubkeys.add(pubkey)
 
         # Subscribe and wait for events
-        client.subscribe(filters, handle_event)
-        time.sleep(RELAY_WAIT_TIME)  # Wait for events
-
-        client.close()
+        await client.subscribe(filters, handle_event)
+        await client.close()
 
         if not event_list:
             return jsonify({"message": "No events found from fuzzedrecords.com accounts."})
@@ -271,7 +264,7 @@ def get_fuzzed_events():
         return error_response("An internal error occurred while fetching events", 500)
 
 @app.route('/send_dm', methods=['POST'])
-def send_dm():
+async def send_dm():
     try:
         data = request.json
 
@@ -295,9 +288,8 @@ def send_dm():
 
         # Publish the DM
         client = initialize_client()
-        client.send_event(event)
-        time.sleep(RELAY_WAIT_TIME)  # Allow relays to process
-        client.close()
+        await client.send_event(event)
+        await client.close()
 
         return jsonify({"message": "Encrypted DM sent successfully"})
 
@@ -305,7 +297,7 @@ def send_dm():
         logger.error(f"Error sending DM: {e}")
         return error_response("An error occurred while sending the DM", 500)
 
-def fetch_and_validate_profile(pubkey, required_domain):
+async def fetch_and_validate_profile(pubkey, required_domain):
     """
     Fetch the profile for a given pubkey and validate that it matches the required domain.
     """
@@ -326,9 +318,8 @@ def fetch_and_validate_profile(pubkey, required_domain):
             })
 
         # Subscribe and wait
-        client.subscribe(filters, handle_event)
-        time.sleep(RELAY_WAIT_TIME)  # Wait for response
-        client.close()
+        await client.subscribe(filters, handle_event)
+        await client.close()
 
         if not profile_data:
             logger.warning(f"No profile found for pubkey: {pubkey}")
