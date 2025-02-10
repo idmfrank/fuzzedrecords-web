@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_restful import Resource, Api
 from flask_cors import CORS
-from nostr_sdk import Client, EventBuilder, Keys, Filter, Kind
+from nostr_sdk import Client, EventBuilder, Filter
 from functools import wraps
 from datetime import datetime, timezone
 from msal import ConfidentialClientApplication
@@ -76,7 +76,7 @@ def fetch_profile():
         client = initialize_client()
 
         # Define the filter for metadata events
-        filters = [Filter(authors=[pubkey_hex], kinds=[Kind.Metadata])]
+        filters = [Filter(authors=[pubkey_hex], kinds=[0])]  # Kind 0 is used for metadata events
 
         # Store profile data
         profile_data = {}
@@ -233,7 +233,7 @@ def get_fuzzed_events():
         client = initialize_client()
 
         # Fetch all Kind 52 events
-        filters = [Filter(kinds=[Kind.Custom(52)])]
+        filters = [Filter(kinds=[52])]
 
         event_list = []
         seen_pubkeys = set()
@@ -311,7 +311,7 @@ def fetch_and_validate_profile(pubkey, required_domain):
     """
     try:
         client = initialize_client()
-        filters = [Filter(authors=[pubkey], kinds=[Kind.Metadata])]
+        filters = [Filter(authors=[pubkey], kinds=[0])]  # Kind 0 is used for metadata events
 
         profile_data = {}
 
