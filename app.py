@@ -41,7 +41,10 @@ def set_cached_item(cache_key, item):
     cache[cache_key] = (item, time.time())
 
 def initialize_client():
-    client = Client(relays=RELAY_URLS)
+    client = Client()  # Initialize client without arguments
+    for relay in RELAY_URLS:
+        client.add_relay(relay)  # Manually add relays
+    client.connect()  # Establish connection
     return client
 
 def error_response(message, status_code=400):
