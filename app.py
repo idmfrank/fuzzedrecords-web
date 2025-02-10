@@ -90,7 +90,7 @@ async def fetch_profile():
             })
 
         # Subscribe and wait for response
-        await client.subscribe(filters, handle_event)
+        client.subscribe(filters, handle_event)
         await client.close()
 
         if profile_data:
@@ -250,7 +250,7 @@ async def get_fuzzed_events():
                 seen_pubkeys.add(pubkey)
 
         # Subscribe and wait for events
-        await client.subscribe(filters, handle_event)
+        client.subscribe(filters, handle_event)
         await client.close()
 
         if not event_list:
@@ -318,7 +318,7 @@ async def fetch_and_validate_profile(pubkey, required_domain):
             })
 
         # Subscribe and wait
-        await client.subscribe(filters, handle_event)
+        client.subscribe(filters, handle_event)
         await client.close()
 
         if not profile_data:
