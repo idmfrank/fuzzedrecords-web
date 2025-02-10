@@ -146,7 +146,9 @@ document.addEventListener('DOMContentLoaded', function () {
           displayProfile(userProfile);
           fetchFuzzedEvents(userProfile);
           // If the nip05 field contains your domain, reveal the admin menu
-          if (userProfile.content.nip05 && userProfile.content.nip05.includes("fuzzedrecords.com")) {
+          const nip05 = userProfile.content.nip05 || "No NIP-05 found";
+          console.log(`User NIP-05: ${nip05}`);
+          if (nip05 && nip05.includes("fuzzedrecords.com")) {
             menuAdmin.classList.remove('admin-only');
             menuAdmin.style.display = "inline-block";
           }
@@ -187,12 +189,14 @@ document.addEventListener('DOMContentLoaded', function () {
             eventsContainer.appendChild(eventElement);
           });
           // Attach event listener for the Generate Ticket buttons
-          document.addEventListener('click', function (e) {
+          document.addEventListener('click', async function (e) {
             if (e.target && e.target.classList.contains('generate-ticket-btn')) {
+              if (e.target.disabled) return;  // Prevent multiple clicks
+              e.target.disabled = true;  
               const eventData = JSON.parse(e.target.getAttribute('data-event'));
-              generateTicketWithQRCode(eventData);
+              await generateTicketWithQRCode(eventData);
             }
-          });
+          });          
         } else {
           eventsContainer.innerHTML = "<p>No events found from fuzzedrecords.com accounts.</p>";
         }
@@ -252,6 +256,16 @@ document.addEventListener('DOMContentLoaded', function () {
         };
         console.log('Event template before signing:', eventTemplate);
         const signedEvent = await window.nostr.signEvent(eventTemplate);
+        if (!signedEvent.sig) {
+          console.error("Failed to sign event. Ensure your Nostr wallet is active.");
+          alert("Could not sign event. Please check your Nostr wallet.");
+          return;
+        }
+        if (signedEvent.pubkey !== localStorage.getItem('pubkey')) {
+          console.error("Mismatch: Signed event pubkey does not match logged-in user.");
+          alert("Your signed event does not match your authenticated profile. Try again.");
+          return;
+        }        
         console.log('Signed event:', signedEvent);
         const response = await fetch('/create_event', {
           method: 'POST',
