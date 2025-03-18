@@ -76,9 +76,10 @@ async def fetch_profile():
         # Use the correct structure for Filter
         # Create filter correctly using methods
         pubkey = PublicKey.parse(pubkey_hex)
-        filter = Filter()
-        filter.authors = [pubkey]
-        filter.kinds = [Kind(0)]
+        filter = Filter.from_json({
+            "authors": [str(pubkey)],
+            "kinds": [Kind(0).value]  # Ensure `Kind` is passed as a value if needed
+        })
         logger.info(f'Filter: {filter}')
 
         # Store profile data
