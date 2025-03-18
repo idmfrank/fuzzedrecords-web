@@ -103,7 +103,7 @@ async def fetch_profile():
             })
 
         # Pass filter as list of Filter objects
-        await client.subscribe([filter], handle_event)  
+        await client.subscribe(filter, handle_event)  
 
         # Add delay to give async call time to process
         await asyncio.sleep(1)
