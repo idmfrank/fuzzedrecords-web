@@ -73,8 +73,13 @@ async def fetch_profile():
         # Initialize client asynchronously
         client = await initialize_client()
 
-        # Define filter correctly
-        filters = [Filter(authors=[pubkey_hex], kinds=[0])]  # Metadata event kind is 0
+        # Correct filter definition (use `pubkeys` instead of `authors`)
+        filters = [
+            Filter(
+                kinds=[0],  # Kind 0 is for metadata events
+                pubkeys=[pubkey_hex]
+            )
+        ]
 
         # Store profile data
         profile_data = {}
@@ -91,6 +96,7 @@ async def fetch_profile():
 
         # Subscribe and wait for response
         client.subscribe(filters, handle_event)
+        await asyncio.sleep(1)  # Wait for async call to complete
         await client.close()
 
         if profile_data:
