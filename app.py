@@ -78,7 +78,7 @@ async def fetch_profile():
         pubkey = PublicKey.parse(pubkey_hex)
         filter = Filter.from_json({
             "authors": [str(pubkey)],
-            "kinds": [Kind(0).value]  # Ensure `Kind` is passed as a value if needed
+            "kinds": [Kind(0)]  # Ensure `Kind` is passed as a value if needed
         })
         logger.info(f'Filter: {filter}')
 
