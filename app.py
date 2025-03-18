@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_restful import Resource, Api
 from flask_cors import CORS
-from nostr_sdk import Client, EventBuilder, Filter
+from nostr_sdk import Client, EventBuilder, Filter, Kind
 from functools import wraps
 from msal import ConfidentialClientApplication
 from io import BytesIO
@@ -74,9 +74,9 @@ async def fetch_profile():
         client = await initialize_client()
 
         # Use the correct structure for Filter
-        filter = Filter()
-        filter.authors = [pubkey_hex]
-        filter.kinds = [0]  # Metadata event
+        # Create filter correctly using methods
+        filter = Filter().pubkey(pubkey_hex).kind(Kind(0))
+        logger.info(f'Filter: {filter}')
 
         # Store profile data
         profile_data = {}
