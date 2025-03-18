@@ -75,7 +75,7 @@ async def fetch_profile():
 
         # Use the correct structure for Filter
         # Create filter correctly using methods
-        pubkey = PublicKey(pubkey_hex)
+        pubkey = PublicKey.parse(pubkey_hex)
         filter = Filter()
         filter.authors = [pubkey]
         filter.kinds = [Kind(0)]
