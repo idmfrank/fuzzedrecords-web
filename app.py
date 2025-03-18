@@ -75,7 +75,9 @@ async def fetch_profile():
 
         # Use the correct structure for Filter
         # Create filter correctly using methods
-        filter = Filter().pubkey(pubkey_hex).kind(Kind(0))
+        filter = Filter()
+        filter.authors(pubkey_hex)
+        filter.kinds(Kind(0))
         logger.info(f'Filter: {filter}')
 
         # Store profile data
