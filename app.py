@@ -73,18 +73,16 @@ async def fetch_profile():
         # Initialize client asynchronously
         client = await initialize_client()
 
-        # Correct filter definition (use `pubkeys` instead of `authors`)
-        filters = [
-            Filter(
-                kinds=[0],  # Kind 0 is for metadata events
-                pubkeys=[pubkey_hex]
-            )
-        ]
+        # Define filter as a dictionary (NOT using `Filter` class directly)
+        filters = [{
+            'kinds': [0],  # Kind 0 is for metadata events
+            'authors': [pubkey_hex]  # Use 'authors' instead of 'pubkeys' in raw dict
+        }]
 
         # Store profile data
         profile_data = {}
 
-        def handle_event(event):
+        async def handle_event(event):
             """ Callback to process events """
             logger.info(f'Fetch Profile - Event received: {event}')
             profile_content = json.loads(event.content)
@@ -95,8 +93,8 @@ async def fetch_profile():
             })
 
         # Subscribe and wait for response
-        client.subscribe(filters, handle_event)
-        await asyncio.sleep(1)  # Wait for async call to complete
+        client.subscribe(filters, handle_event)  # Pass filter as raw dict
+        await asyncio.sleep(1)  # Give time for async handling
         await client.close()
 
         if profile_data:
