@@ -73,11 +73,11 @@ async def fetch_profile():
         # Initialize client asynchronously
         client = await initialize_client()
 
-        # Define filter as a dictionary (NOT using `Filter` class directly)
-        filters = [{
-            'kinds': [0],  # Kind 0 is for metadata events
-            'authors': [pubkey_hex]
-        }]
+        # Create a Filter instance instead of using a dictionary
+        filter = Filter(
+            kinds=[0],  # Kind 0 is for metadata events
+            authors=[pubkey_hex]
+        )
 
         # Store profile data
         profile_data = {}
@@ -92,12 +92,11 @@ async def fetch_profile():
                 "content": profile_content
             })
 
-        # Await the subscription call!
-        await client.subscribe(filters, handle_event)
-        await asyncio.sleep(1)  # Give time for async handling
+        # Properly pass the Filter instance
+        await client.subscribe([filter], handle_event)  
 
-        # Disconnect the client properly
-        await client.disconnect()
+        # Add delay to give async call time to process
+        await asyncio.sleep(1)
 
         if profile_data:
             set_cached_item(pubkey_hex, profile_data)
