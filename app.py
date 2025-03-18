@@ -73,11 +73,10 @@ async def fetch_profile():
         # Initialize client asynchronously
         client = await initialize_client()
 
-        # Create a Filter instance instead of using a dictionary
-        filter = Filter(
-            kinds=[0],  # Kind 0 is for metadata events
-            authors=[pubkey_hex]
-        )
+        # Use the correct structure for Filter
+        filter = Filter()
+        filter.authors = [pubkey_hex]
+        filter.kinds = [0]  # Metadata event
 
         # Store profile data
         profile_data = {}
@@ -92,7 +91,7 @@ async def fetch_profile():
                 "content": profile_content
             })
 
-        # Properly pass the Filter instance
+        # Pass filter as list of Filter objects
         await client.subscribe([filter], handle_event)  
 
         # Add delay to give async call time to process
