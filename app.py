@@ -7,6 +7,16 @@ from pynostr.event import Event, EventKind
 from pynostr.encrypt import encrypt_message
 from pynostr.utils import get_public_key
 from pynostr.filters import Filters, FiltersList
+
+def encrypt_nip04_message(sender_privkey_hex: str, recipient_pubkey_hex: str, message: str) -> str:
+    """
+    Encrypt a message using NIP-04 (ECDH symmetric encryption).
+    :param sender_privkey_hex: hex-encoded sender private key
+    :param recipient_pubkey_hex: hex-encoded recipient public key
+    :param message: plaintext message to encrypt
+    :return: encrypted ciphertext string
+    """
+    return encrypt_message(message, recipient_pubkey_hex, sender_privkey_hex)
 from functools import wraps
 from msal import ConfidentialClientApplication
 from io import BytesIO
