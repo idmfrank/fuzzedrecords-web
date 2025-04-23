@@ -1,7 +1,12 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_restful import Resource, Api
 from flask_cors import CORS
-from nostr_sdk import Client, EventBuilder, Filter, Kind, PublicKey, FilterRecord, SubscribeAutoCloseOptions
+from pynostr.relay_manager import RelayManager
+from pynostr.key import PrivateKey
+from pynostr.event import Event, EventKind
+from pynostr.encrypt import encrypt_message
+from pynostr.utils import get_public_key
+from pynostr.filters import Filters, FiltersList
 from functools import wraps
 from msal import ConfidentialClientApplication
 from io import BytesIO
@@ -41,12 +46,14 @@ def set_cached_item(cache_key, item):
 def error_response(message, status_code=400):
     return jsonify({"error": message}), status_code
 
-async def initialize_client():
-    client = Client()
-    for relay in RELAY_URLS:
-        await client.add_relay(relay)  # Await async call
-    await client.connect()  # Await async call
-    return client
+def initialize_client():
+    """Instantiate and open connections to all relays."""
+    manager = RelayManager()
+    for url in RELAY_URLS:
+        manager.add_relay(url)
+    # Blocking open of all relay connections
+    manager.open_connections()
+    return manager
 
 @app.route('/')
 def index():
@@ -61,62 +68,41 @@ def favicon():
 @app.route('/fetch-profile', methods=['POST'])
 async def fetch_profile():
     try:
-        data = request.json
-        pubkey_hex = data['pubkey']
-        logger.info(f'Received request to fetch profile for pubkey: {pubkey_hex}')
+        data = request.json or {}
+        pubkey_hex = data.get('pubkey')
+        logger.info(f"Fetch-profile request for pubkey: {pubkey_hex}")
+        if not pubkey_hex:
+            return error_response("Missing pubkey", 400)
 
-        cached_profile = get_cached_item(pubkey_hex)
-        if cached_profile:
-            logger.info(f'Profile for {pubkey_hex} returned from cache.')
-            return jsonify(cached_profile)
+        cached = get_cached_item(pubkey_hex)
+        if cached:
+            logger.info(f"Returning cached profile for {pubkey_hex}")
+            return jsonify(cached)
 
-        # Initialize client asynchronously
-        client = await initialize_client()
+        manager = initialize_client()
+        filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
+        sub_id = f"fetch_{pubkey_hex}"
+        manager.add_subscription_on_all_relays(sub_id, filt)
 
-        # Use the correct structure for Filter
-        # Create filter correctly using methods
-        pubkey = PublicKey.parse(pubkey_hex)
-        fr = FilterRecord(
-            ids=None,
-            authors=[pubkey],
-            kinds=[Kind(0)],
-            search="",
-            since=None,
-            until=None,
-            limit=1,
-            generic_tags=[]
-        )
-        filter = Filter().from_record(fr)
-        logger.info(f'Filter: {filter}')
-
-        # Store profile data
-        profile_data = {}
-
-        async def handle_event(event):
-            """ Callback to process events """
-            logger.info(f'Fetch Profile - Event received: {event}')
-            profile_content = json.loads(event.content)
-            profile_data.update({
-                "id": event.id,
-                "pubkey": event.pubkey,
-                "content": profile_content
-            })
-
-        # Pass filter as list of Filter objects
-        options = SubscribeAutoCloseOptions(auto_close=True)
-        await client.subscribe(filter, options, handle_event)
-
-        # Add delay to give async call time to process
+        # allow time to receive events
         await asyncio.sleep(1)
+        profile_data = {}
+        for msg in manager.message_pool.get_all_events():
+            ev = msg.event
+            try:
+                content = json.loads(ev.content)
+            except json.JSONDecodeError:
+                continue
+            profile_data = {"id": ev.id, "pubkey": ev.pubkey, "content": content}
+            break
 
+        manager.close_connections()
         if profile_data:
             set_cached_item(pubkey_hex, profile_data)
             return jsonify(profile_data)
-
-        return error_response("Profile not found or relay did not respond in time", 404)
-
+        return error_response("Profile not found or no relay response", 404)
     except Exception as e:
-        logger.error(f'Error in fetch-profile: {e}')
+        logger.error(f"Error in fetch_profile: {e}")
         return error_response(str(e), 500)
  
 @app.route('/generate_qr')
@@ -208,32 +194,31 @@ def require_nip05_verification(required_domain):
 @require_nip05_verification(REQUIRED_DOMAIN)
 async def create_event():
     try:
-        data = request.json
-        logger.debug(f"Received signed event: {data}")
+        data = request.json or {}
+        logger.debug(f"Create_event data: {data}")
+        # Expect user-supplied signed event or create-and-sign server-side
+        # Here we expect a fully populated signed event dict
+        required = ["pubkey", "sig", "content", "kind", "created_at", "tags"]
+        if not all(k in data for k in required):
+            return error_response("Missing required event fields", 400)
 
-        required_fields = ["id", "kind", "pubkey", "created_at", "tags", "content", "sig"]
-        if not all(field in data for field in required_fields):
-            return error_response("Missing required fields in signed event", 400)
-
-        # Create event object from received data
-        event = EventBuilder(kind=data["kind"], content=data["content"])
-        for tag in data["tags"]:
-            event.add_tag(tag[0], tag[1])
-
-        event = event.to_event(pubkey=data["pubkey"], sig=data["sig"], created_at=data["created_at"])
-
-        # Verify the event signature
-        if not event.verify():
-            logger.warning("Event signature verification failed.")
+        # Reconstruct Event and verify signature
+        ev = Event(
+            public_key=data["pubkey"],
+            content=data["content"],
+            kind=EventKind(data["kind"]),
+            tags=data["tags"],
+            created_at=data["created_at"]
+        )
+        ev.sig = data.get("sig")
+        if not ev.verify():
+            logger.warning("Invalid event signature")
             return error_response("Invalid signature", 403)
 
-        # Use Client to broadcast event
-        client = initialize_client()
-        await client.send_event(event)
-        await client.close()
-
+        mgr = initialize_client()
+        mgr.publish_event(ev)
+        mgr.close_connections()
         return jsonify({"message": "Event successfully broadcasted"})
-
     except Exception as e:
         logger.error(f"Error in create_event: {e}")
         return error_response("An internal error occurred", 500)
@@ -241,77 +226,70 @@ async def create_event():
 @app.route('/fuzzed_events', methods=['GET'])
 async def get_fuzzed_events():
     try:
-        client = initialize_client()
+        mgr = initialize_client()
+        filt = FiltersList([Filters(kinds=[52])])
+        sub_id = "fuzzed_events"
+        mgr.add_subscription_on_all_relays(sub_id, filt)
+        await asyncio.sleep(1)
 
-        # Fetch all Kind 52 events
-        filters = [Filter(kinds=[52])]
+        results = []
+        seen = set()
+        for msg in mgr.message_pool.get_all_events():
+            ev = msg.event
+            if ev.pubkey in seen:
+                continue
+            seen.add(ev.pubkey)
+            if await fetch_and_validate_profile(ev.pubkey, REQUIRED_DOMAIN):
+                results.append({
+                    "id": ev.id,
+                    "pubkey": ev.pubkey,
+                    "content": ev.content,
+                    "tags": ev.tags,
+                    "created_at": ev.created_at
+                })
 
-        event_list = []
-        seen_pubkeys = set()
-
-        def handle_event(event):
-            event_data = {
-                "id": event.id,
-                "pubkey": event.pubkey,
-                "content": event.content,
-                "tags": event.tags,
-                "created_at": event.created_at
-            }
-
-            pubkey = event.pubkey
-            if pubkey not in seen_pubkeys:
-                is_valid = fetch_and_validate_profile(pubkey, REQUIRED_DOMAIN)
-                if is_valid:
-                    event_list.append(event_data)
-                seen_pubkeys.add(pubkey)
-
-        # Subscribe and wait for events
-        client.subscribe(filters, handle_event)
-        await client.close()
-
-        if not event_list:
-            return jsonify({"message": "No events found from " + REQUIRED_DOMAIN + " accounts."})
-
-        logger.info(f"Events found: {event_list}")
-        return jsonify({"events": event_list})
-
+        mgr.close_connections()
+        if not results:
+            return jsonify({"message": f"No events from {REQUIRED_DOMAIN}"})
+        logger.info(f"Found fuzzed events: {results}")
+        return jsonify({"events": results})
     except Exception as e:
-        logger.error(f"Error in fetching fuzzed events: {e}")
-        return error_response("An internal error occurred while fetching events", 500)
+        logger.error(f"Error in get_fuzzed_events: {e}")
+        return error_response("Error fetching fuzzed events", 500)
 
 @app.route('/send_dm', methods=['POST'])
 async def send_dm():
     try:
-        data = request.json
+        data = request.json or {}
+        # Expect to_pubkey, content, sender_privkey
+        required = ["to_pubkey", "content", "sender_privkey"]
+        if not all(k in data for k in required):
+            return error_response("Missing DM fields", 400)
 
-        logger.info(f"Received signed DM: {data}")
-
-        required_fields = ["id", "kind", "pubkey", "created_at", "tags", "content", "sig"]
-        if not all(field in data for field in required_fields):
-            return error_response("Missing required fields in signed DM", 400)
-
-        # Create event object from received data
-        event = EventBuilder(kind=data["kind"], content=data["content"])
-        for tag in data["tags"]:
-            event.add_tag(tag[0], tag[1])
-
-        event = event.to_event(pubkey=data["pubkey"], sig=data["sig"], created_at=data["created_at"])
-
-        # Verify event signature
-        if not event.verify():
-            logger.warning("DM signature verification failed.")
+        # Encrypt the message
+        ciphertext = encrypt_message(
+            data["content"], data["to_pubkey"], data["sender_privkey"]
+        )
+        # Build and sign the DM event
+        ev = Event(
+            public_key=get_public_key(data["sender_privkey"]),
+            content=ciphertext,
+            kind=EventKind.ENCRYPTED_DIRECT_MESSAGE,
+            tags=[["p", data["to_pubkey"]]],
+            created_at=int(time.time())
+        )
+        priv = PrivateKey.from_nsec(data["sender_privkey"])
+        ev.sign(priv)
+        if not ev.verify():
             return error_response("Invalid DM signature", 403)
 
-        # Publish the DM
-        client = initialize_client()
-        await client.send_event(event)
-        await client.close()
-
+        mgr = initialize_client()
+        mgr.publish_event(ev)
+        mgr.close_connections()
         return jsonify({"message": "Encrypted DM sent successfully"})
-
     except Exception as e:
-        logger.error(f"Error sending DM: {e}")
-        return error_response("An error occurred while sending the DM", 500)
+        logger.error(f"Error in send_dm: {e}")
+        return error_response("Error sending DM", 500)
 
 async def fetch_and_validate_profile(pubkey, required_domain):
     """
