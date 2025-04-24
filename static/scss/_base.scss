@@ -1,0 +1,68 @@
+// _base.scss
+// Global base styles: body, header, menu, footer
+// Extracted from style.css
+
+body {
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  overflow-x: hidden;
+}
+
+.logo {
+  display: block;
+  max-width: 500px;
+  width: 80%;
+  margin: 20px auto;
+  height: auto;
+}
+
+.menu {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 80%;
+  margin: 0 auto 20px;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.menu button {
+  flex: none;
+  padding: 10px 15px;
+  background-color: #555;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  min-width: 80px;
+  max-width: 150px;
+  box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
+}
+
+.menu button:hover { background-color: #777; }
+.menu button.active { background-color: #999; }
+.admin-only { display: none; }
+
+#library-section, #profile-section, #events-section, #admin-section {
+  display: none;
+  padding: 20px;
+}
+#library-section.active, #profile-section.active, #events-section.active, #admin-section.active {
+  display: block;
+}
+
+footer {
+  text-align: center;
+  margin-top: 20px;
+  color: #777;
+  font-size: 14px;
+}
