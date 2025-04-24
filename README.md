@@ -52,16 +52,17 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 ```
 fuzzedrecords/
 ├── app.py                    # Top-level Flask router (imports modular routes)
-├── azure_resources.py        # MSAL & Nostr JSON resource definitions
-├── nostr_utils.py            # Nostr endpoints: fetch-profile, create_event, etc.
+├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
+├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile, events
 ├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
-├── ticket_utils.py           # Ticket payload/QR & /send_ticket endpoint
+├── ticket_utils.py           # Ticket generation & /send_ticket endpoint
 ├── requirements.txt          # Python dependencies
 ├── startup.sh                # Deployment script for Azure
 ├── templates/
 │   └── index.html            # Main HTML file for the website
 └── static/
-    ├── style.css             # CSS for styling the website
+    ├── style.css             # CSS for styling the website (committed)
+    ├── images/               # Site images and icons
     └── scripts/
         ├── auth.js           # Frontend NIP-07 authentication logic
         ├── tracks.js         # Frontend music library display logic
@@ -97,6 +98,7 @@ fuzzedrecords/
    ```bash
    pip install -r requirements.txt
    ```
+   > **Note**: `static/style.css` is committed; no Sass/SCSS compilation is required.
 
 4. **Run the Application Locally**:
    ```bash
@@ -113,6 +115,18 @@ fuzzedrecords/
 ---
 
 ## API Endpoints
+
+### 0. Nostr Discovery JSON
+- **Endpoint**: `/.well-known/nostr.json`
+- **Method**: `GET`
+- **Description**: Returns a Nostr discovery document containing admin user public keys and their associated relay URLs, sourced from Azure AD groups.
+- **Response**:
+  ```json
+  {
+    "names": {"Display Name": "pubkey", ...},
+    "relays": {"pubkey": ["wss://relay1", ...], ...}
+  }
+  ```
 
 ### 1. Fetch User Profile
 - **Endpoint**: `/fetch-profile`
@@ -237,8 +251,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 For more information, visit [Fuzzed Records](https://fuzzedrecords.com).
----
-
-## Stylesheet
-
-We now serve `static/style.css` directly. All SCSS sources have been removed and the stylesheet is committed to version control.
