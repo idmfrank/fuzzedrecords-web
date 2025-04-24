@@ -1,14 +1,15 @@
 from flask import Flask, jsonify, render_template, send_from_directory
 from flask_restful import Api
 from flask_cors import CORS
-import os, logging
+import os
+import logging
 
-# App initialization
+# App init
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
 
-# Configuration constants
+# Configuration
 RELAY_URLS = os.getenv(
     "RELAY_URLS",
     "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub"
@@ -22,17 +23,16 @@ SEARCH_TERM = " by Fuzzed Records"
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Register modular resources and routes
+# Register modular routes
 from azure_resources import register_resources
 from wavlake_utils import register_wavlake_routes
 from ticket_utils import register_ticket_routes
-import nostr_utils  # side-effect: registers Nostr routes
+import nostr_utils  # registers Nostr routes
 
 register_resources(api)
 register_wavlake_routes(app)
 register_ticket_routes(app)
 
-# Static page endpoints
 @app.route('/')
 def index():
     return render_template('index.html')
