@@ -22,9 +22,10 @@ else
     pip install -r requirements.txt
 fi
 
-# Compile SCSS to CSS
 echo "Compiling SCSS to CSS..."
 sass static/scss/style.scss static/style.css --no-source-map --style=compressed
+# (SCSS sources have been precompiled; style.css is committed)
+# Remove SCSS compilation step
 
 # Start Gunicorn and log output to stdout/stderr
 gunicorn --bind=0.0.0.0:8000 --log-level debug --access-logfile - --error-logfile - app:app

@@ -239,16 +239,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 For more information, visit [Fuzzed Records](https://fuzzedrecords.com).
 ---
 
-## CSS Preprocessing (SCSS)
+## Stylesheet
 
-We now maintain styles as SCSS partials under `static/scss/`. To compile them into the single stylesheet:
-
-1. Install the Sass CLI:
-   ```bash
-   npm install -g sass
-   ```
-2. Compile SCSS to CSS:
-   ```bash
-   sass static/scss/style.scss static/style.css --no-source-map --style=compressed
-   ```
-3. (Optional) Integrate this compilation into your CI or build pipeline so that `static/style.css` is rebuilt when SCSS changes.
+We now serve `static/style.css` directly. All SCSS sources have been removed and the stylesheet is committed to version control.
