@@ -20,8 +20,38 @@ WAVLAKE_API_BASE = "https://wavlake.com/api/v1"
 SEARCH_TERM = " by Fuzzed Records"
 
 # Logging setup
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
 logger = logging.getLogger(__name__)
+
+# Utilities: error responses, caching, and Nostr relay client
+import time
+from flask import jsonify
+from pynostr.relay_manager import RelayManager
+
+# Simple in-memory cache for user profiles
+_cache = {}
+def get_cached_item(key):
+    item = _cache.get(key)
+    if not item:
+        return None
+    value, ts = item
+    if time.time() - ts > CACHE_TIMEOUT:
+        del _cache[key]
+        return None
+    return value
+
+def set_cached_item(key, value):
+    _cache[key] = (value, time.time())
+
+def error_response(message, status_code):
+    return jsonify({'error': message}), status_code
+
+def initialize_client():
+    # Initialize Nostr RelayManager and add configured relays
+    mgr = RelayManager()
+    for url in RELAY_URLS:
+        mgr.add_relay(url)
+    return mgr
 
 # Register modular routes
 from azure_resources import register_resources
