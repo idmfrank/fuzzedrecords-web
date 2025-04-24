@@ -15,15 +15,6 @@ import os, json, time, requests, asyncio
 import logging
 import qrcode
 
-def encrypt_nip04_message(sender_privkey_hex: str, recipient_pubkey_hex: str, message: str) -> str:
-    """
-    Encrypt a message using NIP-04 (ECDH symmetric encryption).
-    :param sender_privkey_hex: hex-encoded sender private key
-    :param recipient_pubkey_hex: hex-encoded recipient public key
-    :param message: plaintext message to encrypt
-    :return: encrypted ciphertext string
-    """
-    return encrypt_message(message, recipient_pubkey_hex, sender_privkey_hex)
   
 def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
     """
@@ -421,54 +412,6 @@ async def fetch_and_validate_profile(pubkey, required_domain):
         logger.error(f"Error in fetch_and_validate_profile: {e}")
         return False
 
-# Fetch and decrypt NIP-04 direct messages
-async def fetch_decrypted_direct_messages(
-    recipient_privkey_hex: str,
-    recipient_pubkey_hex: str,
-    timeout: float = 1.0,
-    limit: int = 50
-) -> list[str]:
-    """
-    Fetch recent NIP-04 encrypted direct messages (kind=4) for the given pubkey,
-    decrypt them, and return plaintext messages.
-    """
-    # 1) Connect to relays
-    mgr = initialize_client()
-
-    # 2) Build filters: authored by user OR tagged to user (#p tag)
-    sent_filter = Filters(
-        kinds=[EventKind.ENCRYPTED_DIRECT_MESSAGE],
-        authors=[recipient_pubkey_hex],
-        limit=limit
-    )
-    recv_filter = Filters(
-        kinds=[EventKind.ENCRYPTED_DIRECT_MESSAGE],
-        pubkey_refs=[recipient_pubkey_hex],
-        limit=limit
-    )
-    mgr.add_subscription_on_all_relays("dm_sent", FiltersList([sent_filter]))
-    mgr.add_subscription_on_all_relays("dm_recv", FiltersList([recv_filter]))
-
-    # 3) Allow events to arrive
-    await asyncio.sleep(timeout)
-
-    # 4) Collect and decrypt
-    plaintexts: list[str] = []
-    for msg in mgr.message_pool.get_all_events():
-        ev = msg.event
-        dm = EncryptedDirectMessage.from_event(ev)
-        if dm is None:
-            continue
-        try:
-            dm.decrypt(private_key_hex=recipient_privkey_hex,
-                       public_key_hex=ev.pubkey)
-            plaintexts.append(dm.cleartext_content)
-        except Exception as e:
-            logger.warning(f"Failed to decrypt DM {ev.id}: {e}")
-
-    # 5) Close relay connections
-    mgr.close_connections()
-    return plaintexts
 
 # Helper to build music library
 def build_music_library():
