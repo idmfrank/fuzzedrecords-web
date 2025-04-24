@@ -1,0 +1,188 @@
+body {
+    font-family: "Inter", sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
+}
+
+.logo {
+    display: block;
+    max-width: 500px;
+    width: 80%; /* Maintain responsiveness */
+    margin: 20px auto;
+    height: auto; /* Maintain aspect ratio */
+}
+
+.menu {
+    display: flex; /* Ensure buttons are horizontally aligned */
+    justify-content: center; /* Center align the menu items */
+    flex-wrap: wrap; /* Allow wrapping for small screens */
+    background-color: #333; /* Dark background for the menu */
+    padding: 10px;
+    border-radius: 10px; /* Rounded edges for the menu box */
+    max-width: 500px; /* Match the logo's max width */
+    width: 80%; /* Maintain responsiveness */
+    margin: 0 auto 20px auto; /* Center the menu and add spacing below */
+    gap: 10px; /* Spacing between buttons */
+    box-sizing: border-box; /* Ensure padding is included in width calculations */
+}
+
+.menu button {
+    flex: none; /* Prevent buttons from growing to fill the space */
+    padding: 10px 15px; /* Adjust padding for better spacing */
+    background-color: #555; /* Default button background */
+    color: white; /* White text color */
+    border: none; /* Remove default button borders */
+    border-radius: 5px; /* Rounded button edges */
+    font-size: 16px; /* Set consistent font size */
+    text-align: center; /* Center text within buttons */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+    min-width: 80px; /* Ensure all buttons have a minimum width */
+    max-width: 150px; /* Prevent buttons from getting too wide */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Add a slight shadow for a modern look */
+}
+
+.menu button:hover {
+    background-color: #777; /* Lighter background on hover */
+}
+
+.menu button.active {
+    background-color: #999; /* Highlight active button */
+}
+
+.admin-only {
+    display: none;
+}
+
+#library-section,
+#profile-section,
+#events-section,
+#admin-section {
+    display: none;
+    padding: 20px;
+}
+
+#library-section.active,
+#profile-section.active,
+#events-section.active,
+#admin-section.active {
+    display: block;
+}
+
+.song-item {
+    margin: 20px auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    max-width: 500px;
+    background: #f9f9f9;
+}
+
+.song-item h3 {
+    margin: 0 0 10px;
+}
+
+.profile-pic {
+    border-radius: 50%;
+    max-width: 150px;
+    width: 80%;
+    margin: 10px auto;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    display: block;
+}
+
+.profile-details {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 20px auto;
+    max-width: 500px;
+    background: #f9f9f9;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.profile-details td {
+    padding: 5px;
+    text-align: left;
+}
+
+.profile-details td:first-child {
+    font-weight: bold;
+    text-align: right;
+    width: 30%;
+    color: #555;
+}
+
+.empty-profile {
+    font-style: italic;
+    color: #777;
+    padding: 20px;
+    border: 1px dashed #ddd;
+    border-radius: 5px;
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.external-logo {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle; /* Align icon with text */
+    margin-right: 5px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    margin-bottom: 15px; /* Add spacing between form fields */
+    max-width: 500px; /* Limit form width */
+    margin-left: auto;
+    margin-right: auto; /* Center the form on the page */
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%; /* Make inputs take up full width */
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.inline-icon {
+    width: 18px; /* Adjust size as needed */
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 5px;
+    border-radius: 4px; /* Optional: for rounded logos */
+}
+
+button[type="submit"] {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #777;
+}
+
+footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #777;
+    font-size: 14px;
+}

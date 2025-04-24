@@ -1,5 +1,3 @@
-# Ignore generated CSS from SCSS compilation
-static/style.css
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
