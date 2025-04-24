@@ -43,6 +43,38 @@ def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
     qr_img.save(img_io, 'PNG')
     img_io.seek(0)
     return payload_str, img_io
+
+def send_ticket_as_dm(
+    event_name: str,
+    recipient_pubkey_hex: str,
+    sender_privkey_hex: str,
+    timestamp: int = None
+) -> tuple[str, BytesIO]:
+    """
+    Generate a ticket payload, encrypt it via NIP-04, and send as a kind=4 Nostr DM.
+    Returns the event ID and the QR code image BytesIO.
+    """
+    # 1) Build the ticket payload and QR
+    payload_str, qr_img_io = generate_ticket(event_name, recipient_pubkey_hex, timestamp)
+
+    # 2) Encrypt the payload as NIP-04 direct message
+    dm = EncryptedDirectMessage()
+    dm.encrypt(
+        private_key_hex=sender_privkey_hex,
+        cleartext_content=payload_str,
+        recipient_pubkey=recipient_pubkey_hex
+    )
+
+    # 3) Build Nostr event and sign it
+    ev = dm.to_event()
+    ev.sign(sender_privkey_hex)
+
+    # 4) Publish via RelayManager
+    mgr = initialize_client()
+    mgr.publish_event(ev)
+    mgr.close_connections()
+
+    return ev.id, qr_img_io
 from functools import wraps
 from msal import ConfidentialClientApplication
 from io import BytesIO
