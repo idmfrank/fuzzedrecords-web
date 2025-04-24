@@ -18,6 +18,31 @@ def encrypt_nip04_message(sender_privkey_hex: str, recipient_pubkey_hex: str, me
     :return: encrypted ciphertext string
     """
     return encrypt_message(message, recipient_pubkey_hex, sender_privkey_hex)
+  
+def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
+    """
+    Build a ticket payload containing event name, user pubkey, and timestamp,
+    and generate a QR code image for it.
+    :param event_name: Name of the event
+    :param user_pubkey: Hex-encoded user public key
+    :param timestamp: Unix timestamp; if None, use current time
+    :returns: tuple of (payload_str, qr_image_bytes_io)
+    """
+    # Construct the payload dict
+    ts = timestamp if timestamp is not None else int(time.time())
+    payload = {
+        "event": event_name,
+        "pubkey": user_pubkey,
+        "timestamp": ts
+    }
+    # Convert to JSON string
+    payload_str = json.dumps(payload)
+    # Generate QR code
+    qr_img = qrcode.make(payload_str)
+    img_io = BytesIO()
+    qr_img.save(img_io, 'PNG')
+    img_io.seek(0)
+    return payload_str, img_io
 from functools import wraps
 from msal import ConfidentialClientApplication
 from io import BytesIO
