@@ -1,3 +1,15 @@
 // _tracks.scss
 // Styles for music library tracks display
-// (placeholder for track-item styles)
+
+.song-item {
+  margin: 20px auto;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  max-width: 500px;
+  background: #f9f9f9;
+}
+
+.song-item h3 {
+  margin: 0 0 10px;
+}
