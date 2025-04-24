@@ -8,6 +8,12 @@ from pynostr.encrypt import encrypt_message
 from pynostr.utils import get_public_key
 from pynostr.filters import Filters, FiltersList
 from pynostr.encrypted_dm import EncryptedDirectMessage
+from functools import wraps
+from msal import ConfidentialClientApplication
+from io import BytesIO
+import os, json, time, requests, asyncio
+import logging
+import qrcode
 
 def encrypt_nip04_message(sender_privkey_hex: str, recipient_pubkey_hex: str, message: str) -> str:
     """
@@ -75,12 +81,6 @@ def send_ticket_as_dm(
     mgr.close_connections()
 
     return ev.id, qr_img_io
-from functools import wraps
-from msal import ConfidentialClientApplication
-from io import BytesIO
-import os, json, time, requests, asyncio
-import logging
-import qrcode
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -358,6 +358,23 @@ async def send_dm():
     except Exception as e:
         logger.error(f"Error in send_dm: {e}")
         return error_response("Error sending DM", 500)
+
+# Endpoint to send a ticket via NIP-04 DM
+@app.route('/send_ticket', methods=['POST'])
+async def send_ticket_endpoint():
+    data = request.json or {}
+    event_name = data.get("event_name")
+    recipient_pubkey = data.get("recipient_pubkey")
+    sender_privkey = data.get("sender_privkey")
+    timestamp = data.get("timestamp")
+    if not (event_name and recipient_pubkey and sender_privkey):
+        return error_response("Missing fields: event_name, recipient_pubkey, sender_privkey", 400)
+    try:
+        event_id, _ = send_ticket_as_dm(event_name, recipient_pubkey, sender_privkey, timestamp)
+        return jsonify({"status": "sent", "event_id": event_id})
+    except Exception as e:
+        logger.error(f"Error in send_ticket_endpoint: {e}")
+        return error_response(str(e), 500)
 
 async def fetch_and_validate_profile(pubkey, required_domain):
     """
