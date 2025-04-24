@@ -3,7 +3,7 @@ from io import BytesIO
 import qrcode
 from flask import request, jsonify
 
-from app import initialize_client, error_response, logger
+from app import initialize_client, error_response, logger, limiter
 from pynostr.encrypted_dm import EncryptedDirectMessage
 
 def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
@@ -33,6 +33,7 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
 
 def register_ticket_routes(app):
     @app.route('/send_ticket', methods=['POST'])
+    @limiter.limit("10 per minute")
     async def send_ticket_endpoint():
         data = request.json or {}
         event_name = data.get('event_name')

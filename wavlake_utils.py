@@ -1,7 +1,10 @@
 import logging
+import os
 import requests
 import json
 from flask import jsonify
+# Timeout for external API calls
+HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "5"))
 
 from app import WAVLAKE_API_BASE, error_response
 
@@ -10,7 +13,7 @@ logger = logging.getLogger(__name__)
 def fetch_artists():
     """Fetch artist data from Wavlake API."""
     try:
-        resp = requests.get(f"{WAVLAKE_API_BASE}/artists")
+        resp = requests.get(f"{WAVLAKE_API_BASE}/artists", timeout=HTTP_TIMEOUT)
         if resp.ok:
             return resp.json().get('data', [])
         logger.error(f"Error fetching artists: {resp.status_code}")
@@ -22,7 +25,7 @@ def fetch_artists():
 def fetch_albums(artist_id):
     """Fetch albums for a given artist."""
     try:
-        resp = requests.get(f"{WAVLAKE_API_BASE}/artists/{artist_id}/albums")
+        resp = requests.get(f"{WAVLAKE_API_BASE}/artists/{artist_id}/albums", timeout=HTTP_TIMEOUT)
         if resp.ok:
             return resp.json().get('data', [])
         logger.error(f"Error fetching albums for {artist_id}: {resp.status_code}")
@@ -34,7 +37,7 @@ def fetch_albums(artist_id):
 def fetch_tracks(album_id):
     """Fetch tracks for a given album."""
     try:
-        resp = requests.get(f"{WAVLAKE_API_BASE}/albums/{album_id}/tracks")
+        resp = requests.get(f"{WAVLAKE_API_BASE}/albums/{album_id}/tracks", timeout=HTTP_TIMEOUT)
         if resp.ok:
             return resp.json().get('data', [])
         logger.error(f"Error fetching tracks for {album_id}: {resp.status_code}")

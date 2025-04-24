@@ -4,6 +4,8 @@ from flask_restful import Resource
 from msal import ConfidentialClientApplication
 
 logger = logging.getLogger(__name__)
+# Timeout for HTTP requests (seconds)
+HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "5"))
 
 class Main(Resource):
     def post(self):
@@ -29,7 +31,8 @@ class NostrJson(Resource):
         # Fetch groups
         grp_resp = requests.get(
             f"{graph_api_base}/groups?$select=displayName,description",
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=HTTP_TIMEOUT
         )
         groups = grp_resp.json().get("value", [])
         relay_groups = {
@@ -41,7 +44,8 @@ class NostrJson(Resource):
         # Fetch users
         usr_resp = requests.get(
             f"{graph_api_base}/users?$select=id,displayName,jobTitle",
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=HTTP_TIMEOUT
         )
         users = usr_resp.json().get("value", [])
         names = {}
@@ -56,7 +60,8 @@ class NostrJson(Resource):
             uid = u.get("id")
             mem_resp = requests.get(
                 f"{graph_api_base}/users/{uid}/memberOf?$select=displayName",
-                headers={"Authorization": f"Bearer {access_token}"}
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=HTTP_TIMEOUT
             )
             for g in mem_resp.json().get("value", []):
                 dn = g.get("displayName")

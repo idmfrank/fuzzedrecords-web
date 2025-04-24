@@ -1,12 +1,25 @@
 from flask import Flask, jsonify, render_template, send_from_directory
 from flask_restful import Api
+# CORS configuration
 from flask_cors import CORS
+# Rate limiting
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+# HTTP exception handling
+from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
 import logging
 
 # App init
 app = Flask(__name__)
-CORS(app)
+# Limit request payload size (e.g. default 1MB)
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("MAX_CONTENT_LENGTH", 1048576))
+# Configure CORS origins from environment (comma-separated)
+frontend_origins = [o for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o]
+CORS(app, origins=frontend_origins, supports_credentials=True)
+# Rate limiting (IP-based)
+limiter = Limiter(key_func=get_remote_address)
+limiter.init_app(app)
 api = Api(app)
 
 # Configuration
@@ -53,6 +66,23 @@ def initialize_client():
     for url in RELAY_URLS:
         mgr.add_relay(url)
     return mgr
+ 
+# Centralized error handlers
+@app.errorhandler(RequestEntityTooLarge)
+def handle_payload_too_large(e):
+    return jsonify({"error": "Payload too large"}), 413
+
+@app.errorhandler(BadRequest)
+def handle_bad_request_error(e):
+    return jsonify({"error": "Bad request"}), 400
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    code = 500
+    if isinstance(e, HTTPException):
+        code = e.code
+    logger.error(f"Unhandled exception: {e}", exc_info=e)
+    return jsonify({"error": "Internal server error"}), code
 
 # Register modular routes
 from azure_resources import register_resources
@@ -76,10 +106,8 @@ def favicon():
         mimetype='image/vnd.microsoft.icon'
     )
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Toggle debug via FLASK_DEBUG env var
+    debug_mode = os.getenv("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
+    app.run(debug=debug_mode)
