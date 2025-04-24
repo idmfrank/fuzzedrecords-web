@@ -17,8 +17,12 @@ app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("MAX_CONTENT_LENGTH", 1048576))
 # Configure CORS origins from environment (comma-separated)
 frontend_origins = [o for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o]
 CORS(app, origins=frontend_origins, supports_credentials=True)
-# Rate limiting (IP-based)
-limiter = Limiter(key_func=get_remote_address)
+ # Rate limiting (IP-based)
+limiter = Limiter(
+    key_func=get_remote_address,
+    # configure storage backend; default is in-memory ("memory://"); override with RATELIMIT_STORAGE_URI
+    storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+)
 limiter.init_app(app)
 api = Api(app)
 
@@ -97,6 +101,12 @@ register_ticket_routes(app)
 @app.route('/')
 def index():
     return render_template('index.html')
+    
+# Health check for uptime probes (e.g. random /robotsXYZ.txt)
+@app.route('/robots<filename>.txt')
+def robots_txt(filename):
+    # Return 200 to satisfy health checks
+    return ('', 200)
 
 @app.route('/favicon.ico')
 def favicon():
