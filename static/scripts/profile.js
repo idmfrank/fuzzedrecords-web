@@ -364,18 +364,19 @@ document.addEventListener('DOMContentLoaded', function () {
       
           const signedDM = await window.nostr.signEvent(dmEvent);
           console.log("Signed Message: ", signedDM);
-          await fetch('/send_dm', {
+          await fetch('/send_ticket', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(signedDM)
           })
           .then(response => response.json())
           .then(result => {
-            if (result.message === "DM sent successfully") {
-              const regStatus = document.getElementById('registration-status');
-              if (regStatus) {
-                regStatus.innerText = "You are successfully registered for this event!";
-              }
+            if (result.status === "sent") {
+              // Notify user of success
+              alert("Success! Check your Nostr DMs for your event ticket.");
+            } else {
+              // Notify user of failure
+              alert("Failed to send ticket. Please try again.");
             }
           })
           .catch(error => {
