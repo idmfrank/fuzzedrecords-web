@@ -4,16 +4,16 @@ from flask_cors import CORS
 from pynostr.relay_manager import RelayManager
 from pynostr.key import PrivateKey
 from pynostr.event import Event, EventKind
-from pynostr.encrypt import encrypt_message
-from pynostr.utils import get_public_key
-from pynostr.filters import Filters, FiltersList
-from pynostr.encrypted_dm import EncryptedDirectMessage
-from functools import wraps
-from msal import ConfidentialClientApplication
+
+import logging, os, json, time, requests, asyncio
 from io import BytesIO
-import os, json, time, requests, asyncio
-import logging
 import qrcode
+
+# Modular route registration
+from azure_resources import register_resources
+from wavlake_utils import register_wavlake_routes
+from ticket_utils import register_ticket_routes
+import nostr_utils  # registers Nostr routes
 
   
 def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
@@ -77,6 +77,11 @@ def send_ticket_as_dm(
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
+
+# Register modular blueprints and resources
+register_resources(api)
+register_wavlake_routes(app)
+register_ticket_routes(app)
 
 # Configuration
 RELAY_URLS = os.getenv("RELAY_URLS", "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub").split(',')
@@ -165,31 +170,7 @@ async def fetch_profile():
         return error_response(str(e), 500)
  
 @app.route('/generate_qr')
-def generate_qr():
-    ticket_id = request.args.get('ticket_id')
-    event_id = request.args.get('event_id')
 
-    qr_data = {
-        "ticket_id": ticket_id,
-        "event_id": event_id
-    }
-
-    qr = qrcode.make(json.dumps(qr_data))
-    img_io = BytesIO()
-    qr.save(img_io, 'PNG')
-    img_io.seek(0)
-
-    return send_file(img_io, mimetype='image/png')
-
-@app.route('/tracks', methods=['GET'])
-def get_tracks():
-    try:
-        library = build_music_library()
-        logger.info(f'Music Library: {library}')
-        return jsonify({"tracks": library})
-    except Exception as e:
-        logger.error(f"Error building library: {e}")
-        return error_response(f"Error building library: {e}", 500)
 
 @app.route('/validate-profile', methods=['POST'])
 def validate_profile():
