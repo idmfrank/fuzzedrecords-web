@@ -16,7 +16,8 @@ RELAY_URLS = os.getenv(
 ).split(',')
 CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
 REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
-WAVLAKE_API_BASE = "https://wavlake.com/api/v1"
+# Base URL for Wavlake API; can be overridden via environment
+WAVLAKE_API_BASE = os.getenv("WAVLAKE_API_BASE", "https://api.wavlake.com/api/v1")
 SEARCH_TERM = " by Fuzzed Records"
 
 # Logging setup

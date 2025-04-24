@@ -54,7 +54,7 @@ Set the following environment variables to configure the application:
 - RELAY_URLS: Comma-separated list of Nostr relay URLs (default: wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub)
 - CACHE_TIMEOUT: Seconds to cache fetched user profiles (default: 300)
 - REQUIRED_DOMAIN: Domain for NIP-05 profile verification (default: fuzzedrecords.com)
-- WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
+- WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://api.wavlake.com/api/v1)
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
