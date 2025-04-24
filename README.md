@@ -125,6 +125,7 @@ fuzzedrecords/
      ```bash
      chmod +x startup.sh
      ```
+   - Dependencies are installed during the Azure build process; `startup.sh` simply launches the server.
    - Deploy the app to Azure WebApp using the Azure CLI or portal.
 
 ---
