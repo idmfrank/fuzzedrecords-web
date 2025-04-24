@@ -17,12 +17,23 @@ app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("MAX_CONTENT_LENGTH", 1048576))
 # Configure CORS origins from environment (comma-separated)
 frontend_origins = [o for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o]
 CORS(app, origins=frontend_origins, supports_credentials=True)
- # Rate limiting (IP-based)
-limiter = Limiter(
-    key_func=get_remote_address,
-    # configure storage backend; default is in-memory ("memory://"); override with RATELIMIT_STORAGE_URI
-    storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://")
-)
+# Rate limiting (IP-based) with Azure Table Storage or fallback
+from azure_storage_limiter import AzureTableStorage
+
+azure_conn = os.getenv("AZURE_TABLES_CONNECTION_STRING")
+if azure_conn:
+    # Use Azure Table Storage for shared rate limit counters
+    az_storage = AzureTableStorage(
+        azure_conn,
+        os.getenv("RATELIMIT_TABLE_NAME", "RateLimit")
+    )
+    limiter = Limiter(key_func=get_remote_address, storage=az_storage)
+else:
+    # Fallback to in-memory or other URI
+    limiter = Limiter(
+        key_func=get_remote_address,
+        storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+    )
 limiter.init_app(app)
 api = Api(app)
 
