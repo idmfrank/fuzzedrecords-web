@@ -51,12 +51,23 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 
 ```
 fuzzedrecords/
-├── templates/index.html      # Main HTML file for the website
-├── static/scripts/profile.js # JavaScript for user interactions and authentication
-├── static/style.css          # CSS for styling the website
-├── app.py                    # Flask backend for API and logic
+├── app.py                    # Top-level Flask router (imports modular routes)
+├── azure_resources.py        # MSAL & Nostr JSON resource definitions
+├── nostr_utils.py            # Nostr endpoints: fetch-profile, create_event, etc.
+├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
+├── ticket_utils.py           # Ticket payload/QR & /send_ticket endpoint
 ├── requirements.txt          # Python dependencies
 ├── startup.sh                # Deployment script for Azure
+├── templates/
+│   └── index.html            # Main HTML file for the website
+└── static/
+    ├── style.css             # CSS for styling the website
+    └── scripts/
+        ├── auth.js           # Frontend NIP-07 authentication logic
+        ├── tracks.js         # Frontend music library display logic
+        ├── events.js         # Frontend events & admin form logic
+        ├── ticket.js         # Frontend ticket generation & DM logic
+        └── utils.js          # Shared JavaScript helper functions
 ```
 
 ---
@@ -103,73 +114,88 @@ fuzzedrecords/
 
 ## API Endpoints
 
-### **1. Fetch User Profile**
+### 1. Fetch User Profile
 - **Endpoint**: `/fetch-profile`
 - **Method**: `POST`
-- **Description**: Fetches user profile data from Nostr relays.
+- **Description**: Fetches user metadata (Kind=0) from Nostr relays.
 - **Request Body**:
   ```json
-  {
-    "pubkey": "user_public_key"
-  }
+  {"pubkey": "user_public_key"}
   ```
 - **Response**:
   ```json
-  {
-    "id": "event_id",
-    "pubkey": "user_public_key",
-    "content": {
-      "name": "username",
-      "nip05": "user@domain.com",
-      "lud16": "lightning_address",
-      "website": "user_website",
-      "about": "user_bio"
-    },
-    "sig": "event_signature"
-  }
+  {"id":"event_id","pubkey":"user_public_key",
+   "content":{ "name":"username","nip05":"user@domain.com",
+               "lud16":"lightning_address","website":"user_website",
+               "about":"user_bio" }}
   ```
 
-### **2. Fetch Music Library**
+### 2. Fetch Music Library
 - **Endpoint**: `/tracks`
 - **Method**: `GET`
-- **Description**: Fetches the music library from Wavlake.
+- **Description**: Retrieves the aggregated music library from Wavlake.
 - **Response**:
   ```json
-  {
-    "tracks": [
-      {
-        "artist": "artist_name",
-        "album": "album_title",
-        "title": "track_title",
-        "media_url": "track_url",
-        "track_id": "track_id"
-      }
-    ]
-  }
+  {"tracks":[
+    {"artist":"artist_name","album":"album_title",
+     "title":"track_title","media_url":"track_url",
+     "track_id":"track_id"}
+  ]}
   ```
 
-### **3. Create Event (Admin-Only)**
+### 3. Create Event (Admin Only)
 - **Endpoint**: `/create_event`
 - **Method**: `POST`
-- **Description**: Creates and publishes an event to Nostr relays.
+- **Description**: Publishes a signed Kind=1 (text note) or custom event to relays.
 - **Request Body**:
   ```json
-  {
-    "title": "event_title",
-    "venue": "event_venue",
-    "date": "event_date",
-    "price": "event_price",
-    "description": "event_description",
-    "pubkey": "admin_public_key",
-    "sig": "event_signature"
-  }
+  {"pubkey":"...","sig":"...","kind":1,"created_at":timestamp,
+   "tags":[["title","event_title"],...],"content":"event_description"}
   ```
 - **Response**:
   ```json
-  {
-    "message": "Event created successfully",
-    "event_id": "event_id"
-  }
+  {"message":"Event successfully broadcasted"}
+  ```
+
+### 4. Validate Profile (NIP-05)
+- **Endpoint**: `/validate-profile`
+- **Method**: `POST`
+- **Description**: Confirms a public key’s NIP-05 identifier matches your domain.
+- **Request Body**: `{ "pubkey":"user_pubkey" }`
+- **Response**: `{"status":"valid"}` or `403` error
+
+### 5. Fetch Fuzzed Events
+- **Endpoint**: `/fuzzed_events`
+- **Method**: `GET`
+- **Description**: Retrieves Kind=52 events from verified accounts.
+- **Response**:
+  ```json
+  {"events":[{"id":"...","pubkey":"...",
+               "content":"...","tags":[],"created_at":...},...]} 
+  ```
+
+### 6. Send Encrypted DM (NIP-04)
+- **Endpoint**: `/send_dm`
+- **Method**: `POST`
+- **Description**: Encrypts and sends a direct message as Kind=4.
+- **Request Body**:
+  ```json
+  {"to_pubkey":"...","content":"...",
+   "sender_privkey":"..."}
+  ```
+
+### 7. Send Ticket via DM
+- **Endpoint**: `/send_ticket`
+- **Method**: `POST`
+- **Description**: Encrypts a ticket payload and sends a ticket DM.
+- **Request Body**:
+  ```json
+  {"event_name":"...","recipient_pubkey":"...",
+   "sender_privkey":"...","timestamp":...}
+  ```
+- **Response**:
+  ```json
+  {"status":"sent","event_id":"..."}
   ```
 
 ---
