@@ -8,4 +8,4 @@ msal>=1.22.0
 flask-limiter>=2.0.0
 qrcode==7.4.2
 gunicorn>=20.1.0
-azure-data-tables>=12.7.0
+azure-data-tables>=12.6.0
