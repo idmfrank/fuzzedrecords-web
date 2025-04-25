@@ -3,6 +3,7 @@ import time
 from limits.storage import Storage
 from azure.data.tables import TableServiceClient
 from azure.core.exceptions import ResourceExistsError, AzureError
+from typing import Optional
 """
 Azure Table Storage backend for Flask-Limiter.
 """
@@ -17,7 +18,7 @@ class AzureTableStorage(Storage):
     # Underlying TableServiceClient storage
     def __init__(
         self,
-        uri: str | None = None,
+        uri: Optional[str] = None,
         wrap_exceptions: bool = False,
         **options: str,
     ):
