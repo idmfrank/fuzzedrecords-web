@@ -80,3 +80,25 @@ class AzureTableStorage(Storage):
             self.client.delete_entity(partition_key, row_key)
         except AzureError:
             pass
+
+    # Abstract methods required by limits.storage.Storage
+    # Exceptions to catch during storage operations
+    base_exceptions = (AzureError,)
+
+    def check(self, key: str, limit: int, window) -> bool:
+        """Return True if current count is below limit."""
+        return self.get(key) < limit
+
+    def get_expiry(self, window) -> int:
+        """Convert a window (int or timedelta) to seconds."""
+        import datetime
+        if isinstance(window, datetime.timedelta):
+            return int(window.total_seconds())
+        try:
+            return int(window)
+        except Exception:
+            return 0
+
+    def reset(self) -> None:
+        """Reset all counters. No-op for AzureTableStorage."""
+        pass
