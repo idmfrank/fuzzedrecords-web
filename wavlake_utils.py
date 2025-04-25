@@ -1,10 +1,15 @@
 import logging
 import os
+import time
 import requests
 import json
 from flask import jsonify
 # Timeout for external API calls
 HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "5"))
+
+# Simple in-memory cache for music library
+_track_cache = {'library': None, 'ts': 0}
+TRACK_CACHE_TIMEOUT = int(os.getenv("TRACK_CACHE_TIMEOUT", "300"))
 
 from app import WAVLAKE_API_BASE, error_response
 
@@ -74,10 +79,25 @@ def register_wavlake_routes(app):
     """Register the /tracks endpoint on the app."""
     @app.route('/tracks', methods=['GET'])
     def get_tracks():
+        now = time.time()
+        # Serve from cache if fresh
+        cached = _track_cache.get('library')
+        if cached is not None and now - _track_cache['ts'] <= TRACK_CACHE_TIMEOUT:
+            logger.debug("Returning cached music library")
+            return jsonify({"tracks": cached})
+        # Fetch new library
         try:
             library = build_music_library()
-            logger.info(f"Music Library: {library}")
+            # Update cache
+            _track_cache['library'] = library
+            _track_cache['ts'] = now
+            logger.debug(f"Fetched music library: {library}")
             return jsonify({"tracks": library})
         except Exception as e:
             logger.error(f"Error in get_tracks route: {e}")
-            return error_response(f"Error building library: {e}", 500)
+            # On failure, serve stale cache if available
+            if cached is not None:
+                logger.warning("Serving stale music library due to fetch error")
+                return jsonify({"tracks": cached})
+            # No cache to serve
+            return error_response(f"Error fetching music library: {e}", 503)
