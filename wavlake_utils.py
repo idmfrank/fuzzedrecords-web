@@ -19,13 +19,12 @@ def fetch_artists():
     """Fetch artist data from Wavlake API."""
     try:
         resp = requests.get(f"{WAVLAKE_API_BASE}/artists", timeout=HTTP_TIMEOUT)
-        if resp.ok:
-            return resp.json().get('data', [])
-        logger.error(f"Error fetching artists: {resp.status_code}")
-        return []
+        resp.raise_for_status()
+        return resp.json().get('data', [])
     except Exception as e:
         logger.error(f"Exception in fetch_artists: {e}")
-        return []
+        # Propagate errors to trigger 503 in get_tracks
+        raise
 
 def fetch_albums(artist_id):
     """Fetch albums for a given artist."""
