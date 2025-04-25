@@ -3,24 +3,38 @@ import time
 from limits.storage import Storage
 from azure.data.tables import TableServiceClient
 from azure.core.exceptions import ResourceExistsError, AzureError
+"""
+Azure Table Storage backend for Flask-Limiter.
+"""
 
 class AzureTableStorage(Storage):
+    # Register this storage backend under the "azuretables" scheme
+    STORAGE_SCHEME = "azuretables"
     """
     A Flask-Limiter storage backend using Azure Table Storage.
-    Stores rate limit counters with an expiration timestamp.
+    Registered under the 'azuretables://' scheme.
     """
-    def __init__(self, connection_string: str, table_name: str = None):
-        if not connection_string:
+    # Underlying TableServiceClient storage
+    def __init__(
+        self,
+        uri: str | None = None,
+        wrap_exceptions: bool = False,
+        **options: str,
+    ):
+        # Base Storage init
+        super().__init__(uri, wrap_exceptions, **options)
+        # Acquire connection string and table name
+        conn_str = options.get("connection_string") or os.getenv("AZURE_TABLES_CONNECTION_STRING")
+        if not conn_str:
             raise ValueError("AZURE_TABLES_CONNECTION_STRING must be set to use AzureTableStorage")
-        self.table_name = table_name or os.getenv("RATELIMIT_TABLE_NAME", "RateLimit")
+        table_name = options.get("table_name") or os.getenv("RATELIMIT_TABLE_NAME", "RateLimit")
         # Initialize table client
-        service = TableServiceClient.from_connection_string(connection_string)
-        self.client = service.get_table_client(self.table_name)
+        service = TableServiceClient.from_connection_string(conn_str)
+        self.client = service.get_table_client(table_name)
         # Ensure table exists
         try:
             self.client.create_table()
         except ResourceExistsError:
-            # Table already exists; ignore
             pass
 
     def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
@@ -81,7 +95,6 @@ class AzureTableStorage(Storage):
         except AzureError:
             pass
 
-    # Abstract methods required by limits.storage.Storage
     # Exceptions to catch during storage operations
     base_exceptions = (AzureError,)
 

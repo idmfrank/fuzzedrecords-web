@@ -3,8 +3,11 @@ from flask_restful import Api
 # CORS configuration
 from flask_cors import CORS
 # Rate limiting
+# Rate limiting
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+# Custom storage schemes (register AzureTableStorage)
+import azure_storage_limiter
 # HTTP exception handling
 from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
@@ -17,24 +20,25 @@ app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("MAX_CONTENT_LENGTH", 1048576))
 # Configure CORS origins from environment (comma-separated)
 frontend_origins = [o for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o]
 CORS(app, origins=frontend_origins, supports_credentials=True)
-# Rate limiting (IP-based) with Azure Table Storage or fallback
-from azure_storage_limiter import AzureTableStorage
-
+# Rate limiting (IP-based)
+# Configure Flask-Limiter storage backend via URI and options
+storage_options = {}
 azure_conn = os.getenv("AZURE_TABLES_CONNECTION_STRING")
 if azure_conn:
-    # Use Azure Table Storage for shared rate limit counters
-    az_storage = AzureTableStorage(
-        azure_conn,
-        os.getenv("RATELIMIT_TABLE_NAME", "RateLimit")
-    )
-    limiter = Limiter(key_func=get_remote_address, storage=az_storage)
+    # Use our AzureTableStorage scheme (must set RATELIMIT_STORAGE_URI to 'azuretables://')
+    storage_uri = "azuretables://"
+    storage_options["connection_string"] = azure_conn
+    storage_options["table_name"] = os.getenv("RATELIMIT_TABLE_NAME", "RateLimit")
 else:
-    # Fallback to in-memory or other URI
-    limiter = Limiter(
-        key_func=get_remote_address,
-        storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://")
-    )
-limiter.init_app(app)
+    # Fallback to environment URI or in-memory
+    storage_uri = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+# Initialize limiter with storage settings
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    storage_uri=storage_uri,
+    storage_options=storage_options,
+)
 api = Api(app)
 
 # Configuration
