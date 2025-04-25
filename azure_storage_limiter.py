@@ -1,7 +1,8 @@
 import os
 import time
 from limits.storage import Storage
-from azure.data.tables import TableServiceClient, TableServiceError
+from azure.data.tables import TableServiceClient
+from azure.core.exceptions import ResourceExistsError, AzureError
 
 class AzureTableStorage(Storage):
     """
@@ -18,7 +19,8 @@ class AzureTableStorage(Storage):
         # Ensure table exists
         try:
             self.client.create_table()
-        except TableServiceError:
+        except ResourceExistsError:
+            # Table already exists; ignore
             pass
 
     def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
@@ -32,7 +34,7 @@ class AzureTableStorage(Storage):
             entity = self.client.get_entity(partition_key, row_key)
             count = entity.get("count", 0)
             expire_at = entity.get("expire_at", 0)
-            # Reset if expired
+            # Reset or increment
             if now > expire_at:
                 count = 1
                 expire_at = now + expiry
@@ -43,8 +45,8 @@ class AzureTableStorage(Storage):
             entity["count"] = count
             entity["expire_at"] = expire_at
             self.client.update_entity(entity, mode="MERGE")
-        except TableServiceError:
-            # Not found or other error, create new entity
+        except AzureError:
+            # Entity not found or any error: create new entity
             count = 1
             expire_at = now + expiry
             entity = {
@@ -67,7 +69,7 @@ class AzureTableStorage(Storage):
             if now > expire_at:
                 return 0
             return entity.get("count", 0)
-        except TableServiceError:
+        except AzureError:
             return 0
 
     def clear(self, key: str) -> None:
@@ -76,5 +78,5 @@ class AzureTableStorage(Storage):
         row_key = key
         try:
             self.client.delete_entity(partition_key, row_key)
-        except TableServiceError:
+        except AzureError:
             pass
