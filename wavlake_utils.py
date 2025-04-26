@@ -105,30 +105,24 @@ def register_wavlake_routes(app):
     """Register the /tracks endpoint on the app."""
     @app.route('/tracks', methods=['GET'])
     def get_tracks():
-        """Serve music library: block on initial load, thereafter serve cache and refresh stale data in background."""
+        """Serve cached music library immediately; refresh in background when missing or stale."""
         global _updating
         now = time.time()
         cached = _track_cache.get('library')
-        # Initial load: no cached library yet
-        if cached is None:
-            try:
-                library = build_music_library()
-                _track_cache['library'] = library
-                _track_cache['ts'] = now
-                logger.info(f"Initial music library loaded with {len(library)} tracks")
-                return jsonify({"tracks": library})
-            except Exception as e:
-                logger.error(f"Error in get_tracks initial load: {e}")
-                return error_response(f"Error fetching music library: {e}", 500)
-        # Cache exists: check staleness
-        if now - _track_cache['ts'] > TRACK_CACHE_TIMEOUT:
-            # Trigger background refresh if not already running
+        stale = (cached is None) or (now - _track_cache['ts'] > TRACK_CACHE_TIMEOUT)
+        if stale:
+            # Trigger background update if not already running
             with _update_lock:
                 if not _updating:
                     _updating = True
                     threading.Thread(target=_update_library_background, daemon=True).start()
-            logger.warning("Serving stale music library; background update started")
+        # If no data yet, return empty while update is in progress
+        if cached is None:
+            logger.warning("Cache empty, returning empty library while update is in progress")
+            return jsonify({"tracks": []})
+        # If stale, warn; else debug fresh cache
+        if stale:
+            logger.warning("Serving stale music library while background update is in progress")
         else:
-            logger.debug("Returning fresh music library from cache")
-        # Return cached library (either fresh or stale)
+            logger.debug("Returning cached music library")
         return jsonify({"tracks": cached})
