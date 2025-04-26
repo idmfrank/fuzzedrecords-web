@@ -17,9 +17,13 @@ import logging
 app = Flask(__name__)
 # Limit request payload size (e.g. default 1MB)
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("MAX_CONTENT_LENGTH", 1048576))
-# Configure CORS origins from environment (comma-separated)
-frontend_origins = [o for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o]
-CORS(app, origins=frontend_origins, supports_credentials=True)
+# Configure CORS origins from environment (comma-separated). Fallback to '*' if not set.
+origins_env = os.getenv("FRONTEND_ORIGINS", "").strip()
+if origins_env:
+    origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+else:
+    origins = ["*"]
+CORS(app, origins=origins, supports_credentials=True)
 # Rate limiting (IP-based)
 # Configure Flask-Limiter storage backend via URI and options
 storage_options = {}
