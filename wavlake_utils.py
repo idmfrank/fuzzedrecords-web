@@ -4,6 +4,7 @@ import time
 import requests
 import json
 from flask import jsonify
+import threading
 # Timeout for external API calls
 HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "5"))
 
@@ -14,6 +15,9 @@ TRACK_CACHE_TIMEOUT = int(os.getenv("TRACK_CACHE_TIMEOUT", "300"))
 from app import WAVLAKE_API_BASE, error_response
 
 logger = logging.getLogger(__name__)
+
+_update_lock = threading.Lock()
+_updating = False
 
 def fetch_artists():
     """Fetch artist data from Wavlake API."""
@@ -73,30 +77,44 @@ def build_music_library():
                     'track_id': track.get('id', '')
                 })
     return library
+ 
+def _update_library_background():
+    """Background thread target to refresh the music library cache."""
+    global _updating
+    try:
+        library = build_music_library()
+        _track_cache['library'] = library
+        _track_cache['ts'] = time.time()
+        logger.debug("Background music library update complete")
+    except Exception as e:
+        logger.error(f"Exception during background music library update: {e}")
+    finally:
+        with _update_lock:
+            _updating = False
 
 def register_wavlake_routes(app):
     """Register the /tracks endpoint on the app."""
     @app.route('/tracks', methods=['GET'])
     def get_tracks():
+        """Serve cached music library immediately; refresh in background when stale or empty."""
+        global _updating
         now = time.time()
-        # Serve from cache if fresh
         cached = _track_cache.get('library')
-        if cached is not None and now - _track_cache['ts'] <= TRACK_CACHE_TIMEOUT:
+        # Check if cache is missing or stale
+        stale = (cached is None) or (now - _track_cache['ts'] > TRACK_CACHE_TIMEOUT)
+        if stale:
+            # Trigger background refresh if not already running
+            with _update_lock:
+                if not _updating:
+                    _updating = True
+                    threading.Thread(target=_update_library_background, daemon=True).start()
+        # If no cache yet, return empty list
+        if cached is None:
+            logger.warning("Cache empty, returning empty library while update is in progress")
+            return jsonify({"tracks": []})
+        # Return cached library (fresh or stale)
+        if now - _track_cache['ts'] > TRACK_CACHE_TIMEOUT:
+            logger.debug("Returning stale music library while background update is in progress")
+        else:
             logger.debug("Returning cached music library")
-            return jsonify({"tracks": cached})
-        # Fetch new library
-        try:
-            library = build_music_library()
-            # Update cache
-            _track_cache['library'] = library
-            _track_cache['ts'] = now
-            logger.debug(f"Fetched music library: {library}")
-            return jsonify({"tracks": library})
-        except Exception as e:
-            logger.error(f"Error in get_tracks route: {e}")
-            # On failure, serve stale cache if available
-            if cached is not None:
-                logger.warning("Serving stale music library due to fetch error")
-                return jsonify({"tracks": cached})
-            # No cache to serve
-            return error_response(f"Error fetching music library: {e}", 503)
+        return jsonify({"tracks": cached})
