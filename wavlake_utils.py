@@ -12,7 +12,7 @@ HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "5"))
 _track_cache = {'library': None, 'ts': 0}
 TRACK_CACHE_TIMEOUT = int(os.getenv("TRACK_CACHE_TIMEOUT", "300"))
 
-from app import WAVLAKE_API_BASE, error_response
+from app import WAVLAKE_API_BASE, error_response, SEARCH_TERM
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +20,23 @@ _update_lock = threading.Lock()
 _updating = False
 
 def fetch_artists():
-    """Fetch artist data from Wavlake API."""
+    """Fetch artist data from Wavlake API via search term."""
     try:
-        resp = requests.get(f"{WAVLAKE_API_BASE}/artists", timeout=HTTP_TIMEOUT)
+        resp = requests.get(
+            f"{WAVLAKE_API_BASE}/content/search",
+            params={"term": SEARCH_TERM},
+            headers={"accept": "application/json"},
+            timeout=HTTP_TIMEOUT
+        )
         resp.raise_for_status()
-        return resp.json().get('data', [])
+        data = resp.json()
+        # Expecting a list of artists or a dict with 'data'
+        if isinstance(data, list):
+            return [artist for artist in data if artist.get('id')]
+        return data.get('data', [])
     except Exception as e:
         logger.error(f"Exception in fetch_artists: {e}")
-        # Propagate errors to trigger 503 in get_tracks
+        # Propagate errors to trigger failure handling
         raise
 
 def fetch_albums(artist_id):
