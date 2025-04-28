@@ -24,29 +24,39 @@ def require_nip05_verification(required_domain):
 
 async def fetch_profile():
     data = request.json or {}
+    logger.debug("fetch_profile called with data: %s", data)
     pubkey_hex = data.get('pubkey')
     if not pubkey_hex:
+        logger.warning("fetch_profile missing pubkey in request: %s", data)
         return error_response("Missing pubkey", 400)
     cached = get_cached_item(pubkey_hex)
     if cached:
+        logger.debug("Returning cached profile for pubkey %s", pubkey_hex)
         return jsonify(cached)
     mgr = initialize_client()
+    logger.debug("Initializing RelayManager for profile fetch of %s", pubkey_hex)
     filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
     mgr.add_subscription_on_all_relays(f"fetch_{pubkey_hex}", filt)
-    await asyncio.sleep(1)
+    logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
+    await asyncio.sleep(2)
     profile_data = {}
     for msg in mgr.message_pool.get_all_events():
         ev = msg.event
+        logger.debug("fetch_profile received event: %s", ev)
         try:
             content = json.loads(ev.content)
-        except:
+        except Exception as e:
+            logger.error("Error parsing event content: %s", e)
             continue
-        profile_data = {"id":ev.id, "pubkey":ev.pubkey, "content":content}
+        profile_data = {"id": ev.id, "pubkey": ev.pubkey, "content": content}
+        logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
         break
     mgr.close_connections()
     if profile_data:
         set_cached_item(pubkey_hex, profile_data)
+        logger.debug("Caching profile for %s", pubkey_hex)
         return jsonify(profile_data)
+    logger.warning("No profile found for pubkey %s after fetch", pubkey_hex)
     return error_response("Profile not found", 404)
 
 async def fetch_and_validate_profile(pubkey, required_domain):
