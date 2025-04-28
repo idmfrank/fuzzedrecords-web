@@ -35,12 +35,13 @@ async def fetch_profile():
         return jsonify(cached)
     mgr = initialize_client()
     logger.debug("Initializing RelayManager for profile fetch of %s", pubkey_hex)
-    # Connect to relays before subscribing
+    # Asynchronously connect to relays
     try:
-        mgr.run_sync()
-        logger.debug("RelayManager connections opened")
+        logger.debug("Preparing relay connections via prepare_relays()")
+        await mgr.prepare_relays()
+        logger.debug("RelayManager connections prepared")
     except Exception as e:
-        logger.error("Error opening relay connections: %s", e)
+        logger.error("Error preparing relay connections: %s", e)
     filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
     mgr.add_subscription_on_all_relays(f"fetch_{pubkey_hex}", filt)
     logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
