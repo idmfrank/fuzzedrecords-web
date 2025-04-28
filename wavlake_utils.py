@@ -88,11 +88,14 @@ def build_music_library():
                 continue
             tracks = fetch_tracks(album_id)
             for track in tracks:
+                # Extract artist name without the search-term suffix
+                artist_full = track.get('artist', '')
+                artist_name = artist_full.replace(SEARCH_TERM, '')
                 library.append({
-                    'artist': track.get('artist_name', ''),
-                    'album': track.get('album_title', ''),
+                    'artist': artist_name,
+                    'album': track.get('albumTitle', ''),
                     'title': track.get('title', ''),
-                    'media_url': track.get('media_url', ''),
+                    'media_url': track.get('mediaUrl', ''),
                     'track_id': track.get('id', '')
                 })
     return library
