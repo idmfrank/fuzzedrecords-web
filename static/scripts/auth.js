@@ -9,6 +9,7 @@ let userProfile = null;
 export function displayProfile(profileData) {
   const profileContainer = document.getElementById('profile-container');
   profileContainer.innerHTML = '';
+  const { pubkey } = profileData;
   const content = profileData.content || {};
   if (content.picture) {
     const img = document.createElement('img');
@@ -19,7 +20,9 @@ export function displayProfile(profileData) {
   }
   const detailsTable = document.createElement('table');
   detailsTable.classList.add('profile-details');
+  // Always show pubkey; then any other profile details
   const details = [
+    { label: 'Pubkey', value: pubkey },
     { label: 'Username', value: content.name },
     { label: 'NIP-05', value: content.nip05 },
     { label: 'LUD-16', value: content.lud16 },
@@ -63,7 +66,12 @@ export async function authenticateWithNostr() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pubkey })
     });
-    const profileData = await response.json();
+    let profileData = await response.json();
+    // If error or not ok, fallback to showing pubkey only
+    if (!response.ok || profileData.error) {
+      console.warn('fetch-profile error:', profileData.error);
+      profileData = { pubkey };
+    }
     userProfile = profileData;
     displayProfile(profileData);
   } catch (err) {
