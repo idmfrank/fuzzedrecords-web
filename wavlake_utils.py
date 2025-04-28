@@ -41,24 +41,34 @@ def fetch_artists():
 
 def fetch_albums(artist_id):
     """Fetch albums for a given artist."""
+    """Fetch albums for a given artist via content endpoint."""
     try:
-        resp = requests.get(f"{WAVLAKE_API_BASE}/artists/{artist_id}/albums", timeout=HTTP_TIMEOUT)
-        if resp.ok:
-            return resp.json().get('data', [])
-        logger.error(f"Error fetching albums for {artist_id}: {resp.status_code}")
-        return []
+        resp = requests.get(
+            f"{WAVLAKE_API_BASE}/content/artist/{artist_id}",
+            headers={"accept": "application/json"},
+            timeout=HTTP_TIMEOUT
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        albums = data.get('albums', [])
+        return [album for album in albums if album.get('id')]
     except Exception as e:
         logger.error(f"Exception in fetch_albums: {e}")
         return []
 
 def fetch_tracks(album_id):
     """Fetch tracks for a given album."""
+    """Fetch tracks for a given album via content endpoint."""
     try:
-        resp = requests.get(f"{WAVLAKE_API_BASE}/albums/{album_id}/tracks", timeout=HTTP_TIMEOUT)
-        if resp.ok:
-            return resp.json().get('data', [])
-        logger.error(f"Error fetching tracks for {album_id}: {resp.status_code}")
-        return []
+        resp = requests.get(
+            f"{WAVLAKE_API_BASE}/content/album/{album_id}",
+            headers={"accept": "application/json"},
+            timeout=HTTP_TIMEOUT
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        tracks = data.get('tracks', [])
+        return [track for track in tracks if track.get('id')]
     except Exception as e:
         logger.error(f"Exception in fetch_tracks: {e}")
         return []
