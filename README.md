@@ -54,7 +54,10 @@ Set the following environment variables to configure the application:
 - RELAY_URLS: Comma-separated list of Nostr relay URLs (default: wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub)
 - CACHE_TIMEOUT: Seconds to cache fetched user profiles (default: 300)
 - REQUIRED_DOMAIN: Domain for NIP-05 profile verification (default: fuzzedrecords.com)
-- WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://api.wavlake.com/api/v1)
+ - WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
+ - HTTP_TIMEOUT: Timeout in seconds for each Wavlake API request (default: 5)
+ - TRACK_CACHE_TIMEOUT: Seconds to cache the music library before background refresh (default: 300)
+ - SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
@@ -164,6 +167,11 @@ fuzzedrecords/
 - **Endpoint**: `/tracks`
 - **Method**: `GET`
 - **Description**: Retrieves the aggregated music library from Wavlake.
+  - Uses `SEARCH_TERM` to filter artists (default: " by Fuzzed Records").
+  - The first request returns an empty list and starts a background fetch of data.
+  - Subsequent requests return cached data immediately (fresh or stale).
+  - Cache time-to-live is controlled by `TRACK_CACHE_TIMEOUT` (default: 300 seconds).
+  - HTTP timeouts use `HTTP_TIMEOUT` (default: 5 seconds) to avoid long hangs.
 - **Response**:
   ```json
   {"tracks":[
