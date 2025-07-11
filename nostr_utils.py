@@ -68,7 +68,11 @@ async def fetch_profile():
 
 async def fetch_and_validate_profile(pubkey, required_domain):
     mgr = initialize_client()
-    filt = FiltersList([Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)])
+    # Establish WebSocket connections before subscribing
+    await mgr.prepare_relays()
+    filt = FiltersList([
+        Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)
+    ])
     mgr.add_subscription_on_all_relays(f"val_{pubkey}", filt)
     await asyncio.sleep(1)
     profile_data = {}
