@@ -4,6 +4,7 @@ from app import app, error_response, get_cached_item, set_cached_item, initializ
 from pynostr.event import Event, EventKind
 from pynostr.filters import Filters, FiltersList
 from pynostr.key import PrivateKey
+from pynostr.encrypted_dm import EncryptedDirectMessage
 
 def require_nip05_verification(required_domain):
     from functools import wraps
