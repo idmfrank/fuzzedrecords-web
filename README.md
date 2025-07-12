@@ -68,7 +68,7 @@ Set the following environment variables to configure the application:
 ## File Structure
 
 ```
-fuzzedrecords-web/
+./
 ├── app.py                    # Top-level Flask router (imports modular routes)
 ├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
 ├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile, events
