@@ -33,8 +33,11 @@ jobs:
           source antenv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-        
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+
+      - name: Run tests
+        run: |
+          source antenv/bin/activate
+          pytest
       
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
