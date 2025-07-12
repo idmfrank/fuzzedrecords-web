@@ -3,8 +3,26 @@ from io import BytesIO
 import qrcode
 from flask import request, jsonify
 
-from app import initialize_client, error_response, logger, limiter
+# These imports create circular dependencies when this module is imported
+# during testing. Import them lazily inside the functions that require them.
+from flask import current_app
+
+initialize_client = None
+error_response = None
+logger = None
+limiter = None
 from pynostr.encrypted_dm import EncryptedDirectMessage
+
+
+def _load_app_dependencies():
+    """Lazy import objects from app to avoid circular imports during testing."""
+    global initialize_client, error_response, logger, limiter
+    if initialize_client is None:
+        from app import initialize_client as ic, error_response as er, logger as lg, limiter as lm
+        initialize_client = ic
+        error_response = er
+        logger = lg
+        limiter = lm
 
 def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
     ts = timestamp if timestamp is not None else int(time.time())
@@ -19,6 +37,7 @@ def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
 def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
                       sender_privkey_hex: str, timestamp: int = None) -> str:
     # Generate payload (QR image is not needed for DM)
+    _load_app_dependencies()
     payload_str, _ = generate_ticket(event_name, recipient_pubkey_hex, timestamp)
     dm = EncryptedDirectMessage()
     dm.encrypt(private_key_hex=sender_privkey_hex,
@@ -32,6 +51,7 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     return ev.id
 
 def register_ticket_routes(app):
+    _load_app_dependencies()
     @app.route('/send_ticket', methods=['POST'])
     @limiter.limit("10 per minute")
     async def send_ticket_endpoint():
