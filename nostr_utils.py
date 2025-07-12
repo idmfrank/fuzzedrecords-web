@@ -3,8 +3,8 @@ from flask import request, jsonify
 from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN
 from pynostr.event import Event, EventKind
 from pynostr.filters import Filters, FiltersList
-from pynostr.key import PrivateKey
 from pynostr.encrypted_dm import EncryptedDirectMessage
+from pynostr.key import PrivateKey
 
 def require_nip05_verification(required_domain):
     from functools import wraps
