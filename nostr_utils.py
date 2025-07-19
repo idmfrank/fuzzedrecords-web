@@ -46,7 +46,7 @@ async def fetch_profile():
     filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
     mgr.add_subscription_on_all_relays(f"fetch_{pubkey_hex}", filt)
     logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
-    await asyncio.sleep(60)
+    await asyncio.sleep(5)
     profile_data = {}
     for msg in mgr.message_pool.get_all_events():
         ev = msg.event
