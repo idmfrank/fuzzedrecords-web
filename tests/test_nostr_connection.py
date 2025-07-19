@@ -3,7 +3,6 @@ import json
 import websockets
 
 async def try_connect(url="wss://relay.damus.io"):
-main
     try:
         async with websockets.connect(url, open_timeout=5):
             print("connected")
