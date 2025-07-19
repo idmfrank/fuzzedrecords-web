@@ -43,6 +43,11 @@ async def fetch_profile():
         logger.debug("RelayManager connections prepared")
     except Exception as e:
         logger.error("Error preparing relay connections: %s", e)
+
+    statuses = getattr(mgr, "connection_statuses", {})
+    if statuses and not any(statuses.values()):
+        logger.error("Unable to connect to any Nostr relays: %s", statuses)
+        return error_response("Unable to connect to Nostr relays", 503)
     filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
     mgr.add_subscription_on_all_relays(f"fetch_{pubkey_hex}", filt)
     logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
