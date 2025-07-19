@@ -3,7 +3,7 @@ import json
 import websockets
 
 async def try_connect(url="wss://relay.damus.io"):
-    """Open a WebSocket connection to the given relay."""
+main
     try:
         async with websockets.connect(url, open_timeout=5):
             print("connected")
@@ -11,7 +11,6 @@ async def try_connect(url="wss://relay.damus.io"):
     except Exception as e:
         print(e)
         return False
-
 
 async def fetch_profile(pubkey: str, url: str = "wss://relay.damus.io"):
     """Fetch a Nostr metadata event for ``pubkey`` from ``url``."""
@@ -37,11 +36,8 @@ async def fetch_profile(pubkey: str, url: str = "wss://relay.damus.io"):
 def test_nostr_relay_connection():
     assert isinstance(asyncio.run(try_connect()), bool)
 
-
 def test_fetch_profile():
     pubkey = "00202dff6f2ab427ff6741817de6f61a5a15f57e62ae77d12b209590de32ad2f038b"
     profile = asyncio.run(fetch_profile(pubkey))
     # The relay may not have the profile cached, but if it does, it should be a dict
     assert profile is None or isinstance(profile, dict)
-
-
