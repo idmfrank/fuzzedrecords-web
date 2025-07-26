@@ -192,13 +192,13 @@ footer {
 /* Intro and gear styling */
 #intro-section {
     padding: 20px;
-}
-.gear-logo {
-    max-width: 200px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    max-width: 500px;
     width: 80%;
-    height: auto;
-    margin: 10px auto;
-    display: block;
+    margin: 20px auto;
+    background: #f9f9f9;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 }
 .gear-photo {
     max-width: 300px;
