@@ -25,6 +25,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
+- **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
 
 ---
 
