@@ -111,4 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     showSection('profile');
   });
+
+  // Allow linking directly to a section via URL hash (e.g., /#gear)
+  const hash = window.location.hash.replace('#', '');
+  const sections = ['library', 'profile', 'events', 'admin', 'gear'];
+  if (sections.includes(hash)) {
+    showSection(hash);
+  }
 });
