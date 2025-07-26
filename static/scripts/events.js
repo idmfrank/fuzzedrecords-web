@@ -5,11 +5,15 @@ import { showSection, getTagValue } from './utils.js';
 // Fetch and display fuzzed events
 export async function fetchFuzzedEvents() {
   const container = document.getElementById('events-section-content');
+  const registerBtn = document.getElementById('register-btn');
   container.innerHTML = '';
   try {
     const response = await fetch('/fuzzed_events');
     const data = await response.json();
     if (data.events && data.events.length > 0) {
+      if (registerBtn && localStorage.getItem('pubkey')) {
+        registerBtn.style.display = 'inline-block';
+      }
       data.events.forEach(ev => {
         const el = document.createElement('div');
         el.classList.add('event-item');
@@ -24,10 +28,12 @@ export async function fetchFuzzedEvents() {
         container.appendChild(el);
       });
     } else {
+      if (registerBtn) registerBtn.style.display = 'none';
       container.innerHTML = '<p>No events available.</p>';
     }
   } catch (err) {
     console.error('Error fetching events:', err);
+    if (registerBtn) registerBtn.style.display = 'none';
     container.innerHTML = '<p>Error loading events.</p>';
   }
 }

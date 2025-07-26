@@ -5,6 +5,20 @@ import { showSection } from './utils.js';
 // Global profile state
 let userProfile = null;
 
+async function validateProfile(pubkey) {
+  try {
+    const resp = await fetch('/validate-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pubkey })
+    });
+    return resp.ok;
+  } catch (err) {
+    console.error('Validation error:', err);
+    return false;
+  }
+}
+
 // Display user profile details
 export function displayProfile(profileData) {
   const profileContainer = document.getElementById('profile-container');
@@ -74,6 +88,11 @@ export async function authenticateWithNostr() {
     }
     userProfile = profileData;
     displayProfile(profileData);
+    const valid = await validateProfile(pubkey);
+    const introEl = document.getElementById('intro-section');
+    if (introEl) {
+      introEl.style.display = valid ? 'none' : 'block';
+    }
   } catch (err) {
     console.error('Authentication error:', err);
   }
@@ -83,18 +102,8 @@ export async function authenticateWithNostr() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('menu-library')
     .addEventListener('click', () => showSection('library'));
-  document.getElementById('menu-profile')
-    .addEventListener('click', async () => {
-      const btn = document.getElementById('menu-profile');
-      btn.textContent = 'Signing in...';
-      await authenticateWithNostr();
-      btn.textContent = 'Profile';
-      document.getElementById('menu-events').style.display = 'inline-block';
-      showSection('profile');
-    });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('menu-gear')
+    .addEventListener('click', () => showSection('gear'));
   const menuProfile = document.getElementById('menu-profile');
   menuProfile.addEventListener('click', async () => {
     if (!menuProfile.dataset.loggedIn) {
@@ -102,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await authenticateWithNostr();
       menuProfile.textContent = 'Profile';
       document.getElementById('menu-events').style.display = 'inline-block';
+      menuProfile.dataset.loggedIn = 'true';
     }
     showSection('profile');
   });

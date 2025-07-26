@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, send_from_directory, redirect
 from flask_restful import Api
 # CORS configuration
 from flask_cors import CORS
@@ -121,6 +121,10 @@ register_ticket_routes(app)
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/', subdomain='fuzzedguitars')
+def guitars_redirect():
+    return redirect('https://fuzzedrecords.com/#gear', code=301)
     
 # Health check for uptime probes (e.g. random /robotsXYZ.txt)
 @app.route('/robots<filename>.txt')
