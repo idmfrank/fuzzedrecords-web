@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, send_from_directory, redirect
+from flask import Flask, jsonify, render_template, send_from_directory, redirect, request
 from flask_restful import Api
 # CORS configuration
 from flask_cors import CORS
@@ -8,6 +8,15 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 # Custom storage schemes (register AzureTableStorage)
 import azure_storage_limiter
+# NIP-19 decoding helpers
+try:
+    from pynostr.utils import nprofile_decode, nprofile_encode
+except Exception:  # pragma: no cover - fallback if module missing
+    def nprofile_decode(value):
+        raise NotImplementedError("nprofile decode not available")
+
+    def nprofile_encode(pubkey, relays):
+        raise NotImplementedError("nprofile encode not available")
 # HTTP exception handling
 from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
@@ -90,6 +99,37 @@ def initialize_client():
     for url in RELAY_URLS:
         mgr.add_relay(url)
     return mgr
+
+# Helper to fetch a profile event (kind 0) by pubkey from given relays
+def fetch_profile_by_pubkey(pubkey, relays):
+    from pynostr.relay_manager import RelayManager
+    from pynostr.message_type import ClientMessageType
+    from pynostr.filter import Filter
+    import time
+    import json
+
+    manager = RelayManager()
+    for r in relays:
+        manager.add_relay(r)
+    manager.open_connections({"cert_reqs": 0})
+    time.sleep(1.25)
+
+    sub_id = "profile_sub"
+    filt = Filter(authors=[pubkey], kinds=[0])
+    req = json.dumps([ClientMessageType.REQUEST, sub_id, filt.to_json()])
+    manager.publish_message_to_all(req)
+    time.sleep(2)
+
+    metadata = None
+    for event in manager.message_pool.get_events():
+        try:
+            metadata = json.loads(event.content)
+            break
+        except Exception:
+            continue
+
+    manager.close_connections()
+    return metadata
  
 # Centralized error handlers
 @app.errorhandler(RequestEntityTooLarge)
@@ -139,6 +179,35 @@ def favicon():
         'favicon.ico',
         mimetype='image/vnd.microsoft.icon'
     )
+
+
+# Endpoint to fetch metadata by nprofile (NIP-19)
+@app.route('/fetch-nprofile', methods=['POST'])
+def fetch_nprofile():
+    data = request.get_json()
+    nprofile = data.get('nprofile') if data else None
+
+    if not nprofile:
+        return jsonify({'error': 'Missing nprofile'}), 400
+
+    try:
+        pubkey, relays = nprofile_decode(nprofile)
+        if not pubkey:
+            return jsonify({'error': 'Invalid nprofile'}), 400
+
+        if not relays:
+            relays = [
+                'wss://relay.damus.io',
+                'wss://nos.lol',
+                'wss://relay.nostr.band'
+            ]
+
+        metadata = fetch_profile_by_pubkey(pubkey, relays)
+
+        return jsonify({'pubkey': pubkey, 'metadata': metadata})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
