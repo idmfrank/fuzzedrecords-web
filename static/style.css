@@ -196,9 +196,8 @@ footer {
     font-size: 14px;
 }
 
-/* Intro and gear styling */
-#intro-section {
-    padding: 20px;
+/* Gear section styling */
+#gear-section {
     border: 1px solid #ddd;
     border-radius: 5px;
     max-width: 500px;
