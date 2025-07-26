@@ -88,11 +88,7 @@ export async function authenticateWithNostr() {
     }
     userProfile = profileData;
     displayProfile(profileData);
-    const valid = await validateProfile(pubkey);
-    const introEl = document.getElementById('intro-section');
-    if (introEl) {
-      introEl.style.display = valid ? 'none' : 'block';
-    }
+    await validateProfile(pubkey);
   } catch (err) {
     console.error('Authentication error:', err);
   }
