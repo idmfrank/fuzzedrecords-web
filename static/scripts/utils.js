@@ -8,6 +8,14 @@ export function showSection(section) {
     if (el) el.classList.toggle('active', sec === section);
     if (btn) btn.classList.toggle('active', sec === section);
   });
+  const logo = document.getElementById('header-logo');
+  if (logo) {
+    if (section === 'gear') {
+      logo.src = '/static/images/fuzzed-guitars-logo.jfif';
+    } else {
+      logo.src = '/static/images/fuzzedrecords.png';
+    }
+  }
 }
 
 // Extract single-letter tag value from event tags
