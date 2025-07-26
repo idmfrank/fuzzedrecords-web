@@ -1,6 +1,11 @@
 import os, json, time, asyncio, logging
 from flask import request, jsonify
-from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN
+from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN, RELAY_URLS
+try:
+    from pynostr.utils import nprofile_encode
+except Exception:  # pragma: no cover - fallback if module missing
+    def nprofile_encode(pubkey, relays):
+        return None
 from pynostr.event import Event, EventKind
 from pynostr.filters import Filters, FiltersList
 from pynostr.encrypted_dm import EncryptedDirectMessage
@@ -34,6 +39,12 @@ async def fetch_profile():
     if cached:
         logger.debug("Returning cached profile for pubkey %s", pubkey_hex)
         return jsonify(cached)
+
+    nprof = None
+    try:
+        nprof = nprofile_encode(pubkey_hex, RELAY_URLS)
+    except Exception as e:
+        logger.warning("nprofile encode failed: %s", e)
     mgr = initialize_client()
     logger.debug("Initializing RelayManager for profile fetch of %s", pubkey_hex)
     # Asynchronously connect to relays
@@ -62,10 +73,14 @@ async def fetch_profile():
             logger.error("Error parsing event content: %s", e)
             continue
         profile_data = {"id": ev.id, "pubkey": ev.pubkey, "content": content}
+        if nprof:
+            profile_data["nprofile"] = nprof
         logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
         break
     mgr.close_connections()
     if profile_data:
+        if nprof and "nprofile" not in profile_data:
+            profile_data["nprofile"] = nprof
         set_cached_item(pubkey_hex, profile_data)
         logger.debug("Caching profile for %s", pubkey_hex)
         return jsonify(profile_data)

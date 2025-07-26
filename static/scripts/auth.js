@@ -34,8 +34,9 @@ export function displayProfile(profileData) {
   }
   const detailsTable = document.createElement('table');
   detailsTable.classList.add('profile-details');
-  // Always show pubkey; then any other profile details
+  // Always show nprofile and pubkey; then any other profile details
   const details = [
+    { label: 'Nprofile', value: profileData.nprofile },
     { label: 'Pubkey', value: pubkey },
     { label: 'Username', value: content.name },
     { label: 'NIP-05', value: content.nip05 },

@@ -8,6 +8,16 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 # Custom storage schemes (register AzureTableStorage)
 import azure_storage_limiter
+
+# NIP-19 decoding helpers
+try:
+    from pynostr.utils import nprofile_decode, nprofile_encode
+except Exception:  # pragma: no cover - fallback if module missing
+    def nprofile_decode(value):
+        raise NotImplementedError("nprofile decode not available")
+
+    def nprofile_encode(pubkey, relays):
+        raise NotImplementedError("nprofile encode not available")
 # NIP-19 decoding
 try:
     from pynostr.nip19 import decode as nip19_decode
@@ -188,6 +198,16 @@ def fetch_nprofile():
         return jsonify({'error': 'Missing nprofile'}), 400
 
     try:
+        pubkey, relays = nprofile_decode(nprofile)
+        if not pubkey:
+            return jsonify({'error': 'Invalid nprofile'}), 400
+
+        if not relays:
+            relays = [
+                'wss://relay.damus.io',
+                'wss://nos.lol',
+                'wss://relay.nostr.band'
+            ]
         type_, nprofile_data = nip19_decode(nprofile)
         if type_ != 'nprofile':
             return jsonify({'error': 'Invalid nprofile type'}), 400
