@@ -25,6 +25,8 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
+- **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend.
+- **CORS Configuration**: Allowed origins can be customized via environment variable.
 - **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
 
 ---
@@ -55,14 +57,20 @@ Set the following environment variables to configure the application:
 - RELAY_URLS: Comma-separated list of Nostr relay URLs (default: wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub)
 - CACHE_TIMEOUT: Seconds to cache fetched user profiles (default: 300)
 - REQUIRED_DOMAIN: Domain for NIP-05 profile verification (default: fuzzedrecords.com)
- - WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
- - HTTP_TIMEOUT: Timeout in seconds for each Wavlake API request (default: 5)
- - TRACK_CACHE_TIMEOUT: Seconds to cache the music library before background refresh (default: 300)
- - SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
+- MAX_CONTENT_LENGTH: Max request payload size in bytes (default: 1048576)
+- FRONTEND_ORIGINS: Comma-separated list of allowed CORS origins (default: '*')
+- AZURE_TABLES_CONNECTION_STRING: Azure connection string for rate-limit storage
+- RATELIMIT_TABLE_NAME: Azure table name for rate-limit counters (default: RateLimit)
+- RATELIMIT_STORAGE_URI: Alternate limiter storage URI (default: memory://)
+- WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
+- HTTP_TIMEOUT: Timeout in seconds for each Wavlake API request (default: 5)
+- TRACK_CACHE_TIMEOUT: Seconds to cache the music library before background refresh (default: 300)
+- SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
 - (Optional) LOG_LEVEL: Python log level for application logging (default: DEBUG)
+- (Optional) FLASK_DEBUG: Set to 1 or true for debug mode when running locally
 
 ---
 
@@ -72,6 +80,7 @@ Set the following environment variables to configure the application:
 ./
 ├── app.py                    # Top-level Flask router (imports modular routes)
 ├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
+├── azure_storage_limiter.py  # Azure Table Storage backend for rate limiting
 ├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile, events
 ├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
 ├── ticket_utils.py           # Ticket generation & /send_ticket endpoint
@@ -118,13 +127,16 @@ Set the following environment variables to configure the application:
    pip install -r requirements.txt
    ```
    > **Note**: `static/style.css` is committed; no Sass/SCSS compilation is required.
-
-4. **Run the Application Locally**:
+4. **Run Tests**:
+   ```bash
+   pytest
+   ```
+   All tests should pass before deployment.
+5. **Run the Application Locally**:
    ```bash
    python app.py
    ```
-
-5. **Deploy to Azure**:
+6. **Deploy to Azure**:
    - Ensure `startup.sh` is executable:
      ```bash
      chmod +x startup.sh
