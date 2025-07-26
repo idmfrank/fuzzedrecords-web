@@ -18,12 +18,34 @@ except Exception:  # pragma: no cover - fallback if module missing
 
     def nprofile_encode(pubkey, relays):
         raise NotImplementedError("nprofile encode not available")
-# NIP-19 decoding
+# NIP-19 decoding (optional depending on pynostr version)
 try:
     from pynostr.nip19 import decode as nip19_decode
-except Exception:  # pragma: no cover - fallback if module missing
-    def nip19_decode(value):
-        raise NotImplementedError("nip19 decode not available")
+except Exception:  # pragma: no cover - older versions lack this module
+    from pynostr import bech32
+
+    def nip19_decode(nprofile: str):
+        hrp, data, _ = bech32.bech32_decode(nprofile)
+        if hrp != "nprofile" or data is None:
+            raise ValueError("Invalid nprofile")
+        from pynostr.bech32 import convertbits
+        decoded = convertbits(data, 5, 8, False)
+        if decoded is None:
+            raise ValueError("Invalid nprofile data")
+        b = bytes(decoded)
+        pubkey = None
+        relays = []
+        i = 0
+        while i < len(b):
+            t = b[i]
+            l = b[i + 1]
+            v = b[i + 2 : i + 2 + l]
+            if t == 0:
+                pubkey = v.hex()
+            elif t == 1:
+                relays.append(v.decode())
+            i += 2 + l
+        return "nprofile", {"pubkey": pubkey, "relays": relays}
 # HTTP exception handling
 from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
@@ -198,26 +220,17 @@ def fetch_nprofile():
         return jsonify({'error': 'Missing nprofile'}), 400
 
     try:
-        pubkey, relays = nprofile_decode(nprofile)
-        if not pubkey:
-            return jsonify({'error': 'Invalid nprofile'}), 400
-
-        if not relays:
-            relays = [
-                'wss://relay.damus.io',
-                'wss://nos.lol',
-                'wss://relay.nostr.band'
-            ]
-        type_, nprofile_data = nip19_decode(nprofile)
-        if type_ != 'nprofile':
-            return jsonify({'error': 'Invalid nprofile type'}), 400
-
-        pubkey = nprofile_data['pubkey']
-        relays = nprofile_data.get('relays', [
+        default_relays = [
             'wss://relay.damus.io',
             'wss://nos.lol',
             'wss://relay.nostr.band'
-        ])
+        ]
+
+        type_, data = nip19_decode(nprofile)
+        if type_ != 'nprofile':
+            return jsonify({'error': 'Invalid nprofile type'}), 400
+        pubkey = data['pubkey']
+        relays = data.get('relays', default_relays)
 
         metadata = fetch_profile_by_pubkey(pubkey, relays)
 
