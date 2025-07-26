@@ -84,8 +84,14 @@ export async function createEvent(e) {
 document.addEventListener('DOMContentLoaded', () => {
   const btnEvents = document.getElementById('menu-events');
   const btnAdmin = document.getElementById('menu-admin');
-  btnEvents?.addEventListener('click', () => showSection('events'));
+  btnEvents?.addEventListener('click', () => {
+    if (localStorage.getItem('pubkey')) {
+      fetchFuzzedEvents();
+      showSection('events');
+    } else {
+      alert('Please sign in with Nostr to view events.');
+    }
+  });
   btnAdmin?.addEventListener('click', () => showSection('admin'));
-  fetchFuzzedEvents();
   document.getElementById('event-form')?.addEventListener('submit', createEvent);
 });
