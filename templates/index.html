@@ -16,6 +16,7 @@
 
     <nav class="menu">
         <button id="menu-library" class="nav-btn active">Library</button>
+        <button id="menu-gear" class="nav-btn">Gear</button>
         <!-- Profile button is always visible so the user can trigger login -->
         <button id="menu-profile" class="nav-btn">Nostr Login</button>
         <!-- Events and Admin remain hidden until authentication -->
@@ -24,6 +25,11 @@
     </nav>
 
     <main>
+        <section id="intro-section" class="content-section">
+            <p class="intro-welcome">Welcome to Fuzzed Records!</p>
+            <p class="intro-text">Fuzzed Records is a Nostr-enabled independent label and gear lab. Explore identity, music, and experiments in analog and digital sound.</p>
+        </section>
+
         <section id="library-section" class="content-section active">
             <h2>
                 Songs in our Library at:
@@ -35,6 +41,20 @@
             <div id="songs-section">
                 <p>Loading songs...</p>
             </div>
+        </section>
+
+        <section id="gear-section" class="content-section">
+            <h2>Fuzzed Guitars</h2>
+            <img src="/static/images/fuzzed-guitars-logo.jfif" alt="Fuzzed Guitars Logo" class="gear-logo">
+            <p>Boutique gear crafted for experimental sound.</p>
+            <img src="/static/images/lasered-fuzzed-guitars.jfif" alt="Fuzzed Guitars" class="gear-photo">
+            <p class="coming-soon">Guitar and pedal prototypes coming soon.</p>
+        </section>
+
+        <section id="events" class="content-section">
+            <h2>Events</h2>
+            <p>Live events and demos coming soon.</p>
+            <button id="register-btn" style="display: none;">Register</button>
         </section>
 
         <section id="profile-section">

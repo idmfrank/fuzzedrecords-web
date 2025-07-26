@@ -59,7 +59,8 @@ body {
 #library-section,
 #profile-section,
 #events-section,
-#admin-section {
+#admin-section,
+#gear-section {
     display: none;
     padding: 20px;
 }
@@ -67,7 +68,8 @@ body {
 #library-section.active,
 #profile-section.active,
 #events-section.active,
-#admin-section.active {
+#admin-section.active,
+#gear-section.active {
     display: block;
 }
 
@@ -185,4 +187,23 @@ footer {
     margin-top: 20px;
     color: #777;
     font-size: 14px;
+}
+
+/* Intro and gear styling */
+#intro-section {
+    padding: 20px;
+}
+.gear-logo {
+    max-width: 200px;
+    width: 80%;
+    height: auto;
+    margin: 10px auto;
+    display: block;
+}
+.gear-photo {
+    max-width: 300px;
+    width: 90%;
+    height: auto;
+    margin: 10px auto;
+    display: block;
 }

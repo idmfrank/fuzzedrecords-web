@@ -1,7 +1,7 @@
 // utils.js - shared helper functions
 // Switch between content sections
 export function showSection(section) {
-  const sections = ['library', 'profile', 'events', 'admin'];
+  const sections = ['library', 'profile', 'events', 'admin', 'gear'];
   sections.forEach(sec => {
     const el = document.getElementById(`${sec}-section`);
     const btn = document.getElementById(`menu-${sec}`);
