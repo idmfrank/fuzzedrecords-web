@@ -222,3 +222,15 @@ footer {
     object-fit: cover;
     display: block;
 }
+
+@media (min-width: 768px) {
+    .logo-container {
+        max-width: 350px;
+        height: 150px;
+    }
+
+    .gear-container {
+        max-width: 250px;
+        height: 150px;
+    }
+}
