@@ -28,6 +28,6 @@ def test_active_relays_default(monkeypatch, tmp_path):
     assert app_module.ACTIVE_RELAYS == [
         "wss://relay.damus.io",
         "wss://relay.primal.net",
-        "wss://relay.mostr.pub",
+        "wss://relay.nostr.pub",
         "wss://nos.lol",
     ]
