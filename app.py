@@ -90,7 +90,7 @@ RELAY_URLS = [
     u.strip()
     for u in os.getenv(
         "RELAY_URLS",
-        "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub,wss://nos.lol",
+        "wss://relay.damus.io,wss://relay.primal.net,wss://relay.nostr.pub,wss://nos.lol",
     ).split(",")
 ]
 CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
