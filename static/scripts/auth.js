@@ -90,6 +90,21 @@ export async function authenticateWithNostr() {
     userProfile = profileData;
     displayProfile(profileData);
     await validateProfile(pubkey);
+    if (window.nostr.getRelays) {
+      try {
+        const info = await window.nostr.getRelays();
+        const relays = Object.keys(info || {});
+        if (relays.length) {
+          await fetch('/update-relays', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ relays })
+          });
+        }
+      } catch (err) {
+        console.warn('getRelays failed:', err);
+      }
+    }
   } catch (err) {
     console.error('Authentication error:', err);
   }

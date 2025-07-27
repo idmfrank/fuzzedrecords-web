@@ -88,6 +88,7 @@ Set the following environment variables to configure the application:
 ├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile, events
 ├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
 ├── ticket_utils.py           # Ticket generation & /send_ticket endpoint
+├── relay_checker.py          # Relay maintenance script
 ├── requirements.txt          # Python dependencies
 ├── startup.sh                # Deployment script for Azure
 ├── templates/
@@ -148,6 +149,9 @@ Set the following environment variables to configure the application:
    - `startup.sh` installs Python dependencies and then launches the server.
    - Deploy the app to Azure WebApp using the Azure CLI or portal.
     > **Note**: The application must be able to establish outbound WebSocket connections to the relays listed in `RELAY_URLS`. Blocked outbound traffic will result in profile fetch failures.
+7. **Maintain Relay Lists**:
+   - Run `python relay_checker.py` periodically to update `good-relays.txt`.
+   - Users can contribute relays via the `/update-relays` endpoint when logging in.
 
 ---
 
@@ -252,6 +256,19 @@ Set the following environment variables to configure the application:
 - **Response**:
   ```json
   {"status":"sent","event_id":"..."}
+  ```
+
+### 8. Update Relays
+- **Endpoint**: `/update-relays`
+- **Method**: `POST`
+- **Description**: Appends relay URLs to `relays.txt`.
+- **Request Body**:
+  ```json
+  {"relays": ["wss://relay1", "wss://relay2"]}
+  ```
+- **Response**:
+  ```json
+  {"status":"updated","count":2}
   ```
 
 ---
