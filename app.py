@@ -84,10 +84,13 @@ limiter = Limiter(
 api = Api(app)
 
 # Configuration
-RELAY_URLS = os.getenv(
-    "RELAY_URLS",
-    "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub"
-).split(',')
+RELAY_URLS = [
+    u.strip()
+    for u in os.getenv(
+        "RELAY_URLS",
+        "wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub",
+    ).split(",")
+]
 CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
 REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 # Base URL for Wavlake API; can be overridden via environment
