@@ -1,3 +1,5 @@
+# Standard library
+import threading
 from flask import Flask, jsonify, render_template, send_from_directory, redirect, request
 from flask_restful import Api
 # CORS configuration
@@ -102,6 +104,22 @@ SEARCH_TERM = " by Fuzzed Records"
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
 logger = logging.getLogger(__name__)
 
+# Active relay list loaded from files/environment
+RELAYS_LOCK = threading.Lock()
+
+def load_relays_from_file():
+    """Load relay URLs from good-relays.txt, relays.txt or RELAY_URLS env."""
+    for fname in ("good-relays.txt", "relays.txt"):
+        if os.path.exists(fname):
+            with open(fname) as f:
+                rels = [l.strip() for l in f if l.strip()]
+            if rels:
+                return rels
+    return [u.strip() for u in os.getenv("RELAY_URLS", "").split(",") if u.strip()]
+
+# Initialize at startup
+ACTIVE_RELAYS = load_relays_from_file()
+
 # Utilities: error responses, caching, and Nostr relay client
 import time
 from flask import jsonify
@@ -128,7 +146,7 @@ def error_response(message, status_code):
 def initialize_client():
     # Initialize Nostr RelayManager and add configured relays
     mgr = RelayManager()
-    for url in RELAY_URLS:
+    for url in ACTIVE_RELAYS:
         mgr.add_relay(url)
     return mgr
 
@@ -220,18 +238,15 @@ def update_relays():
     if not relays or not isinstance(relays, list):
         return jsonify({'error': 'Invalid relays'}), 400
     relays = [r.strip() for r in relays if isinstance(r, str) and r.strip()]
+    with RELAYS_LOCK:
+        merged = set(ACTIVE_RELAYS)
+        merged.update(relays)
+        ACTIVE_RELAYS[:] = sorted(merged)
+        with open('relays.txt', 'w') as f:
+            for url in ACTIVE_RELAYS:
+                f.write(url + '\n')
 
-    existing = set()
-    if os.path.exists('relays.txt'):
-        with open('relays.txt') as f:
-            existing = {l.strip() for l in f if l.strip()}
-
-    merged = existing.union(relays)
-    with open('relays.txt', 'w') as f:
-        for url in sorted(merged):
-            f.write(url + '\n')
-
-    return jsonify({'status': 'updated', 'count': len(merged)})
+    return jsonify({'status': 'updated', 'count': len(ACTIVE_RELAYS)})
 
 
 # Endpoint to fetch metadata by nprofile (NIP-19)

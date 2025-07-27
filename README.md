@@ -148,7 +148,8 @@ Set the following environment variables to configure the application:
     > **Note**: The application must be able to establish outbound WebSocket connections to the relays listed in `RELAY_URLS`. Blocked outbound traffic will result in profile fetch failures.
 7. **Maintain Relay Lists**:
    - Run `python relay_checker.py` periodically to update `good-relays.txt`.
-   - Users can contribute relays via the `/update-relays` endpoint when logging in.
+   - On startup the app loads relays from `good-relays.txt` if present, falling back to `relays.txt` or the `RELAY_URLS` environment variable.
+   - Users can contribute relays via the `/update-relays` endpoint; submitted URLs are merged in-memory and written back to `relays.txt`.
 
 ---
 
@@ -258,7 +259,7 @@ Set the following environment variables to configure the application:
 ### 8. Update Relays
 - **Endpoint**: `/update-relays`
 - **Method**: `POST`
-- **Description**: Appends relay URLs to `relays.txt`.
+- **Description**: Merges relay URLs into the active list and persists them to `relays.txt`.
 - **Request Body**:
   ```json
   {"relays": ["wss://relay1", "wss://relay2"]}

@@ -1,6 +1,6 @@
 import os, json, time, asyncio, logging
 from flask import request, jsonify
-from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN, RELAY_URLS
+from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN, ACTIVE_RELAYS
 try:
     from pynostr.utils import nprofile_encode
 except Exception:  # pragma: no cover - fallback if module missing
@@ -42,7 +42,8 @@ async def fetch_profile():
 
     nprof = None
     try:
-        nprof = nprofile_encode(pubkey_hex, RELAY_URLS)
+        from app import ACTIVE_RELAYS
+        nprof = nprofile_encode(pubkey_hex, ACTIVE_RELAYS)
     except Exception as e:
         logger.warning("nprofile encode failed: %s", e)
     mgr = initialize_client()
