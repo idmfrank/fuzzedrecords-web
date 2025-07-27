@@ -1,6 +1,6 @@
 import os, json, time, asyncio, logging
 from flask import request, jsonify
-from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN, ACTIVE_RELAYS
+from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN, ACTIVE_RELAYS, PROFILE_FETCH_TIMEOUT
 try:
     from pynostr.utils import nprofile_encode
 except Exception:  # pragma: no cover - fallback if module missing
@@ -79,7 +79,7 @@ async def fetch_profile():
             await asyncio.sleep(0.05)
 
     try:
-        msg_type, msg = await asyncio.wait_for(wait_for_message(), timeout=5)
+        msg_type, msg = await asyncio.wait_for(wait_for_message(), timeout=PROFILE_FETCH_TIMEOUT)
     except asyncio.TimeoutError:
         logger.warning("Timeout waiting for profile event for %s", pubkey_hex)
         mgr.close_connections()
