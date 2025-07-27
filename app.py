@@ -213,6 +213,27 @@ def favicon():
     )
 
 
+@app.route('/update-relays', methods=['POST'])
+def update_relays():
+    data = request.get_json() or {}
+    relays = data.get('relays')
+    if not relays or not isinstance(relays, list):
+        return jsonify({'error': 'Invalid relays'}), 400
+    relays = [r.strip() for r in relays if isinstance(r, str) and r.strip()]
+
+    existing = set()
+    if os.path.exists('relays.txt'):
+        with open('relays.txt') as f:
+            existing = {l.strip() for l in f if l.strip()}
+
+    merged = existing.union(relays)
+    with open('relays.txt', 'w') as f:
+        for url in sorted(merged):
+            f.write(url + '\n')
+
+    return jsonify({'status': 'updated', 'count': len(merged)})
+
+
 # Endpoint to fetch metadata by nprofile (NIP-19)
 @app.route('/fetch-nprofile', methods=['POST'])
 def fetch_nprofile():
