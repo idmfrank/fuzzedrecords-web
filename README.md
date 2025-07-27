@@ -67,6 +67,7 @@ Set the following environment variables to configure the application:
 - HTTP_TIMEOUT: Timeout in seconds for each Wavlake API request (default: 5)
 - TRACK_CACHE_TIMEOUT: Seconds to cache the music library before background refresh (default: 300)
 - SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
+- PROFILE_FETCH_TIMEOUT: Seconds to wait for a user profile event when handling `/fetch-profile` or `/validate-profile` (default: 5)
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret

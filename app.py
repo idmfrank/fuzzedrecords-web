@@ -99,6 +99,7 @@ REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 # Default updated to use wavlake.com domain as per API docs
 WAVLAKE_API_BASE = os.getenv("WAVLAKE_API_BASE", "https://wavlake.com/api/v1")
 SEARCH_TERM = " by Fuzzed Records"
+PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
 
 # Logging setup
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
