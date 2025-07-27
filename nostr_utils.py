@@ -60,23 +60,43 @@ async def fetch_profile():
         logger.error("Unable to connect to any Nostr relays: %s", statuses)
         return error_response("Unable to connect to Nostr relays", 503)
     filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
-    mgr.add_subscription_on_all_relays(f"fetch_{pubkey_hex}", filt)
+    sub_id = f"fetch_{pubkey_hex}"
+    mgr.add_subscription_on_all_relays(sub_id, filt)
     logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
-    await asyncio.sleep(5)
+
+    async def wait_for_message():
+        """Wait until an event or EOSE for this subscription arrives."""
+        while True:
+            if mgr.message_pool.has_events():
+                msg = mgr.message_pool.get_event()
+                if msg.subscription_id == sub_id:
+                    return ("event", msg)
+            if mgr.message_pool.has_eose_notices():
+                notice = mgr.message_pool.get_eose_notice()
+                if notice.subscription_id == sub_id:
+                    return ("eose", None)
+            await asyncio.sleep(0.05)
+
+    try:
+        msg_type, msg = await asyncio.wait_for(wait_for_message(), timeout=5)
+    except asyncio.TimeoutError:
+        logger.warning("Timeout waiting for profile event for %s", pubkey_hex)
+        mgr.close_connections()
+        return error_response("Profile not found", 404)
     profile_data = {}
-    for msg in mgr.message_pool.get_all_events():
+    if msg_type == "event":
         ev = msg.event
         logger.debug("fetch_profile received event: %s", ev)
         try:
             content = json.loads(ev.content)
         except Exception as e:
             logger.error("Error parsing event content: %s", e)
-            continue
-        profile_data = {"id": ev.id, "pubkey": ev.pubkey, "content": content}
-        if nprof:
-            profile_data["nprofile"] = nprof
-        logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
-        break
+            content = None
+        if content is not None:
+            profile_data = {"id": ev.id, "pubkey": ev.pubkey, "content": content}
+            if nprof:
+                profile_data["nprofile"] = nprof
+            logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
     mgr.close_connections()
     if profile_data:
         if nprof and "nprofile" not in profile_data:
