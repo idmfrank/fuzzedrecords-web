@@ -17,3 +17,17 @@ def test_relay_urls_strip(monkeypatch):
     else:
         monkeypatch.delenv("RELAY_URLS", raising=False)
     importlib.reload(app_module)
+
+
+def test_active_relays_default(monkeypatch, tmp_path):
+    """ACTIVE_RELAYS should fall back to the default list when no files or env."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("RELAY_URLS", raising=False)
+    importlib.reload(app_module)
+
+    assert app_module.ACTIVE_RELAYS == [
+        "wss://relay.damus.io",
+        "wss://relay.primal.net",
+        "wss://relay.mostr.pub",
+        "wss://nos.lol",
+    ]

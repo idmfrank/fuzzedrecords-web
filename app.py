@@ -115,7 +115,12 @@ def load_relays_from_file():
                 rels = [l.strip() for l in f if l.strip()]
             if rels:
                 return rels
-    return [u.strip() for u in os.getenv("RELAY_URLS", "").split(",") if u.strip()]
+    # Fallback to the module constant if the environment variable isn't set
+    return [
+        u.strip()
+        for u in os.getenv("RELAY_URLS", ",".join(RELAY_URLS)).split(",")
+        if u.strip()
+    ]
 
 # Initialize at startup
 ACTIVE_RELAYS = load_relays_from_file()

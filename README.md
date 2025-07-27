@@ -55,7 +55,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 
 Set the following environment variables to configure the application:
 
-- RELAY_URLS: Comma-separated list of Nostr relay URLs (default: wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub,wss://nos.lol)
+- RELAY_URLS: Comma-separated list of Nostr relay URLs (default: wss://relay.damus.io,wss://relay.primal.net,wss://relay.mostr.pub,wss://nos.lol). If unset and no relay list files exist, this default list populates `ACTIVE_RELAYS`.
 - CACHE_TIMEOUT: Seconds to cache fetched user profiles (default: 300)
 - REQUIRED_DOMAIN: Domain for NIP-05 profile verification (default: fuzzedrecords.com)
 - MAX_CONTENT_LENGTH: Max request payload size in bytes (default: 1048576)
