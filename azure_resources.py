@@ -1,4 +1,5 @@
 import os, logging, requests
+from requests.exceptions import RequestException
 from flask import jsonify
 from flask_restful import Resource
 from msal import ConfidentialClientApplication
@@ -29,11 +30,19 @@ class NostrJson(Resource):
             return jsonify({"error": "Authentication failed"}), 500
         access_token = token["access_token"]
         # Fetch groups
-        grp_resp = requests.get(
-            f"{graph_api_base}/groups?$select=displayName,description",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=HTTP_TIMEOUT
-        )
+        try:
+            grp_resp = requests.get(
+                f"{graph_api_base}/groups?$select=displayName,description",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=HTTP_TIMEOUT,
+            )
+            grp_resp.raise_for_status()
+        except RequestException as e:
+            logger.error("Error fetching groups: %s", e)
+            resp = jsonify({"error": "Failed to retrieve groups"})
+            resp.status_code = 502
+            return resp
+
         groups = grp_resp.json().get("value", [])
         relay_groups = {
             g["displayName"]: g["description"]
@@ -42,11 +51,19 @@ class NostrJson(Resource):
                and g["description"].startswith("wss://")
         }
         # Fetch users
-        usr_resp = requests.get(
-            f"{graph_api_base}/users?$select=id,displayName,jobTitle",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=HTTP_TIMEOUT
-        )
+        try:
+            usr_resp = requests.get(
+                f"{graph_api_base}/users?$select=id,displayName,jobTitle",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=HTTP_TIMEOUT,
+            )
+            usr_resp.raise_for_status()
+        except RequestException as e:
+            logger.error("Error fetching users: %s", e)
+            resp = jsonify({"error": "Failed to retrieve users"})
+            resp.status_code = 502
+            return resp
+
         users = usr_resp.json().get("value", [])
         names = {}
         relays = {}
@@ -58,11 +75,19 @@ class NostrJson(Resource):
             names[name] = pubkey
             relays[pubkey] = []
             uid = u.get("id")
-            mem_resp = requests.get(
-                f"{graph_api_base}/users/{uid}/memberOf?$select=displayName",
-                headers={"Authorization": f"Bearer {access_token}"},
-                timeout=HTTP_TIMEOUT
-            )
+            try:
+                mem_resp = requests.get(
+                    f"{graph_api_base}/users/{uid}/memberOf?$select=displayName",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    timeout=HTTP_TIMEOUT,
+                )
+                mem_resp.raise_for_status()
+            except RequestException as e:
+                logger.error("Error fetching memberships for %s: %s", uid, e)
+                resp = jsonify({"error": "Failed to retrieve group memberships"})
+                resp.status_code = 502
+                return resp
+
             for g in mem_resp.json().get("value", []):
                 dn = g.get("displayName")
                 if dn in relay_groups:
