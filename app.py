@@ -152,22 +152,26 @@ def fetch_profile_by_pubkey(pubkey, relays):
         await manager.prepare_relays()
         sub_id = "profile_sub"
         await manager.add_subscription_on_all_relays(sub_id, FiltersList([Filter(authors=[pubkey], kinds=[0])]))
+        profile = None
+        start = time.time()
         try:
-            while True:
+            while time.time() - start < PROFILE_FETCH_TIMEOUT:
                 if manager.message_pool.has_events():
                     msg = manager.message_pool.get_event()
                     if msg.subscription_id == sub_id:
                         try:
-                            return json.loads(msg.event.content)
+                            profile = json.loads(msg.event.content)
                         except Exception:
-                            return None
+                            profile = None
+                        break
                 if manager.message_pool.has_eose_notices():
                     notice = manager.message_pool.get_eose_notice()
                     if notice.subscription_id == sub_id:
-                        return None
+                        continue
                 await asyncio.sleep(0.1)
         finally:
             manager.close_connections()
+        return profile
 
     return asyncio.run(_run())
  

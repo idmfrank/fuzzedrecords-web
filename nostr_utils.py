@@ -74,39 +74,31 @@ async def fetch_profile():
     await mgr.add_subscription_on_all_relays(sub_id, filt)
     logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
 
-    async def wait_for_message():
-        """Wait until an event or EOSE for this subscription arrives."""
-        while True:
-            if mgr.message_pool.has_events():
-                msg = mgr.message_pool.get_event()
-                if msg.subscription_id == sub_id:
-                    return ("event", msg)
-            if mgr.message_pool.has_eose_notices():
-                notice = mgr.message_pool.get_eose_notice()
-                if notice.subscription_id == sub_id:
-                    return ("eose", None)
-            await asyncio.sleep(0.05)
-
-    try:
-        msg_type, msg = await asyncio.wait_for(wait_for_message(), timeout=PROFILE_FETCH_TIMEOUT)
-    except asyncio.TimeoutError:
-        logger.warning("Timeout waiting for profile event for %s", pubkey_hex)
-        mgr.close_connections()
-        return error_response("Profile not found", 404)
     profile_data = {}
-    if msg_type == "event":
-        ev = msg.event
-        logger.debug("fetch_profile received event: %s", ev)
-        try:
-            content = json.loads(ev.content)
-        except Exception as e:
-            logger.error("Error parsing event content: %s", e)
-            content = None
-        if content is not None:
-            profile_data = {"id": ev.id, "pubkey": ev.public_key, "content": content}
-            if nprof:
-                profile_data["nprofile"] = nprof
-            logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
+    start = time.time()
+    while time.time() - start < PROFILE_FETCH_TIMEOUT:
+        if mgr.message_pool.has_events():
+            msg = mgr.message_pool.get_event()
+            if msg.subscription_id == sub_id:
+                ev = msg.event
+                logger.debug("fetch_profile received event: %s", ev)
+                try:
+                    content = json.loads(ev.content)
+                except Exception as e:
+                    logger.error("Error parsing event content: %s", e)
+                    content = None
+                if content is not None:
+                    profile_data = {"id": ev.id, "pubkey": ev.public_key, "content": content}
+                    if nprof:
+                        profile_data["nprofile"] = nprof
+                    logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
+                break
+        if mgr.message_pool.has_eose_notices():
+            notice = mgr.message_pool.get_eose_notice()
+            if notice.subscription_id == sub_id:
+                # Ignore EOSE and continue waiting
+                continue
+        await asyncio.sleep(0.05)
     mgr.close_connections()
     if profile_data:
         if nprof and "nprofile" not in profile_data:
