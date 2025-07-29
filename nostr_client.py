@@ -4,10 +4,13 @@ import os
 import ssl
 import hashlib
 import time
+import logging
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import websockets
 import bech32
+
+logger = logging.getLogger(__name__)
 
 # --- NIP-19 helpers ---
 
@@ -165,8 +168,9 @@ class RelayManager:
             relay.ws = await websockets.connect(relay.url, open_timeout=self.timeout, ssl=ssl_ctx)
             self.connection_statuses[relay.url] = True
             asyncio.create_task(self._recv_loop(relay))
-        except Exception:
+        except Exception as exc:
             self.connection_statuses[relay.url] = False
+            logger.error("Failed to connect to %s: %s", relay.url, exc)
 
     async def prepare_relays(self):
         self._ensure_pool()
