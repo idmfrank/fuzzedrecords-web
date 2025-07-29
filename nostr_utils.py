@@ -103,7 +103,7 @@ async def fetch_profile():
             logger.error("Error parsing event content: %s", e)
             content = None
         if content is not None:
-            profile_data = {"id": ev.id, "pubkey": ev.pubkey, "content": content}
+            profile_data = {"id": ev.id, "pubkey": ev.public_key, "content": content}
             if nprof:
                 profile_data["nprofile"] = nprof
             logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
@@ -181,11 +181,11 @@ async def _get_fuzzed_events():
     seen = set()
     for msg in mgr.message_pool.get_all_events():
         ev = msg.event
-        if ev.pubkey in seen: continue
-        seen.add(ev.pubkey)
-        if await fetch_and_validate_profile(ev.pubkey, REQUIRED_DOMAIN):
+        if ev.public_key in seen: continue
+        seen.add(ev.public_key)
+        if await fetch_and_validate_profile(ev.public_key, REQUIRED_DOMAIN):
             results.append({
-                'id':ev.id, 'pubkey':ev.pubkey,
+                'id':ev.id, 'pubkey':ev.public_key,
                 'content':ev.content, 'tags':ev.tags,
                 'created_at':ev.created_at
             })
