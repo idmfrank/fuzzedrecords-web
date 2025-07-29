@@ -11,7 +11,7 @@ initialize_client = None
 error_response = None
 logger = None
 limiter = None
-from pynostr.encrypted_dm import EncryptedDirectMessage
+from nostr_client import EncryptedDirectMessage
 
 
 def _load_app_dependencies():

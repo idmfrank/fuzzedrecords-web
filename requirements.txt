@@ -1,8 +1,7 @@
 Flask[async]>=3.0.4
 Flask-RESTful>=0.3.10
 flask-cors>=4.0.2
-# switch from nostr-sdk to pynostr (latest available 0.6.2)
-pynostr>=0.6.2
+bech32>=1.2.0
 requests>=2.32.0
 msal>=1.22.0
 flask-limiter>=2.0.0

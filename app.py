@@ -11,43 +11,18 @@ from flask_limiter.util import get_remote_address
 # Custom storage schemes (register AzureTableStorage)
 import azure_storage_limiter
 
-# NIP-19 decoding helpers
-try:
-    from pynostr.utils import nprofile_decode, nprofile_encode
-except Exception:  # pragma: no cover - fallback if module missing
-    def nprofile_decode(value):
-        raise NotImplementedError("nprofile decode not available")
+# NIP-19 helpers provided by our minimal Nostr client implementation
+from nostr_client import (
+    nprofile_decode,
+    nprofile_encode,
+    RelayManager,
+    Filter,
+    FiltersList,
+)
 
-    def nprofile_encode(pubkey, relays):
-        raise NotImplementedError("nprofile encode not available")
-# NIP-19 decoding (optional depending on pynostr version)
-try:
-    from pynostr.nip19 import decode as nip19_decode
-except Exception:  # pragma: no cover - older versions lack this module
-    from pynostr import bech32
-
-    def nip19_decode(nprofile: str):
-        hrp, data, _ = bech32.bech32_decode(nprofile)
-        if hrp != "nprofile" or data is None:
-            raise ValueError("Invalid nprofile")
-        from pynostr.bech32 import convertbits
-        decoded = convertbits(data, 5, 8, False)
-        if decoded is None:
-            raise ValueError("Invalid nprofile data")
-        b = bytes(decoded)
-        pubkey = None
-        relays = []
-        i = 0
-        while i < len(b):
-            t = b[i]
-            l = b[i + 1]
-            v = b[i + 2 : i + 2 + l]
-            if t == 0:
-                pubkey = v.hex()
-            elif t == 1:
-                relays.append(v.decode())
-            i += 2 + l
-        return "nprofile", {"pubkey": pubkey, "relays": relays}
+def nip19_decode(value: str):
+    """Alias for ``nprofile_decode`` to match prior API."""
+    return nprofile_decode(value)
 # HTTP exception handling
 from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
@@ -131,7 +106,7 @@ ACTIVE_RELAYS = load_relays_from_file()
 # Utilities: error responses, caching, and Nostr relay client
 import time
 from flask import jsonify
-from pynostr.relay_manager import RelayManager
+from nostr_client import RelayManager, Filter
 
 # Protect in-memory cache access
 _cache_lock = threading.Lock()
@@ -166,35 +141,35 @@ def initialize_client():
 
 # Helper to fetch a profile event (kind 0) by pubkey from given relays
 def fetch_profile_by_pubkey(pubkey, relays):
-    from pynostr.relay_manager import RelayManager
-    from pynostr.message_type import ClientMessageType
-    from pynostr.filter import Filter
-    import time
     import json
+    import asyncio
 
-    manager = RelayManager()
+    manager = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
     for r in relays:
         manager.add_relay(r)
-    opts = {"cert_reqs": 0} if DISABLE_TLS_VERIFY else {}
-    manager.open_connections(opts)
-    time.sleep(1.25)
 
-    sub_id = "profile_sub"
-    filt = Filter(authors=[pubkey], kinds=[0])
-    req = json.dumps([ClientMessageType.REQUEST, sub_id, filt.to_json()])
-    manager.publish_message_to_all(req)
-    time.sleep(2)
-
-    metadata = None
-    for event in manager.message_pool.get_events():
+    async def _run():
+        await manager.prepare_relays()
+        sub_id = "profile_sub"
+        await manager.add_subscription_on_all_relays(sub_id, FiltersList([Filter(authors=[pubkey], kinds=[0])]))
         try:
-            metadata = json.loads(event.content)
-            break
-        except Exception:
-            continue
+            while True:
+                if manager.message_pool.has_events():
+                    msg = manager.message_pool.get_event()
+                    if msg.subscription_id == sub_id:
+                        try:
+                            return json.loads(msg.event.content)
+                        except Exception:
+                            return None
+                if manager.message_pool.has_eose_notices():
+                    notice = manager.message_pool.get_eose_notice()
+                    if notice.subscription_id == sub_id:
+                        return None
+                await asyncio.sleep(0.1)
+        finally:
+            manager.close_connections()
 
-    manager.close_connections()
-    return metadata
+    return asyncio.run(_run())
  
 # Centralized error handlers
 @app.errorhandler(RequestEntityTooLarge)
