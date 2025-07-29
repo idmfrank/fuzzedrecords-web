@@ -148,8 +148,14 @@ class RelayManager:
     def __init__(self, timeout: float = 2.0):
         self.timeout = timeout
         self.relays: Dict[str, _Relay] = {}
-        self.message_pool = MessagePool()
+        # Lazily create the message pool when we have an event loop
+        self.message_pool: Optional[MessagePool] = None
         self.connection_statuses: Dict[str, bool] = {}
+
+    def _ensure_pool(self):
+        """Create the message pool if it hasn't been initialised yet."""
+        if self.message_pool is None:
+            self.message_pool = MessagePool()
 
     def add_relay(self, url: str):
         self.relays[url] = _Relay(url, self.timeout)
@@ -163,6 +169,7 @@ class RelayManager:
             self.connection_statuses[relay.url] = False
 
     async def prepare_relays(self):
+        self._ensure_pool()
         ssl_ctx = None
         if os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}:
             ssl_ctx = ssl.create_default_context()
