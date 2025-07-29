@@ -207,6 +207,17 @@ footer {
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 }
 
+/* Profile section styling */
+#profile-section {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    max-width: 500px;
+    width: 80%;
+    margin: 20px auto;
+    background: #f9f9f9;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
 .gear-container {
     max-width: 300px;
     width: 100%;

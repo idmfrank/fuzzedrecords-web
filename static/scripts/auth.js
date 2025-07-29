@@ -52,10 +52,8 @@ export function displayProfile(profileData) {
   }
   const detailsTable = document.createElement('table');
   detailsTable.classList.add('profile-details');
-  // Always show nprofile and pubkey; then any other profile details
+  // Display profile fields other than nprofile/npub
   const details = [
-    { label: 'Nprofile', value: profileData.nprofile },
-    { label: 'Pubkey', value: pubkey },
     { label: 'Username', value: content.name },
     { label: 'NIP-05', value: content.nip05 },
     { label: 'LUD-16', value: content.lud16 },
