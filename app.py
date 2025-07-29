@@ -100,6 +100,7 @@ REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 WAVLAKE_API_BASE = os.getenv("WAVLAKE_API_BASE", "https://wavlake.com/api/v1")
 SEARCH_TERM = " by Fuzzed Records"
 PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
+RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
 
 # Logging setup
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
@@ -151,7 +152,7 @@ def error_response(message, status_code):
 
 def initialize_client():
     # Initialize Nostr RelayManager and add configured relays
-    mgr = RelayManager()
+    mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
     for url in ACTIVE_RELAYS:
         mgr.add_relay(url)
     return mgr
