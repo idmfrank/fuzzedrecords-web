@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import app as app_module
 from app import app
-from pynostr.utils import nprofile_encode
+from nostr_client import nprofile_encode
 
 
 def test_fetch_nprofile_fallback(monkeypatch):
