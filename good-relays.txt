@@ -6,4 +6,3 @@ wss://relay.getalby.com/v1
 wss://relay.nostr.band/
 wss://relay.noswhere.com/
 wss://relay.primal.net/
-wss://relay.snort.social/
