@@ -3,6 +3,7 @@ import json
 import os
 import ssl
 import hashlib
+import time
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import websockets
@@ -232,4 +233,10 @@ class EncryptedDirectMessage:
         self.pubkey = recipient_pubkey
 
     def to_event(self) -> Event:
-        return Event(public_key=self.pubkey, content=self.content, kind=EventKind.ENCRYPTED_DM, tags=[], created_at=int(asyncio.get_event_loop().time()))
+        return Event(
+            public_key=self.pubkey,
+            content=self.content,
+            kind=EventKind.ENCRYPTED_DM,
+            tags=[],
+            created_at=int(time.time()),
+        )
