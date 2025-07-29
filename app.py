@@ -101,6 +101,7 @@ WAVLAKE_API_BASE = os.getenv("WAVLAKE_API_BASE", "https://wavlake.com/api/v1")
 SEARCH_TERM = " by Fuzzed Records"
 PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
 RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
+DISABLE_TLS_VERIFY = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
 
 # Logging setup
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
@@ -132,20 +133,26 @@ import time
 from flask import jsonify
 from pynostr.relay_manager import RelayManager
 
+# Protect in-memory cache access
+_cache_lock = threading.Lock()
+
 # Simple in-memory cache for user profiles
 _cache = {}
 def get_cached_item(key):
-    item = _cache.get(key)
+    with _cache_lock:
+        item = _cache.get(key)
     if not item:
         return None
     value, ts = item
     if time.time() - ts > CACHE_TIMEOUT:
-        del _cache[key]
+        with _cache_lock:
+            del _cache[key]
         return None
     return value
 
 def set_cached_item(key, value):
-    _cache[key] = (value, time.time())
+    with _cache_lock:
+        _cache[key] = (value, time.time())
 
 def error_response(message, status_code):
     return jsonify({'error': message}), status_code
@@ -168,7 +175,8 @@ def fetch_profile_by_pubkey(pubkey, relays):
     manager = RelayManager()
     for r in relays:
         manager.add_relay(r)
-    manager.open_connections({"cert_reqs": 0})
+    opts = {"cert_reqs": 0} if DISABLE_TLS_VERIFY else {}
+    manager.open_connections(opts)
     time.sleep(1.25)
 
     sub_id = "profile_sub"
@@ -245,6 +253,11 @@ def update_relays():
     if not relays or not isinstance(relays, list):
         return jsonify({'error': 'Invalid relays'}), 400
     relays = [r.strip() for r in relays if isinstance(r, str) and r.strip()]
+    from urllib.parse import urlparse
+    for url in relays:
+        parsed = urlparse(url)
+        if parsed.scheme not in ('ws', 'wss'):
+            return jsonify({'error': f'Invalid relay URL: {url}'}), 400
     with RELAYS_LOCK:
         merged = set(ACTIVE_RELAYS)
         merged.update(relays)
