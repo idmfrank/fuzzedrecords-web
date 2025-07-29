@@ -57,3 +57,29 @@ def test_membership_http_error(monkeypatch):
         resp = client.get("/.well-known/nostr.json")
         assert resp.status_code == 502
         assert "memberships" in resp.get_json()["error"]
+
+
+def test_filter_returns_single_user(monkeypatch):
+    responses = []
+    # groups response with one relay group
+    responses.append(DummyResponse({"value": [{"displayName": "MainRelay", "description": "wss://relay"}]}))
+    # users response with two users
+    responses.append(
+        DummyResponse({"value": [
+            {"id": "u1", "displayName": "Alice", "jobTitle": "pk1"},
+            {"id": "u2", "displayName": "Bob", "jobTitle": "pk2"},
+        ]})
+    )
+    # membership response for Bob only (filter should skip Alice)
+    responses.append(DummyResponse({"value": [{"displayName": "MainRelay"}]}))
+
+    def seq_get(url, *args, **kwargs):
+        return responses.pop(0)
+
+    app_module = _reload_app(monkeypatch, seq_get)
+    with app_module.app.test_client() as client:
+        resp = client.get("/.well-known/nostr.json?name=Bob")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["names"] == {"Bob": "pk2"}
+        assert data["relays"] == {"pk2": ["wss://relay"]}

@@ -1,6 +1,6 @@
 import os, logging, requests
 from requests.exceptions import RequestException
-from flask import jsonify
+from flask import jsonify, request
 from flask_restful import Resource
 from msal import ConfidentialClientApplication
 
@@ -65,12 +65,16 @@ class NostrJson(Resource):
             return resp
 
         users = usr_resp.json().get("value", [])
+        filter_name = request.args.get("name")
+        filter_name_l = filter_name.lower() if filter_name else None
         names = {}
         relays = {}
         for u in users:
             pubkey = u.get("jobTitle")
             name = u.get("displayName")
             if not pubkey or not name:
+                continue
+            if filter_name_l and name.lower() != filter_name_l:
                 continue
             names[name] = pubkey
             relays[pubkey] = []
@@ -92,6 +96,9 @@ class NostrJson(Resource):
                 dn = g.get("displayName")
                 if dn in relay_groups:
                     relays[pubkey].append(relay_groups[dn])
+
+        if filter_name and not names:
+            return jsonify({})
         return jsonify({"names": names, "relays": relays})
 
 def register_resources(api):
