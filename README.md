@@ -69,6 +69,7 @@ Set the following environment variables to configure the application:
 - SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
 - PROFILE_FETCH_TIMEOUT: Seconds to wait for a user profile event when handling `/fetch-profile` or `/validate-profile` (default: 5)
 - RELAY_CONNECT_TIMEOUT: Seconds allowed to establish each WebSocket connection to a relay (default: 2)
+- DISABLE_TLS_VERIFY: Set to 1 to disable TLS certificate verification when connecting to relays (default: 0)
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
@@ -151,9 +152,20 @@ Set the following environment variables to configure the application:
 7. **Maintain Relay Lists**:
    - Run `python relay_checker.py` periodically to update `good-relays.txt`.
    - On startup the app loads relays from `good-relays.txt` if present, falling back to `relays.txt` or the `RELAY_URLS` environment variable.
-   - Users can contribute relays via the `/update-relays` endpoint; submitted URLs are merged in-memory and written back to `relays.txt`.
+  - Users can contribute relays via the `/update-relays` endpoint; submitted URLs are merged in-memory and written back to `relays.txt`.
 
 ---
+
+## Testing
+
+Install the required packages and run the test suite:
+
+```bash
+pip install -r requirements.txt
+pytest
+```
+
+If dependencies are missing, tests will fail with import errors similar to the ones observed when `flask` or `websockets` are not installed.
 
 ## API Endpoints
 

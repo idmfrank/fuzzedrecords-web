@@ -19,3 +19,16 @@ def test_update_relays_updates_state(tmp_path, monkeypatch):
         mgr = app_module.initialize_client()
         assert set(mgr.relays.keys()) == {"wss://a.com", "wss://b.com"}
 
+
+def test_update_relays_rejects_invalid_urls(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RELAY_URLS", "wss://a.com")
+    import app as app_module
+    import importlib
+    importlib.reload(app_module)
+
+    with app_module.app.test_client() as client:
+        resp = client.post("/update-relays", json={"relays": ["http://bad.com"]})
+        assert resp.status_code == 400
+        assert "Invalid relay URL" in resp.get_json()["error"]
+
