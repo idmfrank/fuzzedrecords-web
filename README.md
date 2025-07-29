@@ -202,8 +202,8 @@ If dependencies are missing, tests will fail with import errors similar to the o
 - **Method**: `GET`
 - **Description**: Retrieves the aggregated music library from Wavlake.
   - Uses `SEARCH_TERM` to filter artists (default: " by Fuzzed Records").
-  - The first request returns an empty list and starts a background fetch of data.
-  - Subsequent requests return cached data immediately (fresh or stale).
+  - The library is built on-demand if not cached so the first request returns data.
+  - Subsequent requests return cached data immediately; stale caches refresh in the background.
   - Cache time-to-live is controlled by `TRACK_CACHE_TIMEOUT` (default: 300 seconds).
   - HTTP timeouts use `HTTP_TIMEOUT` (default: 5 seconds) to avoid long hangs.
 - **Response**:

@@ -118,24 +118,35 @@ def register_wavlake_routes(app):
     """Register the /tracks endpoint on the app."""
     @app.route('/tracks', methods=['GET'])
     def get_tracks():
-        """Serve cached music library immediately; refresh in background when missing or stale."""
+        """Return the music library, building it on-demand if missing."""
         global _updating
         now = time.time()
         cached = _track_cache.get('library')
-        stale = (cached is None) or (now - _track_cache['ts'] > TRACK_CACHE_TIMEOUT)
-        if stale:
-            # Trigger background update if not already running
-            with _update_lock:
-                if not _updating:
-                    _updating = True
-                    threading.Thread(target=_update_library_background, daemon=True).start()
-        # If no data yet, return empty while update is in progress
+
         if cached is None:
-            logger.warning("Cache empty, returning empty library while update is in progress")
-            return jsonify({"tracks": []})
-        # If stale, warn; else debug fresh cache
-        if stale:
-            logger.warning("Serving stale music library while background update is in progress")
+            # No library yet - build synchronously so the first request has data
+            logger.info("Cache empty, building music library synchronously")
+            try:
+                library = build_music_library()
+            except Exception as e:
+                logger.error(f"Failed to build music library: {e}")
+                return error_response("Failed to load library", 500)
+            _track_cache['library'] = library
+            _track_cache['ts'] = now
+            cached = library
+            logger.debug("Music library loaded")
+            stale = False
         else:
+            stale = now - _track_cache['ts'] > TRACK_CACHE_TIMEOUT
+            if stale:
+                # Trigger background update if not already running
+                with _update_lock:
+                    if not _updating:
+                        _updating = True
+                        threading.Thread(target=_update_library_background, daemon=True).start()
+                logger.warning("Serving stale music library while background update is in progress")
+
+        if not stale:
             logger.debug("Returning cached music library")
+
         return jsonify({"tracks": cached})
