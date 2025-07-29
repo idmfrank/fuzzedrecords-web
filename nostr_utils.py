@@ -1,15 +1,24 @@
 import os, json, time, asyncio, logging
 from flask import request, jsonify
-from app import app, error_response, get_cached_item, set_cached_item, initialize_client, logger, REQUIRED_DOMAIN, ACTIVE_RELAYS, PROFILE_FETCH_TIMEOUT
-try:
-    from pynostr.utils import nprofile_encode
-except Exception:  # pragma: no cover - fallback if module missing
-    def nprofile_encode(pubkey, relays):
-        return None
-from pynostr.event import Event, EventKind
-from pynostr.filters import Filters, FiltersList
-from pynostr.encrypted_dm import EncryptedDirectMessage
-from pynostr.key import PrivateKey
+from app import (
+    app,
+    error_response,
+    get_cached_item,
+    set_cached_item,
+    initialize_client,
+    logger,
+    REQUIRED_DOMAIN,
+    ACTIVE_RELAYS,
+    PROFILE_FETCH_TIMEOUT,
+)
+from nostr_client import (
+    nprofile_encode,
+    Event,
+    EventKind,
+    Filter as Filters,
+    FiltersList,
+    EncryptedDirectMessage,
+)
 
 def require_nip05_verification(required_domain):
     from functools import wraps
@@ -62,7 +71,7 @@ async def fetch_profile():
         return error_response("Unable to connect to Nostr relays", 503)
     filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
     sub_id = f"fetch_{pubkey_hex}"
-    mgr.add_subscription_on_all_relays(sub_id, filt)
+    await mgr.add_subscription_on_all_relays(sub_id, filt)
     logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
 
     async def wait_for_message():
@@ -115,7 +124,7 @@ async def fetch_and_validate_profile(pubkey, required_domain):
     filt = FiltersList([
         Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)
     ])
-    mgr.add_subscription_on_all_relays(f"val_{pubkey}", filt)
+    await mgr.add_subscription_on_all_relays(f"val_{pubkey}", filt)
     await asyncio.sleep(1)
     profile_data = {}
     for msg in mgr.message_pool.get_all_events():
@@ -166,7 +175,7 @@ async def _create_event():
 async def _get_fuzzed_events():
     mgr = initialize_client()
     filt = FiltersList([Filters(kinds=[52])])
-    mgr.add_subscription_on_all_relays('fuzzed', filt)
+    await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
     results = []
     seen = set()
