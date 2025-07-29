@@ -5,6 +5,14 @@ import { showSection } from './utils.js';
 // Global profile state
 let userProfile = null;
 
+function renderProfileWhenReady(profileData) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => displayProfile(profileData), { once: true });
+  } else {
+    displayProfile(profileData);
+  }
+}
+
 async function validateProfile(pubkey) {
   try {
     const resp = await fetch('/validate-profile', {
@@ -22,9 +30,19 @@ async function validateProfile(pubkey) {
 // Display user profile details
 export function displayProfile(profileData) {
   const profileContainer = document.getElementById('profile-container');
+  if (!profileContainer) {
+    console.error('profile-container element not found');
+    return;
+  }
   profileContainer.innerHTML = '';
   const { pubkey } = profileData;
   const content = profileData.content || {};
+  if (Object.keys(content).length === 0) {
+    const msg = document.createElement('p');
+    msg.classList.add('empty-profile');
+    msg.textContent = 'No Nostr profile found for this public key. Please check your wallet or try again.';
+    profileContainer.appendChild(msg);
+  }
   if (content.picture) {
     const img = document.createElement('img');
     img.src = content.picture;
@@ -75,7 +93,9 @@ export async function authenticateWithNostr() {
   }
   try {
     const pubkey = await window.nostr.getPublicKey();
+    console.log('Retrieved pubkey:', pubkey);
     localStorage.setItem('pubkey', pubkey);
+    console.log('Fetching profile for', pubkey);
     const response = await fetch('/fetch-profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,8 +107,11 @@ export async function authenticateWithNostr() {
       console.warn('fetch-profile error:', profileData.error);
       profileData = { pubkey };
     }
+    if (!profileData.content) {
+      console.warn('No profile data returned for', pubkey);
+    }
     userProfile = profileData;
-    displayProfile(profileData);
+    renderProfileWhenReady(profileData);
     await validateProfile(pubkey);
     if (window.nostr.getRelays) {
       try {
