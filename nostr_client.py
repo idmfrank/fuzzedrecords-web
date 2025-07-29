@@ -165,7 +165,15 @@ class RelayManager:
 
     async def _connect(self, relay: _Relay, ssl_ctx):
         try:
-            relay.ws = await websockets.connect(relay.url, open_timeout=self.timeout, ssl=ssl_ctx)
+            if relay.url.startswith("wss://"):
+                ssl_param = ssl_ctx if ssl_ctx is not None else True
+            else:
+                ssl_param = None
+            relay.ws = await websockets.connect(
+                relay.url,
+                open_timeout=self.timeout,
+                ssl=ssl_param,
+            )
             self.connection_statuses[relay.url] = True
             asyncio.create_task(self._recv_loop(relay))
         except Exception as exc:
