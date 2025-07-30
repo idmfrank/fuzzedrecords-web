@@ -14,6 +14,12 @@ class Main(Resource):
 
 class NostrJson(Resource):
     def get(self):
+        filter_name = request.args.get("name")
+        if not filter_name:
+            resp = jsonify({"error": "Missing name parameter"})
+            resp.status_code = 400
+            return resp
+
         logger.info("Fetching admin users and relays from Entra ID")
         tenant_id = os.getenv("TENANT_ID")
         client_id = os.getenv("CLIENT_ID")
@@ -65,8 +71,7 @@ class NostrJson(Resource):
             return resp
 
         users = usr_resp.json().get("value", [])
-        filter_name = request.args.get("name")
-        filter_name_l = filter_name.lower() if filter_name else None
+        filter_name_l = filter_name.lower()
         names = {}
         relays = {}
         for u in users:

@@ -38,7 +38,7 @@ def test_groups_request_exception(monkeypatch):
         raise requests.RequestException("boom")
     app_module = _reload_app(monkeypatch, bad_get)
     with app_module.app.test_client() as client:
-        resp = client.get("/.well-known/nostr.json")
+        resp = client.get("/.well-known/nostr.json?name=User")
         assert resp.status_code == 502
         assert resp.get_json()["error"] == "Failed to retrieve groups"
 
@@ -54,7 +54,7 @@ def test_membership_http_error(monkeypatch):
         return responses.pop(0)
     app_module = _reload_app(monkeypatch, seq_get)
     with app_module.app.test_client() as client:
-        resp = client.get("/.well-known/nostr.json")
+        resp = client.get("/.well-known/nostr.json?name=User")
         assert resp.status_code == 502
         assert "memberships" in resp.get_json()["error"]
 
@@ -83,3 +83,14 @@ def test_filter_returns_single_user(monkeypatch):
         data = resp.get_json()
         assert data["names"] == {"Bob": "pk2"}
         assert data["relays"] == {"pk2": ["wss://relay"]}
+
+
+def test_missing_name_returns_400(monkeypatch):
+    def noop_get(url, *args, **kwargs):
+        return DummyResponse({"value": []})
+
+    app_module = _reload_app(monkeypatch, noop_get)
+    with app_module.app.test_client() as client:
+        resp = client.get("/.well-known/nostr.json")
+        assert resp.status_code == 400
+        assert "name" in resp.get_json()["error"]

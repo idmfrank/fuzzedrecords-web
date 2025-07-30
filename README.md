@@ -172,12 +172,12 @@ If dependencies are missing, tests will fail with import errors similar to the o
 ### 0. Nostr Discovery JSON
 - **Endpoint**: `/.well-known/nostr.json`
 - **Method**: `GET`
-- **Description**: Returns a Nostr discovery document containing admin user public keys and their associated relay URLs, sourced from Azure AD groups.
+- **Description**: Returns discovery information for a single administrator. The request must include a `name` query parameter matching the user's display name. If omitted, the endpoint responds with HTTP 400.
 - **Response**:
   ```json
   {
-    "names": {"Display Name": "pubkey", ...},
-    "relays": {"pubkey": ["wss://relay1", ...], ...}
+    "names": {"Display Name": "pubkey"},
+    "relays": {"pubkey": ["wss://relay1", ...]}
   }
   ```
 
