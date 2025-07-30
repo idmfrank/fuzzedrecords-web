@@ -54,7 +54,7 @@ export async function createEvent(e) {
   try {
     if (!window.nostr) throw new Error('Nostr wallet not available');
     const template = {
-      kind: 52,
+      kind: 31922,
       created_at: Math.floor(Date.now()/1000),
       tags: [
         ['title', eventData.title],
