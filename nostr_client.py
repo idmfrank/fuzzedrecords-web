@@ -300,6 +300,12 @@ class EncryptedDirectMessage:
             self.content = cleartext_content
 
     def to_event(self) -> Event:
+        """Return an ``Event`` representing this message.
+
+        The ``pubkey`` field in the resulting event must reference the
+        **sender's** public key. Older versions incorrectly used the
+        recipient's pubkey here which resulted in invalid signatures.
+        """
         return Event(
             public_key=self.sender_pubkey,
             content=self.content,
