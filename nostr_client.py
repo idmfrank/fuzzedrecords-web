@@ -5,10 +5,14 @@ import ssl
 import hashlib
 import time
 import logging
+import base64
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import websockets
 import bech32
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives import hashes
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +60,7 @@ class EventKind:
     SET_METADATA = 0
     TEXT_NOTE = 1
     ENCRYPTED_DM = 4
+    EPHEMERAL_DM = 23194
     CALENDAR_EVENT = 31922  # NIP-52 calendar events
 
 @dataclass
@@ -242,20 +247,60 @@ class RelayManager:
                 except Exception:
                     pass
 
+_P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+
+def _lift_x(x: int) -> (int, int):
+    """Convert x-only pubkey to curve point with even y."""
+    y_sq = (pow(x, 3, _P) + 7) % _P
+    y = pow(y_sq, (_P + 1) // 4, _P)
+    if y % 2 == 1:
+        y = _P - y
+    return x, y
+
+def _pubkey_from_hex(pub_hex: str) -> ec.EllipticCurvePublicKey:
+    x = int(pub_hex, 16)
+    x, y = _lift_x(x)
+    numbers = ec.EllipticCurvePublicNumbers(x, y, ec.SECP256K1())
+    return numbers.public_key()
+
+def derive_public_key_hex(priv_hex: str) -> str:
+    key = ec.derive_private_key(int(priv_hex, 16), ec.SECP256K1())
+    numbers = key.public_key().public_numbers()
+    return f"{numbers.x:064x}"
+
+def nip17_encrypt(sender_priv: str, recipient_pub: str, plaintext: str) -> str:
+    """Encrypt plaintext per NIP-17 using AES-GCM."""
+    sender_key = ec.derive_private_key(int(sender_priv, 16), ec.SECP256K1())
+    recipient_key = _pubkey_from_hex(recipient_pub)
+    shared = sender_key.exchange(ec.ECDH(), recipient_key)
+    digest = hashes.Hash(hashes.SHA256())
+    digest.update(shared)
+    key = digest.finalize()
+    aes = AESGCM(key)
+    iv = os.urandom(12)
+    ct = aes.encrypt(iv, plaintext.encode(), None)
+    return base64.b64encode(iv + ct).decode()
+
 class EncryptedDirectMessage:
-    def __init__(self):
+    def __init__(self, kind: int = EventKind.ENCRYPTED_DM):
+        self.kind = kind
         self.content = ""
-        self.pubkey = ""
+        self.sender_pubkey = ""
+        self.recipient_pubkey = ""
 
     def encrypt(self, private_key_hex: str, cleartext_content: str, recipient_pubkey: str):
-        self.content = cleartext_content
-        self.pubkey = recipient_pubkey
+        self.sender_pubkey = derive_public_key_hex(private_key_hex)
+        self.recipient_pubkey = recipient_pubkey
+        if self.kind == EventKind.EPHEMERAL_DM:
+            self.content = nip17_encrypt(private_key_hex, recipient_pubkey, cleartext_content)
+        else:
+            self.content = cleartext_content
 
     def to_event(self) -> Event:
         return Event(
-            public_key=self.pubkey,
+            public_key=self.sender_pubkey,
             content=self.content,
-            kind=EventKind.ENCRYPTED_DM,
-            tags=[],
+            kind=self.kind,
+            tags=[["p", self.recipient_pubkey]],
             created_at=int(time.time()),
         )
