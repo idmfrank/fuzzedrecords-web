@@ -10,9 +10,12 @@ import app
 class DummyMgr:
     def __init__(self):
         self.published = False
+        self.prepared = False
     def add_relay(self, url):
         pass
-    def publish_event(self, ev):
+    async def prepare_relays(self):
+        self.prepared = True
+    async def publish_event(self, ev):
         self.published = True
     def close_connections(self):
         pass
@@ -53,6 +56,7 @@ def test_create_event_requires_valid_admin(monkeypatch):
         resp = client.post("/create_event", json=_basic_event_data())
         assert resp.status_code == 403
         assert not mgr.published
+        assert not mgr.prepared
 
     # valid admin -> 200
     monkeypatch.setattr(nostr_utils, "fetch_and_validate_profile", _true)
@@ -61,6 +65,7 @@ def test_create_event_requires_valid_admin(monkeypatch):
         resp = client.post("/create_event", json=data)
         assert resp.status_code == 200
         assert mgr.published
+        assert mgr.prepared
         resp_data = resp.get_json()
         assert resp_data["id"] == data["id"]
 
