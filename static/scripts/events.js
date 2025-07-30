@@ -17,13 +17,24 @@ export async function fetchFuzzedEvents() {
       data.events.forEach(ev => {
         const el = document.createElement('div');
         el.classList.add('event-item');
+        const start = getTagValue(ev.tags, 'starts');
+        const end = getTagValue(ev.tags, 'ends');
+        const price = getTagValue(ev.tags, 'price');
+        const category = getTagValue(ev.tags, 'category');
         el.innerHTML = `
           <h3>${getTagValue(ev.tags, 'title')}</h3>
-          <p><strong>Venue:</strong> ${getTagValue(ev.tags, 'venue')}</p>
-          <p><strong>Date:</strong> ${new Date(getTagValue(ev.tags, 'date')).toLocaleString()}</p>
-          <p><strong>Fee:</strong> $${getTagValue(ev.tags, 'fee')}</p>
-          <p>${ev.content}</p>
+          <p><strong>Summary:</strong> ${getTagValue(ev.tags, 'summary')}</p>
+          <p><strong>Location:</strong> ${getTagValue(ev.tags, 'location')}</p>
+          <p><strong>Starts:</strong> ${new Date(start).toLocaleString()}</p>
+          <p><strong>Ends:</strong> ${new Date(end).toLocaleString()}</p>
         `;
+        if (price !== 'N/A') {
+          el.innerHTML += `<p><strong>Price:</strong> $${price}</p>`;
+        }
+        if (category !== 'N/A') {
+          el.innerHTML += `<p><strong>Category:</strong> ${category}</p>`;
+        }
+        el.innerHTML += `<p>${ev.content}</p>`;
         el.innerHTML += `<button class="generate-ticket-btn" data-event='${JSON.stringify(ev)}'>Generate Ticket</button>`;
         container.appendChild(el);
       });
@@ -45,23 +56,31 @@ export async function createEvent(e) {
   const data = new FormData(form);
   const eventData = {
     title: data.get('event-title'),
-    venue: data.get('event-venue'),
-    date: data.get('event-date'),
-    fee: data.get('event-fee'),
+    summary: data.get('event-summary'),
+    location: data.get('event-location'),
+    starts: data.get('event-start'),
+    ends: data.get('event-end'),
+    price: data.get('event-price'),
+    category: data.get('event-category'),
     description: data.get('event-description'),
     pubkey: localStorage.getItem('pubkey')
   };
   try {
     if (!window.nostr) throw new Error('Nostr wallet not available');
+    const tags = [
+      ['d', crypto.randomUUID()],
+      ['title', eventData.title],
+      ['summary', eventData.summary],
+      ['location', eventData.location],
+      ['starts', eventData.starts],
+      ['ends', eventData.ends]
+    ];
+    if (eventData.price) tags.push(['price', String(eventData.price)]);
+    if (eventData.category) tags.push(['category', eventData.category]);
     const template = {
       kind: 31922,
       created_at: Math.floor(Date.now()/1000),
-      tags: [
-        ['title', eventData.title],
-        ['venue', eventData.venue],
-        ['date', eventData.date],
-        ['fee', String(eventData.fee)]
-      ],
+      tags,
       content: eventData.description,
       pubkey: eventData.pubkey
     };
