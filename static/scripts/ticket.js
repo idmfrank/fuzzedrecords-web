@@ -21,7 +21,7 @@ export async function generateTicketWithQRCode(eventData) {
   await sendTicketViaNostrDM(ticketData);
 }
 
-// Encrypt and send ticket via kind=4 Nostr event
+// Encrypt and send ticket via kind=23194 Nostr event
 async function sendTicketViaNostrDM(ticketData) {
   if (!window.nostr) {
     console.error('Nostr wallet not available.');
@@ -32,9 +32,11 @@ async function sendTicketViaNostrDM(ticketData) {
     let encrypted = content;
     if (window.nostr.nip44?.encrypt) {
       encrypted = await window.nostr.nip44.encrypt(ticketData.pubkey, content);
+    } else if (window.nostr.nip04?.encrypt) {
+      encrypted = await window.nostr.nip04.encrypt(ticketData.pubkey, content);
     }
     const dmEvent = {
-      kind: 4,
+      kind: 23194,
       created_at: Math.floor(Date.now() / 1000),
       tags: [['p', ticketData.pubkey]],
       content: encrypted,
