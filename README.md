@@ -218,12 +218,15 @@ If dependencies are missing, tests will fail with import errors similar to the o
 ### 3. Create Event (Admin Only)
 - **Endpoint**: `/create_event`
 - **Method**: `POST`
-- **Description**: Publishes a signed Kind=1 (text note) or custom event to relays.
+- **Description**: Publishes a signed Kind=1 (text note) or calendar event (NIP-52) to relays.
 - **Request Body**:
   ```json
   {"pubkey":"...","sig":"...","kind":1,"created_at":timestamp,
    "tags":[["title","event_title"],...],"content":"event_description"}
   ```
+- **NIP-52 Tags**: For `kind` `31922`, include tags like `['d', 'id']`, `['title','name']`,
+  `['summary','summary']`, `['location','venue']`, `['starts','unix_ts']`,
+  `['ends','unix_ts']` and optionally `['price','amount']`, `['category','type']`.
 - **Response**:
   ```json
   {"message":"Event successfully broadcasted"}
@@ -240,10 +243,11 @@ If dependencies are missing, tests will fail with import errors similar to the o
 - **Endpoint**: `/fuzzed_events`
 - **Method**: `GET`
 - **Description**: Retrieves Kind=31922 events from verified accounts.
+- **NIP-52 Tags**: Returned events contain tags defined above (e.g. `['title']`, `['location']`, `['starts']`, `['ends']`).
 - **Response**:
   ```json
   {"events":[{"id":"...","pubkey":"...",
-               "content":"...","tags":[],"created_at":...},...]} 
+               "content":"...","tags":[],"created_at":...},...]}
   ```
 
 ### 6. Send Encrypted DM (NIP-04)

@@ -78,6 +78,7 @@ export async function createEvent(e) {
     if (eventData.price) tags.push(['price', String(eventData.price)]);
     if (eventData.category) tags.push(['category', eventData.category]);
     const template = {
+      // NIP-52 calendar event kind
       kind: 31922,
       created_at: Math.floor(Date.now()/1000),
       tags,

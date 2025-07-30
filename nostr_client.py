@@ -56,7 +56,7 @@ class EventKind:
     SET_METADATA = 0
     TEXT_NOTE = 1
     ENCRYPTED_DM = 4
-    CALENDAR_EVENT = 31922
+    CALENDAR_EVENT = 31922  # NIP-52 calendar events
 
 @dataclass
 class Event:
