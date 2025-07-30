@@ -1,6 +1,6 @@
 // events.js
 // Handles events section: fetching, rendering, and admin event creation
-import { showSection, getTagValue } from './utils.js';
+import { showSection, getTagValue, isAdmin } from './utils.js';
 
 // Fetch and display fuzzed events
 export async function fetchFuzzedEvents() {
@@ -112,6 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Please sign in with Nostr to view events.');
     }
   });
-  btnAdmin?.addEventListener('click', () => showSection('admin'));
+  btnAdmin?.addEventListener('click', () => {
+    if (isAdmin()) {
+      showSection('admin');
+    }
+  });
   document.getElementById('event-form')?.addEventListener('submit', createEvent);
 });

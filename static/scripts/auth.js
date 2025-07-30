@@ -1,6 +1,6 @@
 // auth.js
 // Handles navigation and Nostr authentication (NIP-07) logic
-import { showSection } from './utils.js';
+import { showSection, isAdmin } from './utils.js';
 
 // Global profile state
 let userProfile = null;
@@ -110,11 +110,11 @@ export async function authenticateWithNostr() {
     }
     userProfile = profileData;
     renderProfileWhenReady(profileData);
-  const isAdmin = await validateProfile(pubkey);
-  localStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
+  const adminStatus = await validateProfile(pubkey);
+  localStorage.setItem('isAdmin', adminStatus ? 'true' : 'false');
   const adminBtn = document.getElementById('menu-admin');
   if (adminBtn) {
-    adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    adminBtn.style.display = adminStatus ? 'inline-block' : 'none';
   }
   if (window.nostr.getRelays) {
       try {
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const adminBtn = document.getElementById('menu-admin');
-  if (adminBtn && localStorage.getItem('isAdmin') === 'true') {
-    adminBtn.style.display = 'inline-block';
+  if (adminBtn) {
+    adminBtn.style.display = isAdmin() ? 'inline-block' : 'none';
   }
 });
