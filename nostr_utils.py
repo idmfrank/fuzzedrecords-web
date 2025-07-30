@@ -168,6 +168,7 @@ async def _create_event():
     ev.id = data.get('id')
     if not ev.verify():
         return error_response("Invalid signature", 403)
+    logger.debug("Created event for publish: %s", ev.to_dict())
     mgr = initialize_client()
     mgr.publish_event(ev)
     mgr.close_connections()
