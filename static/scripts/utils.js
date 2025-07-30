@@ -1,6 +1,16 @@
 // utils.js - shared helper functions
 // Switch between content sections
+export function isAdmin() {
+  return (
+    localStorage.getItem('isAdmin') === 'true' &&
+    Boolean(localStorage.getItem('pubkey'))
+  );
+}
+
 export function showSection(section) {
+  if (section === 'admin' && !isAdmin()) {
+    return; // Block non-admins from showing admin section
+  }
   const sections = ['library', 'profile', 'events', 'admin', 'gear'];
   sections.forEach(sec => {
     const el = document.getElementById(`${sec}-section`);
