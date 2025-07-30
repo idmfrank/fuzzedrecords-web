@@ -156,12 +156,13 @@ async def _create_event():
                kind=EventKind(data.get('kind',1)), tags=data.get('tags',[]),
                created_at=data.get('created_at', int(time.time())))
     ev.sig = data.get('sig')
+    ev.id = data.get('id')
     if not ev.verify():
         return error_response("Invalid signature", 403)
     mgr = initialize_client()
     mgr.publish_event(ev)
     mgr.close_connections()
-    return jsonify({"message":"Event successfully broadcasted"})
+    return jsonify({"message":"Event successfully broadcasted", "id": ev.id})
 
 @app.route('/fuzzed_events', methods=['GET'])
 async def _get_fuzzed_events():

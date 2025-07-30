@@ -88,7 +88,7 @@ export async function createEvent(e) {
     const resp = await fetch('/create_event', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({...template, sig: signed.sig})
+      body: JSON.stringify(signed)
     });
     if (!resp.ok) throw new Error((await resp.json()).error || 'Unknown');
     alert('Event created successfully!');

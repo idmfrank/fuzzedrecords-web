@@ -28,6 +28,7 @@ def _basic_event_data():
     return {
         "pubkey": "00" * 32,
         "sig": "sig",
+        "id": "11" * 32,
         "kind": 1,
         "created_at": 0,
         "tags": [],
@@ -56,7 +57,10 @@ def test_create_event_requires_valid_admin(monkeypatch):
     # valid admin -> 200
     monkeypatch.setattr(nostr_utils, "fetch_and_validate_profile", _true)
     with app.app.test_client() as client:
-        resp = client.post("/create_event", json=_basic_event_data())
+        data = _basic_event_data()
+        resp = client.post("/create_event", json=data)
         assert resp.status_code == 200
         assert mgr.published
+        resp_data = resp.get_json()
+        assert resp_data["id"] == data["id"]
 
