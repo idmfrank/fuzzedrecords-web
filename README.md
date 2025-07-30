@@ -250,10 +250,16 @@ If dependencies are missing, tests will fail with import errors similar to the o
                "content":"...","tags":[],"created_at":...},...]}
   ```
 
-### 6. Send Encrypted DM (NIP-04)
+### 6. Send Ephemeral DM (NIP-17)
 - **Endpoint**: `/send_dm`
 - **Method**: `POST`
-- **Description**: Encrypts and sends a direct message as Kind=4.
+- **Description**: Encrypts and sends a direct message as Kind=23194. The
+  message content is encrypted using NIP‑17's AES‑GCM flow with the sender's
+  private key and recipient's public key. Ephemeral DMs are not persisted by
+  relays, but the backend may optionally save a copy so recipients can fallback
+  to retrieve it later.
+- **Required Fields**: `pubkey`, `kind`, `created_at`, `tags=[['p',
+  recipient_pubkey]]`, and encrypted `content`.
 - **Request Body**:
   ```json
   {"to_pubkey":"...","content":"...",
