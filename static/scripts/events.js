@@ -11,7 +11,7 @@ export async function fetchFuzzedEvents() {
     const response = await fetch('/fuzzed_events');
     const data = await response.json();
     if (data.events && data.events.length > 0) {
-      if (registerBtn && localStorage.getItem('pubkey')) {
+      if (registerBtn && sessionStorage.getItem('pubkey')) {
         registerBtn.style.display = 'inline-block';
       }
       data.events.forEach(ev => {
@@ -63,7 +63,7 @@ export async function createEvent(e) {
     price: data.get('event-price'),
     category: data.get('event-category'),
     description: data.get('event-description'),
-    pubkey: localStorage.getItem('pubkey')
+    pubkey: sessionStorage.getItem('pubkey')
   };
   try {
     if (!window.nostr) throw new Error('Nostr wallet not available');
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnEvents = document.getElementById('menu-events');
   const btnAdmin = document.getElementById('menu-admin');
   btnEvents?.addEventListener('click', () => {
-    if (localStorage.getItem('pubkey')) {
+    if (sessionStorage.getItem('pubkey')) {
       fetchFuzzedEvents();
       showSection('events');
     } else {
