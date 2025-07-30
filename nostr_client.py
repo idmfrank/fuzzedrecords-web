@@ -232,12 +232,15 @@ class RelayManager:
 
     def publish_event(self, event: Event):
         msg = json.dumps(["EVENT", event.to_dict()])
-        for r in self.relays.values():
+        for url, r in self.relays.items():
             if r.ws:
+                logger.debug("Sending message to %s: %s", url, msg)
                 try:
                     asyncio.create_task(r.ws.send(msg))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.error("Failed to send to %s: %s", url, exc)
+            else:
+                logger.debug("Relay %s not connected; skipping send", url)
 
     def close_connections(self):
         for r in self.relays.values():
