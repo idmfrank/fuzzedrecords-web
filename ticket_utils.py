@@ -11,7 +11,7 @@ initialize_client = None
 error_response = None
 logger = None
 limiter = None
-from nostr_client import EncryptedDirectMessage
+from nostr_client import EncryptedDirectMessage, EventKind
 
 
 def _load_app_dependencies():
@@ -39,7 +39,7 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     # Generate payload (QR image is not needed for DM)
     _load_app_dependencies()
     payload_str, _ = generate_ticket(event_name, recipient_pubkey_hex, timestamp)
-    dm = EncryptedDirectMessage()
+    dm = EncryptedDirectMessage(kind=EventKind.EPHEMERAL_DM)
     dm.encrypt(private_key_hex=sender_privkey_hex,
                cleartext_content=payload_str,
                recipient_pubkey=recipient_pubkey_hex)
