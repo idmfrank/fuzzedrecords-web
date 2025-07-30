@@ -152,13 +152,23 @@ def _validate_profile():
 @require_nip05_verification(REQUIRED_DOMAIN)
 async def _create_event():
     data = request.json or {}
-    ev = Event(public_key=data.get('pubkey'), content=data.get('content',''),
-               kind=EventKind(data.get('kind',1)), tags=data.get('tags',[]),
-               created_at=data.get('created_at', int(time.time())))
+    kind_val = data.get('kind', EventKind.TEXT_NOTE)
+    try:
+        kind_val = int(kind_val)
+    except (TypeError, ValueError):
+        kind_val = EventKind.TEXT_NOTE
+    ev = Event(
+        public_key=data.get('pubkey'),
+        content=data.get('content', ''),
+        kind=kind_val,
+        tags=data.get('tags', []),
+        created_at=data.get('created_at', int(time.time())),
+    )
     ev.sig = data.get('sig')
     ev.id = data.get('id')
     if not ev.verify():
         return error_response("Invalid signature", 403)
+    logger.debug("Created event for publish: %s", ev.to_dict())
     mgr = initialize_client()
     mgr.publish_event(ev)
     mgr.close_connections()

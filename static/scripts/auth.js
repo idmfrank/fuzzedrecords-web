@@ -138,9 +138,6 @@ export async function authenticateWithNostr() {
 
 // Initialization: menu buttons
 document.addEventListener('DOMContentLoaded', () => {
-  // Remove any persisted admin state from older versions
-  localStorage.removeItem('pubkey');
-  localStorage.removeItem('isAdmin');
   // Clear session data so admin UI requires fresh login each reload
   sessionStorage.removeItem('pubkey');
   sessionStorage.removeItem('isAdmin');
