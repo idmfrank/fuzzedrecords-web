@@ -10,7 +10,7 @@ export async function generateTicketWithQRCode(eventData) {
   const ticketData = {
     ticket_id: ticketId,
     event_id: eventId,
-    pubkey: localStorage.getItem('pubkey'),
+    pubkey: sessionStorage.getItem('pubkey'),
     event_name: eventName
   };
   const qrContainer = document.getElementById('qr-code');
@@ -38,7 +38,7 @@ async function sendTicketViaNostrDM(ticketData) {
       created_at: Math.floor(Date.now() / 1000),
       tags: [['p', ticketData.pubkey]],
       content: encrypted,
-      pubkey: localStorage.getItem('pubkey')
+      pubkey: sessionStorage.getItem('pubkey')
     };
     const signed = await window.nostr.signEvent(dmEvent);
     const resp = await fetch('/send_ticket', {

@@ -2,8 +2,8 @@
 // Switch between content sections
 export function isAdmin() {
   return (
-    localStorage.getItem('isAdmin') === 'true' &&
-    Boolean(localStorage.getItem('pubkey'))
+    sessionStorage.getItem('isAdmin') === 'true' &&
+    Boolean(sessionStorage.getItem('pubkey'))
   );
 }
 
