@@ -92,7 +92,7 @@ export async function authenticateWithNostr() {
   try {
     const pubkey = await window.nostr.getPublicKey();
     console.log('Retrieved pubkey:', pubkey);
-    localStorage.setItem('pubkey', pubkey);
+    sessionStorage.setItem('pubkey', pubkey);
     console.log('Fetching profile for', pubkey);
     const response = await fetch('/fetch-profile', {
       method: 'POST',
@@ -111,7 +111,7 @@ export async function authenticateWithNostr() {
     userProfile = profileData;
     renderProfileWhenReady(profileData);
   const adminStatus = await validateProfile(pubkey);
-  localStorage.setItem('isAdmin', adminStatus ? 'true' : 'false');
+  sessionStorage.setItem('isAdmin', adminStatus ? 'true' : 'false');
   const adminBtn = document.getElementById('menu-admin');
   if (adminBtn) {
     adminBtn.style.display = adminStatus ? 'inline-block' : 'none';
@@ -138,6 +138,12 @@ export async function authenticateWithNostr() {
 
 // Initialization: menu buttons
 document.addEventListener('DOMContentLoaded', () => {
+  // Remove any persisted admin state from older versions
+  localStorage.removeItem('pubkey');
+  localStorage.removeItem('isAdmin');
+  // Clear session data so admin UI requires fresh login each reload
+  sessionStorage.removeItem('pubkey');
+  sessionStorage.removeItem('isAdmin');
   document.getElementById('menu-library')
     .addEventListener('click', () => showSection('library'));
   document.getElementById('menu-gear')
