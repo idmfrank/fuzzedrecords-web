@@ -20,7 +20,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 
 - **Music Library**: Browse and play songs hosted on Wavlake. The library includes detailed artist and album information.
 - **User Profiles**: Authenticate using Nostr Wallet to view and manage your profile, leveraging Nostr NIP-07 for login.
-- **Admin Panel**: Create and publish events (restricted to verified admins).
+ - **Admin Panel**: Create and publish events (visible when your NIP-05 address ends with `fuzzedrecords.com`).
 - **Decentralized Authentication**: Uses Nostr Wallet for secure, decentralized user authentication.
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
@@ -296,7 +296,8 @@ If dependencies are missing, tests will fail with import errors similar to the o
    - The backend fetches and validates their profile data.
 
 3. **Admin Actions**:
-   - Verified admins can access the Admin section and create events.
+   - Users whose NIP-05 identifier ends with `fuzzedrecords.com` are treated as admins.
+   - The Admin menu becomes visible after login and allows creating events.
    - Events are published to Nostr relays.
 
 4. **Music Library**:
