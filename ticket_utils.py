@@ -1,4 +1,4 @@
-import time, json
+import time, json, asyncio
 from io import BytesIO
 import qrcode
 from flask import request, jsonify
@@ -46,7 +46,7 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     ev = dm.to_event()
     ev.sign(sender_privkey_hex)
     mgr = initialize_client()
-    mgr.publish_event(ev)
+    asyncio.run(mgr.publish_event(ev))
     mgr.close_connections()
     return ev.id
 
