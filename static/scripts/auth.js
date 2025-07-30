@@ -110,8 +110,13 @@ export async function authenticateWithNostr() {
     }
     userProfile = profileData;
     renderProfileWhenReady(profileData);
-    await validateProfile(pubkey);
-    if (window.nostr.getRelays) {
+  const isAdmin = await validateProfile(pubkey);
+  localStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
+  const adminBtn = document.getElementById('menu-admin');
+  if (adminBtn) {
+    adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  }
+  if (window.nostr.getRelays) {
       try {
         const info = await window.nostr.getRelays();
         const relays = Object.keys(info || {});
@@ -154,5 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const sections = ['library', 'profile', 'events', 'admin', 'gear'];
   if (sections.includes(hash)) {
     showSection(hash);
+  }
+
+  const adminBtn = document.getElementById('menu-admin');
+  if (adminBtn && localStorage.getItem('isAdmin') === 'true') {
+    adminBtn.style.display = 'inline-block';
   }
 });
