@@ -56,7 +56,7 @@ class EventKind:
     SET_METADATA = 0
     TEXT_NOTE = 1
     ENCRYPTED_DM = 4
-    CUSTOM_52 = 52
+    CALENDAR_EVENT = 31922
 
 @dataclass
 class Event:

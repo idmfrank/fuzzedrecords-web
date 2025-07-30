@@ -166,7 +166,7 @@ async def _create_event():
 @app.route('/fuzzed_events', methods=['GET'])
 async def _get_fuzzed_events():
     mgr = initialize_client()
-    filt = FiltersList([Filters(kinds=[52])])
+    filt = FiltersList([Filters(kinds=[EventKind.CALENDAR_EVENT])])
     await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
     results = []

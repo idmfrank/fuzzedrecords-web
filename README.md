@@ -239,7 +239,7 @@ If dependencies are missing, tests will fail with import errors similar to the o
 ### 5. Fetch Fuzzed Events
 - **Endpoint**: `/fuzzed_events`
 - **Method**: `GET`
-- **Description**: Retrieves Kind=52 events from verified accounts.
+- **Description**: Retrieves Kind=31922 events from verified accounts.
 - **Response**:
   ```json
   {"events":[{"id":"...","pubkey":"...",
