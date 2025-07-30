@@ -179,6 +179,11 @@ async def _create_event():
 @app.route('/fuzzed_events', methods=['GET'])
 async def _get_fuzzed_events():
     mgr = initialize_client()
+    await mgr.prepare_relays()
+    statuses = getattr(mgr, "connection_statuses", {})
+    if statuses and not any(statuses.values()):
+        logger.error("Unable to connect to any Nostr relays: %s", statuses)
+        return error_response("Unable to connect to Nostr relays", 503)
     filt = FiltersList([Filters(kinds=[EventKind.CALENDAR_EVENT])])
     await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
