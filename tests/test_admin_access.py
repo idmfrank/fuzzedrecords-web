@@ -44,7 +44,7 @@ def test_create_event_requires_valid_admin(monkeypatch):
         SET_METADATA = 0
         TEXT_NOTE = 1
         ENCRYPTED_DM = 4
-        CALENDAR_EVENT = 31922
+        CALENDAR_EVENT = 31922  # NIP-52 calendar events
     monkeypatch.setattr(nostr_utils, "EventKind", DummyEK)
 
     # invalid admin -> 403
