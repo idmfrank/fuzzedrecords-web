@@ -1,6 +1,9 @@
 // ticket.js
-// Handles ticket generation, QR display, and sending via Nostr DM
+// Handles ticket generation, QR display, and sending via Nostr Wallet Connect
 import { getTagValue } from './utils.js';
+
+// Server wallet pubkey should be exposed on the window object
+const SERVER_WALLET_PUBKEY = window.serverWalletPubkey || '';
 
 // Generate ticket payload, display QR, and send DM
 export async function generateTicketWithQRCode(eventData) {
@@ -18,31 +21,36 @@ export async function generateTicketWithQRCode(eventData) {
     qrContainer.innerHTML = '';
     new QRCode(qrContainer, { text: JSON.stringify(ticketData), width: 256, height: 256 });
   }
-  await sendTicketViaNostrDM(ticketData);
+  await sendTicketViaNostrRequest(ticketData);
 }
 
-// Encrypt and send ticket via kind=23194 Nostr event
-async function sendTicketViaNostrDM(ticketData) {
+// Encrypt and send ticket via NIP-47 wallet request
+async function sendTicketViaNostrRequest(ticketData) {
   if (!window.nostr) {
     console.error('Nostr wallet not available.');
     return;
   }
-  const content = JSON.stringify(ticketData);
+  const payload = {
+    method: 'ticket.create',
+    params: ticketData,
+    id: crypto.randomUUID()
+  };
+  const content = JSON.stringify(payload);
   try {
     let encrypted = content;
     if (window.nostr.nip44?.encrypt) {
-      encrypted = await window.nostr.nip44.encrypt(ticketData.pubkey, content);
+      encrypted = await window.nostr.nip44.encrypt(SERVER_WALLET_PUBKEY, content);
     } else if (window.nostr.nip04?.encrypt) {
-      encrypted = await window.nostr.nip04.encrypt(ticketData.pubkey, content);
+      encrypted = await window.nostr.nip04.encrypt(SERVER_WALLET_PUBKEY, content);
     }
-    const dmEvent = {
+    const reqEvent = {
       kind: 23194,
       created_at: Math.floor(Date.now() / 1000),
-      tags: [['p', ticketData.pubkey]],
+      tags: [['p', SERVER_WALLET_PUBKEY]],
       content: encrypted,
       pubkey: sessionStorage.getItem('pubkey')
     };
-    const signed = await window.nostr.signEvent(dmEvent);
+    const signed = await window.nostr.signEvent(reqEvent);
     const resp = await fetch('/send_ticket', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,7 +63,7 @@ async function sendTicketViaNostrDM(ticketData) {
       alert('Failed to send ticket. Please try again.');
     }
   } catch (err) {
-    console.error('Error sending ticket DM:', err);
+    console.error('Error sending ticket request:', err);
     alert('Error sending ticket.');
   }
 }
