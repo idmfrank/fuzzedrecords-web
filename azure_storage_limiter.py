@@ -1,7 +1,7 @@
 import os
 import time
 from limits.storage import Storage
-from azure.data.tables import TableServiceClient
+from azure.data.tables import TableServiceClient, UpdateMode
 from urllib.parse import quote
 from azure.core.exceptions import ResourceExistsError, AzureError
 from typing import Optional
@@ -68,7 +68,8 @@ class AzureTableStorage(Storage):
                     expire_at = now + expiry
             entity["count"] = count
             entity["expire_at"] = expire_at
-            self.client.update_entity(entity, mode="MERGE")
+            # azure-data-tables >=12.4 expects UpdateMode enums instead of strings
+            self.client.update_entity(entity, mode=UpdateMode.MERGE)
         except AzureError:
             # Entity not found or any error: create new entity
             count = amount
