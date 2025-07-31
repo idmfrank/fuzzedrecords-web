@@ -20,13 +20,13 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Create and start virtual environment
         run: |
           python -m venv antenv
           source antenv/bin/activate
-          echo "PYTHONPATH=$(pwd)/antenv/lib/python3.9/site-packages" >> $GITHUB_ENV
+          echo "PYTHONPATH=$(pwd)/antenv/lib/python3.11/site-packages" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
