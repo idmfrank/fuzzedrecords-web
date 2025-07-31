@@ -63,6 +63,7 @@ Set the following environment variables to configure the application:
 - FRONTEND_ORIGINS: Comma-separated list of allowed CORS origins (default: '*')
 - AZURE_TABLES_CONNECTION_STRING: Azure connection string for rate-limit storage
 - RATELIMIT_TABLE_NAME: Azure table name for rate-limit counters (default: RateLimit)
+- Rate-limit keys are percent-encoded before being stored in Azure Table Storage.
 - RATELIMIT_STORAGE_URI: Alternate limiter storage URI (default: memory://)
 - WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
 - HTTP_TIMEOUT: Timeout in seconds for each Wavlake API request (default: 5)
@@ -86,7 +87,7 @@ Set the following environment variables to configure the application:
 ./
 ├── app.py                    # Top-level Flask router (imports modular routes)
 ├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
-├── azure_storage_limiter.py  # Azure Table Storage backend for rate limiting
+├── azure_storage_limiter.py  # Azure Table Storage backend for rate limiting (keys percent-encoded)
 ├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile, events
 ├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
 ├── ticket_utils.py           # Ticket generation & /send_ticket endpoint
