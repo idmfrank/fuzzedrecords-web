@@ -118,7 +118,7 @@ class FiltersList:
 class _EventMsg:
     subscription_id: str
     event: Event
-    relay_url: str | None = None
+    relay_url: Optional[str] = None
 
 @dataclass
 class _EOSEMsg:
@@ -129,7 +129,7 @@ class MessagePool:
         self._events: asyncio.Queue[_EventMsg] = asyncio.Queue()
         self._eose: asyncio.Queue[_EOSEMsg] = asyncio.Queue()
 
-    def add_event(self, sub_id: str, event: Event, relay_url: str | None = None):
+    def add_event(self, sub_id: str, event: Event, relay_url: Optional[str] = None):
         self._events.put_nowait(_EventMsg(sub_id, event, relay_url))
 
     def add_eose(self, sub_id: str):
