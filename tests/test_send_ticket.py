@@ -57,3 +57,24 @@ def test_send_ticket_as_dm(monkeypatch):
     expected_sender = nostr_client.derive_public_key_hex("11" * 32)
     assert mgr.last_event.public_key == expected_sender
     assert mgr.last_event.tags == [["p", "recip_pubkey"]]
+
+
+def test_publish_signed_ticket_dm(monkeypatch):
+    mgr = DummyRelayManager()
+    monkeypatch.setattr(ticket_utils, "initialize_client", lambda: mgr)
+
+    event_data = {
+        "id": "123",
+        "pubkey": "abcd",
+        "content": "cipher",
+        "kind": nostr_client.EventKind.EPHEMERAL_DM,
+        "tags": [["p", "abcd"]],
+        "created_at": 111,
+        "sig": "deadbeef",
+    }
+
+    ev_id = ticket_utils.publish_signed_ticket_dm(event_data)
+
+    assert ev_id == "123"
+    assert mgr.publish_count == 1
+    assert mgr.last_event.content == "cipher"
