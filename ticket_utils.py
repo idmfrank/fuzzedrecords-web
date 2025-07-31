@@ -46,6 +46,7 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     ev = dm.to_event()
     ev.sign(sender_privkey_hex)
     mgr = initialize_client()
+    asyncio.run(mgr.prepare_relays())
     asyncio.run(mgr.publish_event(ev))
     asyncio.run(mgr.close_connections())
     return ev.id
