@@ -11,15 +11,23 @@ from app import (
     ACTIVE_RELAYS,
     PROFILE_FETCH_TIMEOUT,
     VALID_PUBKEYS,
+    RELAY_CONNECT_TIMEOUT,
 )
 from nostr_client import (
     nprofile_encode,
+    npub_to_hex,
+    RelayManager,
     Event,
     EventKind,
     Filter as Filters,
     FiltersList,
     EncryptedDirectMessage,
 )
+
+# Single relay/event configuration for the events feed
+EVENTS_RELAY = "wss://nos.lol"
+EVENTS_NPUB = "npub19hlk7245yllkwsvp0hn0vxj6zh6huc4wwlgjkgy4jr0r9tf0qw9sxsr94q"
+EVENTS_PUBKEY_HEX = npub_to_hex(EVENTS_NPUB)
 
 def require_nip05_verification(required_domain):
     from functools import wraps
@@ -195,57 +203,33 @@ async def _create_event():
 
 @app.route('/fuzzed_events', methods=['GET'])
 async def _get_fuzzed_events():
-    mgr = initialize_client()
+    mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
+    mgr.add_relay(EVENTS_RELAY)
     await mgr.prepare_relays()
     statuses = getattr(mgr, "connection_statuses", {})
     if statuses and not any(statuses.values()):
-        logger.error("Unable to connect to any Nostr relays: %s", statuses)
+        logger.error("Unable to connect to Nostr relay: %s", statuses)
         return error_response("Unable to connect to Nostr relays", 503)
-    filt = FiltersList([Filters(kinds=[EventKind.CALENDAR_EVENT])])
+
+    filt = FiltersList([
+        Filters(authors=[EVENTS_PUBKEY_HEX], kinds=[EventKind.CALENDAR_EVENT])
+    ])
     await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
 
-    events = []
-    pubkeys = set()
-    for msg in mgr.message_pool.get_all_events():
-        ev = msg.event
-        events.append(ev)
-        pubkeys.add(ev.public_key)
+    results = [
+        {
+            'id': msg.event.id,
+            'pubkey': msg.event.public_key,
+            'content': msg.event.content,
+            'tags': msg.event.tags,
+            'created_at': msg.event.created_at,
+        }
+        for msg in mgr.message_pool.get_all_events()
+    ]
 
-    to_validate = [pk for pk in pubkeys if pk not in VALID_PUBKEYS]
-    tasks = [fetch_and_validate_profile(pk, REQUIRED_DOMAIN) for pk in to_validate]
-    validations = {}
-    if tasks:
-        try:
-            vals = await asyncio.wait_for(
-                asyncio.gather(*tasks, return_exceptions=True),
-                timeout=PROFILE_FETCH_TIMEOUT,
-            )
-        except asyncio.TimeoutError:
-            logger.warning("Profile validation timed out")
-            vals = [False] * len(tasks)
-        validations.update({pk: val for pk, val in zip(to_validate, vals)})
-    for pk in VALID_PUBKEYS:
-        if pk in pubkeys:
-            validations[pk] = True
-
-    results = []
-    for ev in events:
-        pk = ev.public_key
-        valid = validations.get(pk)
-        if isinstance(valid, Exception):
-            logger.error("Validation error for %s: %s", pk, valid)
-            continue
-        if valid:
-            results.append({
-                'id': ev.id,
-                'pubkey': pk,
-                'content': ev.content,
-                'tags': ev.tags,
-                'created_at': ev.created_at,
-            })
     await mgr.close_connections()
-    return jsonify({'events':results})
+    return jsonify({'events': results})
 
 @app.route('/send_dm', methods=['POST'])
 async def _send_dm():

@@ -54,6 +54,14 @@ def nprofile_decode(value: str):
         i += 2 + l
     return "nprofile", {"pubkey": pubkey, "relays": relays}
 
+def npub_to_hex(value: str) -> str:
+    """Decode a bech32 ``npub`` string into a hex pubkey."""
+    hrp, data = bech32.bech32_decode(value)
+    if hrp != "npub" or data is None:
+        raise ValueError("Invalid npub")
+    decoded = bech32.convertbits(data, 5, 8, False)
+    return bytes(decoded).hex()
+
 # --- Event and Filters ---
 
 class EventKind:
