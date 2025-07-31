@@ -118,6 +118,7 @@ class FiltersList:
 class _EventMsg:
     subscription_id: str
     event: Event
+    relay_url: str | None = None
 
 @dataclass
 class _EOSEMsg:
@@ -128,8 +129,8 @@ class MessagePool:
         self._events: asyncio.Queue[_EventMsg] = asyncio.Queue()
         self._eose: asyncio.Queue[_EOSEMsg] = asyncio.Queue()
 
-    def add_event(self, sub_id: str, event: Event):
-        self._events.put_nowait(_EventMsg(sub_id, event))
+    def add_event(self, sub_id: str, event: Event, relay_url: str | None = None):
+        self._events.put_nowait(_EventMsg(sub_id, event, relay_url))
 
     def add_eose(self, sub_id: str):
         self._eose.put_nowait(_EOSEMsg(sub_id))
@@ -225,7 +226,7 @@ class RelayManager:
                             sig=data[2].get("sig", ""),
                             id=data[2].get("id", ""),
                         )
-                        self.message_pool.add_event(data[1], event)
+                        self.message_pool.add_event(data[1], event, relay.url)
                     elif typ == "EOSE" and len(data) >= 2:
                         self.message_pool.add_eose(data[1])
             except websockets.exceptions.ConnectionClosedError as exc:
