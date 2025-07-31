@@ -110,7 +110,7 @@ Set the following environment variables to configure the application:
 ## Setup and Deployment
 
 ### Prerequisites
-- Python 3.x
+- Python 3.11 or newer *(older versions fail due to type-hint syntax)*
 - Nostr Wallet (for authentication)
 - Microsoft Azure account (for deployment)
 
