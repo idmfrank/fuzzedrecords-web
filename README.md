@@ -147,6 +147,8 @@ Set the following environment variables to configure the application:
      ```bash
      chmod +x startup.sh
      ```
+   - Create a `runtime.txt` file in the project root containing `python-3.11`
+     so Azure uses the correct Python version.
    - `startup.sh` installs Python dependencies and then launches the server.
    - Deploy the app to Azure WebApp using the Azure CLI or portal.
     > **Note**: The application must be able to establish outbound WebSocket connections to the relays listed in `RELAY_URLS`. Blocked outbound traffic will result in profile fetch failures.
