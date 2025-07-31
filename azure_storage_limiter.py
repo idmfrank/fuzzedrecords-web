@@ -2,6 +2,7 @@ import os
 import time
 from limits.storage import Storage
 from azure.data.tables import TableServiceClient
+from urllib.parse import quote
 from azure.core.exceptions import ResourceExistsError, AzureError
 from typing import Optional
 """
@@ -38,6 +39,10 @@ class AzureTableStorage(Storage):
         except ResourceExistsError:
             pass
 
+    def _sanitize_key(self, key: str) -> str:
+        """Return a version of ``key`` safe for Azure Table Storage."""
+        return quote(key, safe="")
+
     def incr(
         self,
         key: str,
@@ -47,8 +52,8 @@ class AzureTableStorage(Storage):
     ) -> int:
         """Increment the count for ``key`` by ``amount`` and set expiry."""
         now = int(time.time())
-        partition_key = key
-        row_key = key
+        partition_key = self._sanitize_key(key)
+        row_key = partition_key
         try:
             entity = self.client.get_entity(partition_key, row_key)
             count = entity.get("count", 0)
@@ -80,8 +85,8 @@ class AzureTableStorage(Storage):
     def get(self, key: str) -> int:
         """Return the current count for a key, or 0 if non-existent/expired."""
         now = int(time.time())
-        partition_key = key
-        row_key = key
+        partition_key = self._sanitize_key(key)
+        row_key = partition_key
         try:
             entity = self.client.get_entity(partition_key, row_key)
             expire_at = entity.get("expire_at", 0)
@@ -93,8 +98,8 @@ class AzureTableStorage(Storage):
 
     def clear(self, key: str) -> None:
         """Reset the count for a key by deleting the entity."""
-        partition_key = key
-        row_key = key
+        partition_key = self._sanitize_key(key)
+        row_key = partition_key
         try:
             self.client.delete_entity(partition_key, row_key)
         except AzureError:
