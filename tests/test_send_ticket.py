@@ -24,7 +24,7 @@ class DummyRelayManager:
     async def publish_event(self, ev):
         self.publish_count += 1
         self.last_event = ev
-    def close_connections(self):
+    async def close_connections(self):
         self.closed = True
 
 

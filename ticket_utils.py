@@ -47,7 +47,7 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     ev.sign(sender_privkey_hex)
     mgr = initialize_client()
     asyncio.run(mgr.publish_event(ev))
-    mgr.close_connections()
+    asyncio.run(mgr.close_connections())
     return ev.id
 
 def register_ticket_routes(app):

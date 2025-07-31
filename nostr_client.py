@@ -159,6 +159,7 @@ class RelayManager:
         # Lazily create the message pool when we have an event loop
         self.message_pool: Optional[MessagePool] = None
         self.connection_statuses: Dict[str, bool] = {}
+        self._recv_tasks: List[asyncio.Task] = []
 
     def _ensure_pool(self):
         """Create the message pool if it hasn't been initialised yet."""
@@ -180,7 +181,7 @@ class RelayManager:
                 ssl=ssl_param,
             )
             self.connection_statuses[relay.url] = True
-            asyncio.create_task(self._recv_loop(relay))
+            self._recv_tasks.append(asyncio.create_task(self._recv_loop(relay)))
         except Exception as exc:
             self.connection_statuses[relay.url] = False
             logger.error("Failed to connect to %s: %s", relay.url, exc)
@@ -246,13 +247,18 @@ class RelayManager:
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    def close_connections(self):
+    async def close_connections(self):
         for r in self.relays.values():
             if r.ws:
                 try:
-                    asyncio.create_task(r.ws.close())
+                    await r.ws.close()
                 except Exception:
                     pass
+        for task in self._recv_tasks:
+            task.cancel()
+        if self._recv_tasks:
+            await asyncio.gather(*self._recv_tasks, return_exceptions=True)
+        self._recv_tasks.clear()
 
 _P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
 
