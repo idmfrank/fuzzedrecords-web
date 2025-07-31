@@ -203,17 +203,34 @@ async def _get_fuzzed_events():
     filt = FiltersList([Filters(kinds=[EventKind.CALENDAR_EVENT])])
     await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
-    results = []
-    seen = set()
+    events = {}
     for msg in mgr.message_pool.get_all_events():
         ev = msg.event
-        if ev.public_key in seen: continue
-        seen.add(ev.public_key)
-        if await fetch_and_validate_profile(ev.public_key, REQUIRED_DOMAIN):
+        if ev.public_key not in events:
+            events[ev.public_key] = ev
+
+    tasks = [fetch_and_validate_profile(pk, REQUIRED_DOMAIN) for pk in events]
+    try:
+        validations = await asyncio.wait_for(
+            asyncio.gather(*tasks, return_exceptions=True),
+            timeout=PROFILE_FETCH_TIMEOUT,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Profile validation timed out")
+        validations = [False] * len(tasks)
+
+    results = []
+    for (pk, ev), valid in zip(events.items(), validations):
+        if isinstance(valid, Exception):
+            logger.error("Validation error for %s: %s", pk, valid)
+            continue
+        if valid:
             results.append({
-                'id':ev.id, 'pubkey':ev.public_key,
-                'content':ev.content, 'tags':ev.tags,
-                'created_at':ev.created_at
+                'id': ev.id,
+                'pubkey': pk,
+                'content': ev.content,
+                'tags': ev.tags,
+                'created_at': ev.created_at,
             })
     await mgr.close_connections()
     return jsonify({'events':results})
