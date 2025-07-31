@@ -7,52 +7,98 @@ export async function fetchFuzzedEvents() {
   const container = document.getElementById('events-section-content');
   const registerBtn = document.getElementById('register-btn');
   container.innerHTML = '';
-  try {
-    const response = await fetch('/fuzzed_events');
-    const data = await response.json();
-    if (data.events && data.events.length > 0) {
-      if (registerBtn && sessionStorage.getItem('pubkey')) {
-        registerBtn.style.display = 'inline-block';
-      }
-      const seen = new Set();
-      data.events.forEach(ev => {
-        if (seen.has(ev.id)) return;
-        seen.add(ev.id);
-        const el = document.createElement('div');
-        el.classList.add('event-item');
-        const start = getTagValue(ev.tags, 'starts');
-        const end = getTagValue(ev.tags, 'ends');
-        const price = getTagValue(ev.tags, 'price');
-        const category = getTagValue(ev.tags, 'category');
-        el.innerHTML = `
-          <h3>${getTagValue(ev.tags, 'title')}</h3>
-          <p><strong>Summary:</strong> ${getTagValue(ev.tags, 'summary')}</p>
-          <p><strong>Location:</strong> ${getTagValue(ev.tags, 'location')}</p>
-          <p><strong>Starts:</strong> ${new Date(start).toLocaleString()}</p>
-          <p><strong>Ends:</strong> ${new Date(end).toLocaleString()}</p>
-        `;
-        if (price !== 'N/A') {
-          el.innerHTML += `<p><strong>Price:</strong> $${price}</p>`;
-        }
-        if (category !== 'N/A') {
-          el.innerHTML += `<p><strong>Category:</strong> ${category}</p>`;
-        }
-        el.innerHTML += `<p>${ev.content}</p>`;
-        el.innerHTML += `<p class="event-id"><strong>Note ID:</strong> ${ev.id}</p>`;
-        if (ev.relay) {
-          el.innerHTML += `<p class="event-relay"><strong>Relay:</strong> ${ev.relay}</p>`;
-        }
-        el.innerHTML += `<button class="generate-ticket-btn" data-event='${JSON.stringify(ev)}'>Generate Ticket</button>`;
-        container.appendChild(el);
-      });
-    } else {
-      if (registerBtn) registerBtn.style.display = 'none';
-      container.innerHTML = '<p>No events available.</p>';
+
+  let data;
+  const cached = sessionStorage.getItem('fuzzedEvents');
+  if (cached) {
+    try {
+      data = { events: JSON.parse(cached) };
+    } catch (err) {
+      console.warn('Failed to parse cached events:', err);
+      sessionStorage.removeItem('fuzzedEvents');
     }
-  } catch (err) {
-    console.error('Error fetching events:', err);
+  }
+
+  if (!data) {
+    try {
+      const response = await fetch('/fuzzed_events');
+      data = await response.json();
+      if (response.ok) {
+        sessionStorage.setItem('fuzzedEvents', JSON.stringify(data.events || []));
+      }
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      if (registerBtn) registerBtn.style.display = 'none';
+      container.innerHTML = '<p>Error loading events.</p>';
+      return;
+    }
+  }
+
+  if (data.events && data.events.length > 0) {
+    if (registerBtn && sessionStorage.getItem('pubkey')) {
+      registerBtn.style.display = 'inline-block';
+    }
+    const seen = new Set();
+    data.events.forEach(ev => {
+      if (seen.has(ev.id)) return;
+      seen.add(ev.id);
+      const el = document.createElement('div');
+      el.classList.add('event-item');
+      const start = getTagValue(ev.tags, 'starts');
+      const end = getTagValue(ev.tags, 'ends');
+      const price = getTagValue(ev.tags, 'price');
+      const category = getTagValue(ev.tags, 'category');
+
+      const header = document.createElement('h3');
+      header.textContent = getTagValue(ev.tags, 'title');
+      el.appendChild(header);
+
+      const table = document.createElement('table');
+      table.classList.add('profile-details');
+      const fields = [
+        { label: 'Summary', value: getTagValue(ev.tags, 'summary') },
+        { label: 'Location', value: getTagValue(ev.tags, 'location') },
+        { label: 'Starts', value: new Date(start).toLocaleString() },
+        { label: 'Ends', value: new Date(end).toLocaleString() }
+      ];
+      if (price !== 'N/A') fields.push({ label: 'Price', value: `$${price}` });
+      if (category !== 'N/A') fields.push({ label: 'Category', value: category });
+
+      fields.forEach(f => {
+        const row = document.createElement('tr');
+        const l = document.createElement('td');
+        l.textContent = f.label;
+        const v = document.createElement('td');
+        v.textContent = f.value;
+        row.appendChild(l);
+        row.appendChild(v);
+        table.appendChild(row);
+      });
+      el.appendChild(table);
+
+      if (ev.content) {
+        const desc = document.createElement('p');
+        desc.textContent = ev.content;
+        el.appendChild(desc);
+      }
+      if (ev.relay) {
+        const relay = document.createElement('p');
+        relay.classList.add('event-relay');
+        relay.innerHTML = `<strong>Relay:</strong> ${ev.relay}`;
+        el.appendChild(relay);
+      }
+
+      const btn = document.createElement('button');
+      btn.classList.add('generate-ticket-btn');
+      btn.dataset.event = JSON.stringify(ev);
+      btn.textContent = 'Generate Ticket';
+      el.appendChild(btn);
+
+      container.appendChild(el);
+    });
+  } else {
     if (registerBtn) registerBtn.style.display = 'none';
-    container.innerHTML = '<p>Error loading events.</p>';
+    container.innerHTML = '<p>No events available.</p>';
   }
 }
 
