@@ -10,6 +10,7 @@ from app import (
     REQUIRED_DOMAIN,
     ACTIVE_RELAYS,
     PROFILE_FETCH_TIMEOUT,
+    VALID_PUBKEYS,
 )
 from nostr_client import (
     nprofile_encode,
@@ -209,18 +210,26 @@ async def _get_fuzzed_events():
         if ev.public_key not in events:
             events[ev.public_key] = ev
 
-    tasks = [fetch_and_validate_profile(pk, REQUIRED_DOMAIN) for pk in events]
-    try:
-        validations = await asyncio.wait_for(
-            asyncio.gather(*tasks, return_exceptions=True),
-            timeout=PROFILE_FETCH_TIMEOUT,
-        )
-    except asyncio.TimeoutError:
-        logger.warning("Profile validation timed out")
-        validations = [False] * len(tasks)
+    to_validate = [pk for pk in events if pk not in VALID_PUBKEYS]
+    tasks = [fetch_and_validate_profile(pk, REQUIRED_DOMAIN) for pk in to_validate]
+    validations = {}
+    if tasks:
+        try:
+            vals = await asyncio.wait_for(
+                asyncio.gather(*tasks, return_exceptions=True),
+                timeout=PROFILE_FETCH_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Profile validation timed out")
+            vals = [False] * len(tasks)
+        validations.update({pk: val for pk, val in zip(to_validate, vals)})
+    for pk in VALID_PUBKEYS:
+        if pk in events:
+            validations[pk] = True
 
     results = []
-    for (pk, ev), valid in zip(events.items(), validations):
+    for pk, ev in events.items():
+        valid = validations.get(pk)
         if isinstance(valid, Exception):
             logger.error("Validation error for %s: %s", pk, valid)
             continue

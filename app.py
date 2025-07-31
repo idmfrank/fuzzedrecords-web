@@ -78,6 +78,31 @@ PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
 RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
 DISABLE_TLS_VERIFY = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
 
+# Comma-separated list of pubkeys allowed to publish calendar events. If unset,
+# a local cache file specified by IDENTITIES_CACHE (default 'azure_identities.json')
+# is read when present.
+def load_valid_pubkeys():
+    env_val = os.getenv("VALID_PUBKEYS", "").strip()
+    if env_val:
+        return [p.strip() for p in env_val.split(",") if p.strip()]
+    cache_file = os.getenv("IDENTITIES_CACHE", "azure_identities.json")
+    if os.path.exists(cache_file):
+        try:
+            import json
+            with open(cache_file) as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return [p for p in data if isinstance(p, str)]
+            if isinstance(data, dict):
+                # Expect structure from azure_resources {"names": {name: pubkey}}
+                if "names" in data and isinstance(data["names"], dict):
+                    return [pk for pk in data["names"].values() if isinstance(pk, str)]
+        except Exception as e:
+            logger.warning("Failed to load identities cache %s: %s", cache_file, e)
+    return []
+
+VALID_PUBKEYS = load_valid_pubkeys()
+
 # Logging setup
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
 logger = logging.getLogger(__name__)
