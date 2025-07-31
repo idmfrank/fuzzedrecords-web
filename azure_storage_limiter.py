@@ -38,10 +38,14 @@ class AzureTableStorage(Storage):
         except ResourceExistsError:
             pass
 
-    def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
-        """
-        Increment the count for a given key and set expiry.
-        """
+    def incr(
+        self,
+        key: str,
+        expiry: int,
+        elastic_expiry: bool = False,
+        amount: int = 1,
+    ) -> int:
+        """Increment the count for ``key`` by ``amount`` and set expiry."""
         now = int(time.time())
         partition_key = key
         row_key = key
@@ -51,10 +55,10 @@ class AzureTableStorage(Storage):
             expire_at = entity.get("expire_at", 0)
             # Reset or increment
             if now > expire_at:
-                count = 1
+                count = amount
                 expire_at = now + expiry
             else:
-                count += 1
+                count += amount
                 if elastic_expiry:
                     expire_at = now + expiry
             entity["count"] = count
@@ -62,7 +66,7 @@ class AzureTableStorage(Storage):
             self.client.update_entity(entity, mode="MERGE")
         except AzureError:
             # Entity not found or any error: create new entity
-            count = 1
+            count = amount
             expire_at = now + expiry
             entity = {
                 "PartitionKey": partition_key,
