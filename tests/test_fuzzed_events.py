@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import nostr_utils
 from app import app
-from nostr_client import MessagePool
+from nostr_client import MessagePool, Event, EventKind
 
 class DummyMgr:
     def __init__(self, status=True):
@@ -45,3 +45,48 @@ def test_fuzzed_events_returns_503(monkeypatch):
         resp = client.get("/fuzzed_events")
         assert resp.status_code == 503
         assert "Unable to connect" in resp.get_json()["error"]
+
+
+def test_fuzzed_events_skips_validation_for_allowed(monkeypatch):
+    mgr = DummyMgr(True)
+    ev = Event(public_key="aa", content="x", kind=EventKind.CALENDAR_EVENT)
+    mgr.message_pool.add_event("fuzzed", ev)
+    monkeypatch.setattr(nostr_utils, "initialize_client", lambda: mgr)
+
+    called = False
+    async def fake_validate(*args, **kwargs):
+        nonlocal called
+        called = True
+        return False
+
+    monkeypatch.setattr(nostr_utils, "fetch_and_validate_profile", fake_validate)
+    monkeypatch.setattr(nostr_utils, "VALID_PUBKEYS", ["aa"])
+
+    with app.test_client() as client:
+        resp = client.get("/fuzzed_events")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert len(data["events"]) == 1
+        assert data["events"][0]["pubkey"] == "aa"
+        assert not called
+
+
+def test_fuzzed_events_filters_invalid(monkeypatch):
+    mgr = DummyMgr(True)
+    ev = Event(public_key="bb", content="x", kind=EventKind.CALENDAR_EVENT)
+    mgr.message_pool.add_event("fuzzed", ev)
+    monkeypatch.setattr(nostr_utils, "initialize_client", lambda: mgr)
+
+    calls = []
+    async def fake_validate(pk, domain):
+        calls.append(pk)
+        return False
+
+    monkeypatch.setattr(nostr_utils, "fetch_and_validate_profile", fake_validate)
+    monkeypatch.setattr(nostr_utils, "VALID_PUBKEYS", [])
+
+    with app.test_client() as client:
+        resp = client.get("/fuzzed_events")
+        assert resp.status_code == 200
+        assert resp.get_json() == {"events": []}
+        assert calls == ["bb"]
