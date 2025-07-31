@@ -34,8 +34,8 @@ def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
     img_io.seek(0)
     return payload_str, img_io
 
-def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
-                      sender_privkey_hex: str, timestamp: int = None) -> str:
+async def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
+                            sender_privkey_hex: str, timestamp: int = None) -> str:
     # Generate payload (QR image is not needed for DM)
     _load_app_dependencies()
     payload_str, _ = generate_ticket(event_name, recipient_pubkey_hex, timestamp)
@@ -46,12 +46,12 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     ev = dm.to_event()
     ev.sign(sender_privkey_hex)
     mgr = initialize_client()
-    asyncio.run(mgr.prepare_relays())
-    asyncio.run(mgr.publish_event(ev))
-    asyncio.run(mgr.close_connections())
+    await mgr.prepare_relays()
+    await mgr.publish_event(ev)
+    await mgr.close_connections()
     return ev.id
 
-def publish_signed_ticket_dm(event_data: dict) -> str:
+async def publish_signed_ticket_dm(event_data: dict) -> str:
     """Publish a pre-signed ticket DM event to all relays."""
     _load_app_dependencies()
     ev = Event(
@@ -64,9 +64,9 @@ def publish_signed_ticket_dm(event_data: dict) -> str:
         id=event_data.get("id", ""),
     )
     mgr = initialize_client()
-    asyncio.run(mgr.prepare_relays())
-    asyncio.run(mgr.publish_event(ev))
-    asyncio.run(mgr.close_connections())
+    await mgr.prepare_relays()
+    await mgr.publish_event(ev)
+    await mgr.close_connections()
     return ev.id
 
 def register_ticket_routes(app):
@@ -81,9 +81,9 @@ def register_ticket_routes(app):
         ts = data.get('timestamp')
         try:
             if event_name and recipient and sender:
-                ev_id = send_ticket_as_dm(event_name, recipient, sender, ts)
+                ev_id = await send_ticket_as_dm(event_name, recipient, sender, ts)
             elif 'pubkey' in data and 'id' in data:
-                ev_id = publish_signed_ticket_dm(data)
+                ev_id = await publish_signed_ticket_dm(data)
             else:
                 return error_response(
                     "Missing fields: event_name, recipient_pubkey, sender_privkey", 400)

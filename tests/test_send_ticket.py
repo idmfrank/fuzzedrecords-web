@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import ticket_utils
 import app
 import nostr_client
+import asyncio
 
 
 class DummyEvent:
@@ -44,9 +45,9 @@ def test_send_ticket_as_dm(monkeypatch):
 
     monkeypatch.setattr(nostr_client, "nip17_encrypt", fake_encrypt)
 
-    ev_id = ticket_utils.send_ticket_as_dm(
+    ev_id = asyncio.run(ticket_utils.send_ticket_as_dm(
         "Concert", "recip_pubkey", "11" * 32, timestamp=123
-    )
+    ))
 
     assert mgr.publish_count == 1
     assert mgr.prepared
@@ -73,7 +74,7 @@ def test_publish_signed_ticket_dm(monkeypatch):
         "sig": "deadbeef",
     }
 
-    ev_id = ticket_utils.publish_signed_ticket_dm(event_data)
+    ev_id = asyncio.run(ticket_utils.publish_signed_ticket_dm(event_data))
 
     assert ev_id == "123"
     assert mgr.publish_count == 1
