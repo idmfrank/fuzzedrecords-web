@@ -204,13 +204,15 @@ async def _get_fuzzed_events():
     filt = FiltersList([Filters(kinds=[EventKind.CALENDAR_EVENT])])
     await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
-    events = {}
+
+    events = []
+    pubkeys = set()
     for msg in mgr.message_pool.get_all_events():
         ev = msg.event
-        if ev.public_key not in events:
-            events[ev.public_key] = ev
+        events.append(ev)
+        pubkeys.add(ev.public_key)
 
-    to_validate = [pk for pk in events if pk not in VALID_PUBKEYS]
+    to_validate = [pk for pk in pubkeys if pk not in VALID_PUBKEYS]
     tasks = [fetch_and_validate_profile(pk, REQUIRED_DOMAIN) for pk in to_validate]
     validations = {}
     if tasks:
@@ -224,11 +226,12 @@ async def _get_fuzzed_events():
             vals = [False] * len(tasks)
         validations.update({pk: val for pk, val in zip(to_validate, vals)})
     for pk in VALID_PUBKEYS:
-        if pk in events:
+        if pk in pubkeys:
             validations[pk] = True
 
     results = []
-    for pk, ev in events.items():
+    for ev in events:
+        pk = ev.public_key
         valid = validations.get(pk)
         if isinstance(valid, Exception):
             logger.error("Validation error for %s: %s", pk, valid)

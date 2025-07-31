@@ -90,3 +90,27 @@ def test_fuzzed_events_filters_invalid(monkeypatch):
         assert resp.status_code == 200
         assert resp.get_json() == {"events": []}
         assert calls == ["bb"]
+
+
+def test_fuzzed_events_multiple_events_same_pubkey(monkeypatch):
+    mgr = DummyMgr(True)
+    ev1 = Event(public_key="cc", content="e1", kind=EventKind.CALENDAR_EVENT)
+    ev2 = Event(public_key="cc", content="e2", kind=EventKind.CALENDAR_EVENT)
+    mgr.message_pool.add_event("fuzzed", ev1)
+    mgr.message_pool.add_event("fuzzed", ev2)
+    monkeypatch.setattr(nostr_utils, "initialize_client", lambda: mgr)
+
+    calls = []
+    async def fake_validate(pk, domain):
+        calls.append(pk)
+        return True
+
+    monkeypatch.setattr(nostr_utils, "fetch_and_validate_profile", fake_validate)
+    monkeypatch.setattr(nostr_utils, "VALID_PUBKEYS", [])
+
+    with app.test_client() as client:
+        resp = client.get("/fuzzed_events")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert [e["content"] for e in data["events"]] == ["e1", "e2"]
+        assert calls == ["cc"]
