@@ -110,6 +110,15 @@ async def fetch_profile():
     return error_response("Profile not found", 404)
 
 async def fetch_and_validate_profile(pubkey, required_domain):
+    cached = get_cached_item(pubkey)
+    if cached is not None:
+        data = cached.get("content", cached) if isinstance(cached, dict) else {}
+        nip05 = data.get("nip05") if isinstance(data, dict) else None
+        if not nip05 or "@" not in nip05:
+            return False
+        domain = nip05.split("@", 1)[1]
+        return domain == required_domain
+
     mgr = initialize_client()
     # Establish WebSocket connections before subscribing
     await mgr.prepare_relays()
@@ -118,19 +127,26 @@ async def fetch_and_validate_profile(pubkey, required_domain):
     ])
     await mgr.add_subscription_on_all_relays(f"val_{pubkey}", filt)
     await asyncio.sleep(1)
+
     profile_data = {}
     for msg in mgr.message_pool.get_all_events():
         ev = msg.event
-        try: profile_data = json.loads(ev.content)
-        except: continue
+        try:
+            profile_data = json.loads(ev.content)
+        except Exception:
+            continue
         break
     mgr.close_connections()
+
     if not profile_data:
         return False
-    nip05 = profile_data.get('nip05')
-    if not nip05 or '@' not in nip05:
+
+    set_cached_item(pubkey, profile_data)
+
+    nip05 = profile_data.get("nip05")
+    if not nip05 or "@" not in nip05:
         return False
-    domain = nip05.split('@',1)[1]
+    domain = nip05.split("@", 1)[1]
     return domain == required_domain
 
 @app.route('/fetch-profile', methods=['POST'])
