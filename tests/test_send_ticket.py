@@ -19,8 +19,11 @@ class DummyRelayManager:
     def __init__(self):
         self.publish_count = 0
         self.last_event = None
+        self.prepared = False
     def add_relay(self, url):
         self.last_relay = url
+    async def prepare_relays(self):
+        self.prepared = True
     async def publish_event(self, ev):
         self.publish_count += 1
         self.last_event = ev
@@ -46,6 +49,7 @@ def test_send_ticket_as_dm(monkeypatch):
     )
 
     assert mgr.publish_count == 1
+    assert mgr.prepared
     assert mgr.last_event.kind == nostr_client.EventKind.EPHEMERAL_DM
     assert called["args"][0] == "11" * 32
     assert called["args"][1] == "recip_pubkey"
