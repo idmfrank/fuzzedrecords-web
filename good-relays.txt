@@ -1,8 +1,5 @@
 wss://nos.lol/
 wss://nostr.bitcoiner.social/
-wss://nostr.wine/
 wss://relay.damus.io/
-wss://relay.getalby.com/v1
 wss://relay.nostr.band/
-wss://relay.noswhere.com/
 wss://relay.primal.net/
