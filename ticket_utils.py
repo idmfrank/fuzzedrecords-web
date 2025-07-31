@@ -1,4 +1,4 @@
-import time, json, asyncio
+import time, json, asyncio, os
 from io import BytesIO
 import qrcode
 from flask import request, jsonify
@@ -11,7 +11,13 @@ initialize_client = None
 error_response = None
 logger = None
 limiter = None
-from nostr_client import EncryptedDirectMessage, EventKind, Event
+from nostr_client import (
+    EncryptedDirectMessage,
+    EventKind,
+    Event,
+    nip44_decrypt,
+    build_nip47_response,
+)
 
 
 def _load_app_dependencies():
@@ -75,19 +81,46 @@ def register_ticket_routes(app):
     @limiter.limit("10 per minute")
     async def send_ticket_endpoint():
         data = request.json or {}
-        event_name = data.get('event_name')
-        recipient = data.get('recipient_pubkey')
-        sender = data.get('sender_privkey')
-        ts = data.get('timestamp')
+
+        req_id = data.get("id")
+        sender_pub = data.get("pubkey")
+        cipher = data.get("content")
+        if not (req_id and sender_pub and cipher):
+            return error_response("Missing event fields", 400)
+
+        wallet_priv = os.getenv("WALLET_PRIVKEY_HEX")
+        if not wallet_priv:
+            return error_response("Server wallet not configured", 500)
+
         try:
-            if event_name and recipient and sender:
-                ev_id = await send_ticket_as_dm(event_name, recipient, sender, ts)
-            elif 'pubkey' in data and 'id' in data:
-                ev_id = await publish_signed_ticket_dm(data)
-            else:
-                return error_response(
-                    "Missing fields: event_name, recipient_pubkey, sender_privkey", 400)
-            return jsonify({"status": "sent", "event_id": ev_id})
+            plain = nip44_decrypt(wallet_priv, sender_pub, cipher)
+            payload = json.loads(plain)
+            method = payload.get("method")
+            params = payload.get("params", {})
+            resp_id = payload.get("id") or req_id
+
+            if method != "ticket.create":
+                return error_response("Unsupported method", 400)
+
+            event_name = params.get("event_name")
+            timestamp = params.get("timestamp")
+            recipient_pub = params.get("pubkey") or sender_pub
+
+            if not event_name:
+                return error_response("Missing event_name", 400)
+
+            await send_ticket_as_dm(event_name, recipient_pub, wallet_priv, timestamp)
+
+            resp_payload = {"result": "ok", "id": resp_id}
+            resp_event = build_nip47_response(wallet_priv, sender_pub, resp_payload)
+            resp_event.tags.append(["e", req_id])
+
+            mgr = initialize_client()
+            await mgr.prepare_relays()
+            await mgr.publish_event(resp_event)
+            await mgr.close_connections()
+
+            return jsonify({"status": "sent", "event_id": resp_event.id})
         except Exception as e:
             logger.error(f"Error in send_ticket_endpoint: {e}")
             return error_response(str(e), 500)
