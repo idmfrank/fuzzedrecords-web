@@ -14,7 +14,10 @@ export async function fetchFuzzedEvents() {
       if (registerBtn && sessionStorage.getItem('pubkey')) {
         registerBtn.style.display = 'inline-block';
       }
+      const seen = new Set();
       data.events.forEach(ev => {
+        if (seen.has(ev.id)) return;
+        seen.add(ev.id);
         const el = document.createElement('div');
         el.classList.add('event-item');
         const start = getTagValue(ev.tags, 'starts');
@@ -35,6 +38,10 @@ export async function fetchFuzzedEvents() {
           el.innerHTML += `<p><strong>Category:</strong> ${category}</p>`;
         }
         el.innerHTML += `<p>${ev.content}</p>`;
+        el.innerHTML += `<p class="event-id"><strong>Note ID:</strong> ${ev.id}</p>`;
+        if (ev.relay) {
+          el.innerHTML += `<p class="event-relay"><strong>Relay:</strong> ${ev.relay}</p>`;
+        }
         el.innerHTML += `<button class="generate-ticket-btn" data-event='${JSON.stringify(ev)}'>Generate Ticket</button>`;
         container.appendChild(el);
       });

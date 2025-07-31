@@ -226,16 +226,20 @@ async def _get_fuzzed_events():
     await mgr.add_subscription_on_all_relays('fuzzed', filt)
     await asyncio.sleep(1)
 
-    results = [
-        {
+    results = []
+    seen_ids = set()
+    for msg in mgr.message_pool.get_all_events():
+        if msg.event.id in seen_ids:
+            continue
+        seen_ids.add(msg.event.id)
+        results.append({
             'id': msg.event.id,
             'pubkey': msg.event.public_key,
             'content': msg.event.content,
             'tags': msg.event.tags,
             'created_at': msg.event.created_at,
-        }
-        for msg in mgr.message_pool.get_all_events()
-    ]
+            'relay': msg.relay_url,
+        })
 
     await mgr.close_connections()
     return jsonify({'events': results})

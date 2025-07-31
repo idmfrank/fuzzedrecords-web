@@ -53,7 +53,7 @@ def test_fuzzed_events_returns_events(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     mgr = DummyMgr(True)
     ev = Event(public_key=nostr_utils.EVENTS_PUBKEY_HEX, content="x", kind=EventKind.CALENDAR_EVENT)
-    mgr.message_pool.add_event("fuzzed", ev)
+    mgr.message_pool.add_event("fuzzed", ev, "wss://r1")
     monkeypatch.setattr(nostr_utils, "RelayManager", lambda timeout=0: mgr)
     with app.test_client() as client:
         resp = client.get("/fuzzed_events")
@@ -61,6 +61,7 @@ def test_fuzzed_events_returns_events(monkeypatch, tmp_path):
         data = resp.get_json()
         assert len(data["events"]) == 1
         assert data["events"][0]["content"] == "x"
+        assert data["events"][0]["relay"] == "wss://r1"
 
 
 def test_fuzzed_events_returns_503(monkeypatch, tmp_path):
@@ -83,3 +84,23 @@ def test_fuzzed_events_uses_good_relays(monkeypatch, tmp_path):
         resp = client.get("/fuzzed_events")
         assert resp.status_code == 200
     assert mgr.added == ["wss://a.com", "wss://b.com"]
+
+
+def test_fuzzed_events_dedupes(monkeypatch, tmp_path):
+    """Duplicate events with the same id should be collapsed."""
+    monkeypatch.chdir(tmp_path)
+    mgr = DummyMgr(True)
+    ev1 = Event(public_key=nostr_utils.EVENTS_PUBKEY_HEX, content="x", kind=EventKind.CALENDAR_EVENT)
+    ev1.id = "same"
+    ev2 = Event(public_key=nostr_utils.EVENTS_PUBKEY_HEX, content="y", kind=EventKind.CALENDAR_EVENT)
+    ev2.id = "same"
+    mgr.message_pool.add_event("fuzzed", ev1, "wss://r1")
+    mgr.message_pool.add_event("fuzzed", ev2, "wss://r2")
+    monkeypatch.setattr(nostr_utils, "RelayManager", lambda timeout=0: mgr)
+    with app.test_client() as client:
+        resp = client.get("/fuzzed_events")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert len(data["events"]) == 1
+        assert data["events"][0]["id"] == "same"
+        assert data["events"][0]["relay"] == "wss://r1"
