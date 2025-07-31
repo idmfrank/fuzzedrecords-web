@@ -18,7 +18,7 @@ class DummyMgr:
         self.prepared = True
     async def add_subscription_on_all_relays(self, sub_id, filt):
         self.subscribed = True
-    def close_connections(self):
+    async def close_connections(self):
         self.closed = True
     @property
     def connection_statuses(self):

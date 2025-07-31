@@ -17,7 +17,7 @@ class DummyMgr:
         self.prepared = True
     async def publish_event(self, ev):
         self.published = True
-    def close_connections(self):
+    async def close_connections(self):
         pass
 
 async def _false(*args, **kwargs):

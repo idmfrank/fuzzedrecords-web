@@ -170,7 +170,7 @@ def fetch_profile_by_pubkey(pubkey, relays):
                         continue
                 await asyncio.sleep(0.1)
         finally:
-            manager.close_connections()
+            await manager.close_connections()
         return profile
 
     return asyncio.run(_run())

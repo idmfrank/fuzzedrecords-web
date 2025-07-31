@@ -99,7 +99,7 @@ async def fetch_profile():
                 # Ignore EOSE and continue waiting
                 continue
         await asyncio.sleep(0.05)
-    mgr.close_connections()
+    await mgr.close_connections()
     if profile_data:
         if nprof and "nprofile" not in profile_data:
             profile_data["nprofile"] = nprof
@@ -136,7 +136,7 @@ async def fetch_and_validate_profile(pubkey, required_domain):
         except Exception:
             continue
         break
-    mgr.close_connections()
+    await mgr.close_connections()
 
     if not profile_data:
         return False
@@ -189,7 +189,7 @@ async def _create_event():
     await mgr.prepare_relays()
     await mgr.publish_event(ev)
     await asyncio.sleep(0.5)
-    mgr.close_connections()
+    await mgr.close_connections()
     return jsonify({"message":"Event successfully broadcasted", "id": ev.id})
 
 @app.route('/fuzzed_events', methods=['GET'])
@@ -215,7 +215,7 @@ async def _get_fuzzed_events():
                 'content':ev.content, 'tags':ev.tags,
                 'created_at':ev.created_at
             })
-    mgr.close_connections()
+    await mgr.close_connections()
     return jsonify({'events':results})
 
 @app.route('/send_dm', methods=['POST'])
@@ -234,5 +234,5 @@ async def _send_dm():
     await mgr.prepare_relays()
     await mgr.publish_event(ev)
     await asyncio.sleep(0.5)
-    mgr.close_connections()
+    await mgr.close_connections()
     return jsonify({"message":"DM sent successfully"})
