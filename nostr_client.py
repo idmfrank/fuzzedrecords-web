@@ -198,27 +198,30 @@ class RelayManager:
     async def _recv_loop(self, relay: _Relay):
         assert relay.ws is not None
         try:
-            async for msg in relay.ws:
-                try:
-                    data = json.loads(msg)
-                except Exception:
-                    continue
-                if not isinstance(data, list) or not data:
-                    continue
-                typ = data[0]
-                if typ == "EVENT" and len(data) >= 3:
-                    event = Event(
-                        public_key=data[2].get("pubkey", ""),
-                        content=data[2].get("content", ""),
-                        kind=data[2].get("kind", 0),
-                        tags=data[2].get("tags", []),
-                        created_at=data[2].get("created_at", 0),
-                        sig=data[2].get("sig", ""),
-                        id=data[2].get("id", ""),
-                    )
-                    self.message_pool.add_event(data[1], event)
-                elif typ == "EOSE" and len(data) >= 2:
-                    self.message_pool.add_eose(data[1])
+            try:
+                async for msg in relay.ws:
+                    try:
+                        data = json.loads(msg)
+                    except Exception:
+                        continue
+                    if not isinstance(data, list) or not data:
+                        continue
+                    typ = data[0]
+                    if typ == "EVENT" and len(data) >= 3:
+                        event = Event(
+                            public_key=data[2].get("pubkey", ""),
+                            content=data[2].get("content", ""),
+                            kind=data[2].get("kind", 0),
+                            tags=data[2].get("tags", []),
+                            created_at=data[2].get("created_at", 0),
+                            sig=data[2].get("sig", ""),
+                            id=data[2].get("id", ""),
+                        )
+                        self.message_pool.add_event(data[1], event)
+                    elif typ == "EOSE" and len(data) >= 2:
+                        self.message_pool.add_eose(data[1])
+            except websockets.exceptions.ConnectionClosedError as exc:
+                logger.debug("Websocket closed for %s: %s", relay.url, exc)
         finally:
             await relay.ws.close()
 
