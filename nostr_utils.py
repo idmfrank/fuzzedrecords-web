@@ -204,7 +204,16 @@ async def _create_event():
 @app.route('/fuzzed_events', methods=['GET'])
 async def _get_fuzzed_events():
     mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
-    mgr.add_relay(EVENTS_RELAY)
+    relays = []
+    try:
+        with open("good-relays.txt") as f:
+            relays = [l.strip() for l in f if l.strip()]
+    except FileNotFoundError:
+        relays = [EVENTS_RELAY]
+    if not relays:
+        relays = [EVENTS_RELAY]
+    for url in relays:
+        mgr.add_relay(url)
     await mgr.prepare_relays()
     statuses = getattr(mgr, "connection_statuses", {})
     if statuses and not any(statuses.values()):
