@@ -11,7 +11,7 @@ initialize_client = None
 error_response = None
 logger = None
 limiter = None
-from nostr_client import EncryptedDirectMessage, EventKind
+from nostr_client import EncryptedDirectMessage, EventKind, Event
 
 
 def _load_app_dependencies():
@@ -51,6 +51,24 @@ def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     asyncio.run(mgr.close_connections())
     return ev.id
 
+def publish_signed_ticket_dm(event_data: dict) -> str:
+    """Publish a pre-signed ticket DM event to all relays."""
+    _load_app_dependencies()
+    ev = Event(
+        public_key=event_data.get("pubkey", ""),
+        content=event_data.get("content", ""),
+        kind=event_data.get("kind", EventKind.EPHEMERAL_DM),
+        tags=event_data.get("tags", []),
+        created_at=event_data.get("created_at", int(time.time())),
+        sig=event_data.get("sig", ""),
+        id=event_data.get("id", ""),
+    )
+    mgr = initialize_client()
+    asyncio.run(mgr.prepare_relays())
+    asyncio.run(mgr.publish_event(ev))
+    asyncio.run(mgr.close_connections())
+    return ev.id
+
 def register_ticket_routes(app):
     _load_app_dependencies()
     @app.route('/send_ticket', methods=['POST'])
@@ -61,11 +79,14 @@ def register_ticket_routes(app):
         recipient = data.get('recipient_pubkey')
         sender = data.get('sender_privkey')
         ts = data.get('timestamp')
-        if not (event_name and recipient and sender):
-            return error_response(
-                "Missing fields: event_name, recipient_pubkey, sender_privkey", 400)
         try:
-            ev_id = send_ticket_as_dm(event_name, recipient, sender, ts)
+            if event_name and recipient and sender:
+                ev_id = send_ticket_as_dm(event_name, recipient, sender, ts)
+            elif 'pubkey' in data and 'id' in data:
+                ev_id = publish_signed_ticket_dm(data)
+            else:
+                return error_response(
+                    "Missing fields: event_name, recipient_pubkey, sender_privkey", 400)
             return jsonify({"status": "sent", "event_id": ev_id})
         except Exception as e:
             logger.error(f"Error in send_ticket_endpoint: {e}")
