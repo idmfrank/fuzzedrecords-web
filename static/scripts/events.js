@@ -2,6 +2,29 @@
 // Handles events section: fetching, rendering, and admin event creation
 import { showSection, getTagValue, isAdmin } from './utils.js';
 
+// Fetch BTC-USD rate with simple caching (~10 min)
+let btcRateCache = null;
+let btcRateTime = 0;
+async function getBtcUsdRate() {
+  const now = Date.now();
+  if (btcRateCache && now - btcRateTime < 10 * 60 * 1000) {
+    return btcRateCache;
+  }
+  try {
+    const resp = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
+    const data = await resp.json();
+    const rate = parseFloat(data?.data?.rates?.USD);
+    if (!isNaN(rate)) {
+      btcRateCache = rate;
+      btcRateTime = now;
+      return rate;
+    }
+  } catch (err) {
+    console.error('Failed to fetch BTC rate', err);
+  }
+  return btcRateCache || 0;
+}
+
 // Fetch and display fuzzed events
 export async function fetchFuzzedEvents() {
   const container = document.getElementById('events-section-content');
@@ -38,6 +61,7 @@ export async function fetchFuzzedEvents() {
     if (registerBtn && sessionStorage.getItem('pubkey')) {
       registerBtn.style.display = 'inline-block';
     }
+    const btcRate = await getBtcUsdRate();
     const seen = new Set();
     data.events.forEach(ev => {
       if (seen.has(ev.id)) return;
@@ -48,6 +72,8 @@ export async function fetchFuzzedEvents() {
       const end = getTagValue(ev.tags, 'ends');
       const price = getTagValue(ev.tags, 'price');
       const category = getTagValue(ev.tags, 'category');
+      const usdPrice = Number(price);
+      const sats = (!isNaN(usdPrice) && btcRate) ? Math.round((usdPrice / btcRate) * 100000000) : null;
 
       const header = document.createElement('h3');
       header.textContent = getTagValue(ev.tags, 'title');
@@ -61,7 +87,12 @@ export async function fetchFuzzedEvents() {
         { label: 'Starts', value: new Date(start).toLocaleString() },
         { label: 'Ends', value: new Date(end).toLocaleString() }
       ];
-      if (price !== 'N/A') fields.push({ label: 'Price', value: `$${price}` });
+      if (price !== 'N/A') {
+        fields.push({ label: 'Price', value: `$${price}` });
+        if (sats !== null) {
+          fields.push({ label: 'Price (sats)', value: `${sats} sats` });
+        }
+      }
       if (category !== 'N/A') fields.push({ label: 'Category', value: category });
 
       fields.forEach(f => {

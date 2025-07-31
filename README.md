@@ -24,6 +24,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **Decentralized Authentication**: Uses Nostr Wallet for secure, decentralized user authentication.
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
+- **Prices in USD and Sats**: Event listings display prices in both dollars and satoshis.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend.
 - **CORS Configuration**: Allowed origins can be customized via environment variable.
