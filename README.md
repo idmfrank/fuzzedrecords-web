@@ -124,8 +124,8 @@ Set the following environment variables to configure the application:
 
 2. **Set Up Virtual Environment**:
    ```bash
-   python3 -m venv antenv
-   source antenv/bin/activate
+   python3 -m venv venv
+   source venv/bin/activate
    ```
 
 3. **Install Dependencies**:
