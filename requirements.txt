@@ -11,3 +11,4 @@ azure-data-tables>=12.6.0
 pytest>=7.4
 websockets>=15.0
 cryptography>=42.0
+PyNaCl>=1.5
