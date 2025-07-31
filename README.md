@@ -29,7 +29,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend.
 - **CORS Configuration**: Allowed origins can be customized via environment variable.
 - **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
-- **Fuzzed Guitars**: Boutique gear prototypes can be viewed in the Gear section (`/#gear`) or via the `fuzzedguitars` subdomain.
+- **Fuzzed Guitars**: Boutique gear prototypes can be viewed in the Gear section (`/#gear`), via the `fuzzedguitars` subdomain, or using the `/fuzzedguitars` path.
 
 ---
 
