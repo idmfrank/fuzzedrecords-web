@@ -234,6 +234,11 @@ def index():
 @app.route('/', subdomain='fuzzedguitars')
 def guitars_redirect():
     return redirect('https://fuzzedrecords.com/#gear', code=301)
+
+# Allow path-based access (e.g., /fuzzedguitars) for convenience
+@app.route('/fuzzedguitars')
+def guitars_redirect_path():
+    return redirect('https://fuzzedrecords.com/#gear', code=301)
     
 # Health check for uptime probes (e.g. random /robotsXYZ.txt)
 @app.route('/robots<filename>.txt')
