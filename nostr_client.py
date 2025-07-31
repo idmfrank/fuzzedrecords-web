@@ -12,7 +12,12 @@ import websockets
 import bech32
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import hashes, padding
+from nacl.bindings import (
+    crypto_aead_xchacha20poly1305_ietf_encrypt,
+    crypto_aead_xchacha20poly1305_ietf_decrypt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +74,10 @@ class EventKind:
     TEXT_NOTE = 1
     ENCRYPTED_DM = 4
     EPHEMERAL_DM = 23194
+    WALLET_INFO = 13194
+    WALLET_REQUEST = 23194
+    WALLET_RESPONSE = 23195
+    WALLET_NOTIFICATION = 23197
     CALENDAR_EVENT = 31922  # NIP-52 calendar events
 
 @dataclass
@@ -288,6 +297,15 @@ def _pubkey_from_hex(pub_hex: str) -> ec.EllipticCurvePublicKey:
     numbers = ec.EllipticCurvePublicNumbers(x, y, ec.SECP256K1())
     return numbers.public_key()
 
+def _derive_shared_key(priv_hex: str, pub_hex: str) -> bytes:
+    """Return shared secret hashed with SHA-256 for encryption."""
+    priv = ec.derive_private_key(int(priv_hex, 16), ec.SECP256K1())
+    pub = _pubkey_from_hex(pub_hex)
+    shared = priv.exchange(ec.ECDH(), pub)
+    digest = hashes.Hash(hashes.SHA256())
+    digest.update(shared)
+    return digest.finalize()
+
 def derive_public_key_hex(priv_hex: str) -> str:
     key = ec.derive_private_key(int(priv_hex, 16), ec.SECP256K1())
     numbers = key.public_key().public_numbers()
@@ -295,16 +313,52 @@ def derive_public_key_hex(priv_hex: str) -> str:
 
 def nip17_encrypt(sender_priv: str, recipient_pub: str, plaintext: str) -> str:
     """Encrypt plaintext per NIP-17 using AES-GCM."""
-    sender_key = ec.derive_private_key(int(sender_priv, 16), ec.SECP256K1())
-    recipient_key = _pubkey_from_hex(recipient_pub)
-    shared = sender_key.exchange(ec.ECDH(), recipient_key)
-    digest = hashes.Hash(hashes.SHA256())
-    digest.update(shared)
-    key = digest.finalize()
+    key = _derive_shared_key(sender_priv, recipient_pub)
     aes = AESGCM(key)
     iv = os.urandom(12)
     ct = aes.encrypt(iv, plaintext.encode(), None)
     return base64.b64encode(iv + ct).decode()
+
+def _nip04_encrypt(sender_priv: str, recipient_pub: str, plaintext: str) -> str:
+    """Encrypt plaintext per NIP-04 (AES-CBC)"""
+    key = _derive_shared_key(sender_priv, recipient_pub)
+    iv = os.urandom(16)
+    padder = padding.PKCS7(128).padder()
+    padded = padder.update(plaintext.encode()) + padder.finalize()
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    enc = cipher.encryptor().update(padded) + cipher.encryptor().finalize()
+    return base64.b64encode(enc).decode() + "?iv=" + base64.b64encode(iv).decode()
+
+def _nip04_decrypt(recipient_priv: str, sender_pub: str, ciphertext: str) -> str:
+    enc, iv = ciphertext.split("?iv=")
+    key = _derive_shared_key(recipient_priv, sender_pub)
+    data = base64.b64decode(enc)
+    iv_b = base64.b64decode(iv)
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv_b))
+    dec = cipher.decryptor().update(data) + cipher.decryptor().finalize()
+    unpadder = padding.PKCS7(128).unpadder()
+    plain = unpadder.update(dec) + unpadder.finalize()
+    return plain.decode()
+
+def nip44_encrypt(sender_priv: str, recipient_pub: str, plaintext: str) -> str:
+    """Encrypt plaintext using NIP-44 (XChaCha20-Poly1305)."""
+    key = _derive_shared_key(sender_priv, recipient_pub)
+    nonce = os.urandom(24)
+    ct = crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext.encode(), None, nonce, key)
+    return base64.b64encode(nonce + ct).decode()
+
+def nip44_decrypt(recipient_priv: str, sender_pub: str, ciphertext: str) -> str:
+    """Decrypt ciphertext that may be NIP-44 or NIP-04 encoded."""
+    try:
+        data = base64.b64decode(ciphertext)
+        nonce, ct = data[:24], data[24:]
+        key = _derive_shared_key(recipient_priv, sender_pub)
+        plain = crypto_aead_xchacha20poly1305_ietf_decrypt(ct, None, nonce, key)
+        return plain.decode()
+    except Exception:
+        if "?iv=" in ciphertext:
+            return _nip04_decrypt(recipient_priv, sender_pub, ciphertext)
+        raise
 
 class EncryptedDirectMessage:
     def __init__(self, kind: int = EventKind.ENCRYPTED_DM):
@@ -335,3 +389,29 @@ class EncryptedDirectMessage:
             tags=[["p", self.recipient_pubkey]],
             created_at=int(time.time()),
         )
+
+def build_nip47_request(sender_priv: str, wallet_pub: str, payload: Dict) -> Event:
+    """Create a NIP-47 wallet request event encrypted with NIP-44."""
+    content = nip44_encrypt(sender_priv, wallet_pub, json.dumps(payload))
+    ev = Event(
+        public_key=derive_public_key_hex(sender_priv),
+        content=content,
+        kind=EventKind.WALLET_REQUEST,
+        tags=[["p", wallet_pub]],
+        created_at=int(time.time()),
+    )
+    ev.sign(sender_priv)
+    return ev
+
+def build_nip47_response(sender_priv: str, recipient_pub: str, payload: Dict) -> Event:
+    """Create a NIP-47 wallet response event encrypted with NIP-44."""
+    content = nip44_encrypt(sender_priv, recipient_pub, json.dumps(payload))
+    ev = Event(
+        public_key=derive_public_key_hex(sender_priv),
+        content=content,
+        kind=EventKind.WALLET_RESPONSE,
+        tags=[["p", recipient_pub]],
+        created_at=int(time.time()),
+    )
+    ev.sign(sender_priv)
+    return ev
