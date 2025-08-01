@@ -11,6 +11,7 @@ initialize_client = None
 error_response = None
 logger = None
 limiter = None
+wallet_priv_hex = None
 from nostr_client import (
     EncryptedDirectMessage,
     EventKind,
@@ -22,13 +23,20 @@ from nostr_client import (
 
 def _load_app_dependencies():
     """Lazy import objects from app to avoid circular imports during testing."""
-    global initialize_client, error_response, logger, limiter
+    global initialize_client, error_response, logger, limiter, wallet_priv_hex
     if initialize_client is None:
-        from app import initialize_client as ic, error_response as er, logger as lg, limiter as lm
+        from app import (
+            initialize_client as ic,
+            error_response as er,
+            logger as lg,
+            limiter as lm,
+            WALLET_PRIVKEY_HEX as wph,
+        )
         initialize_client = ic
         error_response = er
         logger = lg
         limiter = lm
+        wallet_priv_hex = wph
 
 def generate_ticket(event_name: str, user_pubkey: str, timestamp: int = None):
     ts = timestamp if timestamp is not None else int(time.time())
@@ -88,7 +96,7 @@ def register_ticket_routes(app):
         if not (req_id and sender_pub and cipher):
             return error_response("Missing event fields", 400)
 
-        wallet_priv = os.getenv("WALLET_PRIVKEY_HEX")
+        wallet_priv = wallet_priv_hex
         if not wallet_priv:
             return error_response("Server wallet not configured", 500)
 
