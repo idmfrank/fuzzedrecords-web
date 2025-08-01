@@ -220,9 +220,15 @@ class RelayManager:
         self.relays[url] = _Relay(url, self.timeout)
 
     async def _connect(self, relay: _Relay, ssl_ctx):
+        disable_tls = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
         try:
             if relay.url.startswith("wss://"):
                 ssl_param = ssl_ctx if ssl_ctx is not None else True
+                if disable_tls:
+                    logger.warning(
+                        "TLS verification is disabled; connection to %s will not verify certificates",
+                        relay.url,
+                    )
             else:
                 ssl_param = None
             relay.ws = await websockets.connect(
