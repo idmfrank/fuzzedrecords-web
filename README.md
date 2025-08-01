@@ -72,6 +72,8 @@ Set the following environment variables to configure the application:
 - PROFILE_FETCH_TIMEOUT: Seconds to wait for a user profile event when handling `/fetch-profile` or `/validate-profile` (default: 5)
 - RELAY_CONNECT_TIMEOUT: Seconds allowed to establish each WebSocket connection to a relay (default: 2)
 - DISABLE_TLS_VERIFY: Set to 1 to disable TLS certificate verification when connecting to relays (default: 0)
+- WALLET_PRIVKEY_HEX: Hex-encoded private key for the server wallet. The corresponding
+  public key is derived automatically and exposed to the frontend as `serverWalletPubkey`.
 - VALID_PUBKEYS: Comma-separated list of pubkeys allowed for fuzzed events. If unset, the app loads from the local file specified by IDENTITIES_CACHE (default: azure_identities.json)
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
