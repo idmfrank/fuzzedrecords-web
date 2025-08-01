@@ -271,19 +271,32 @@ If dependencies are missing, tests will fail with import errors similar to the o
    "sender_privkey":"..."}
   ```
 
-### 7. Send Ticket via DM
+### 7. Send Ticket via DM (NIP-47)
 - **Endpoint**: `/send_ticket`
 - **Method**: `POST`
-- **Description**: Encrypts a ticket payload and sends a ticket DM.
-- **Request Body**:
-  ```json
-  {"event_name":"...","recipient_pubkey":"...",
-   "sender_privkey":"...","timestamp":...}
-  ```
-- **Response**:
-  ```json
-  {"status":"sent","event_id":"..."}
-  ```
+- **Description**: Accepts a NIP‑47 wallet request event. The event's `content`
+  must be encrypted using NIP‑44 (or legacy NIP‑04). The decrypted JSON should
+  invoke the `ticket.create` method so the server can deliver the ticket via DM.
+- **NIP-47 Request Event**:
+```json
+{
+  "id": "<req_id>",
+  "pubkey": "<sender_pubkey>",
+  "kind": 23194,
+  "created_at": <timestamp>,
+  "tags": [["p", "<server_wallet_pubkey>"]],
+  "content": "<nip44_or_nip04_ciphertext>"
+}
+```
+- **Decrypted Payload**:
+```json
+{"method":"ticket.create","params":{"event_name":"...","pubkey":"...","timestamp":...},"id":"<req_id>"}
+```
+- **Server Response Event**: On success the server replies with a Kind=23195
+  event encrypted back to the requester. Decryption yields:
+```json
+{"result":"ok","id":"<req_id>"}
+```
 
 ### 8. Update Relays
 - **Endpoint**: `/update-relays`
