@@ -18,6 +18,7 @@ from nostr_client import (
     RelayManager,
     Filter,
     FiltersList,
+    derive_public_key_hex,
 )
 
 def nip19_decode(value: str):
@@ -77,6 +78,11 @@ SEARCH_TERM = " by Fuzzed Records"
 PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
 RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
 DISABLE_TLS_VERIFY = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
+
+WALLET_PRIVKEY_HEX = os.getenv("WALLET_PRIVKEY_HEX", "").strip()
+SERVER_WALLET_PUBKEY = (
+    derive_public_key_hex(WALLET_PRIVKEY_HEX) if WALLET_PRIVKEY_HEX else ""
+)
 
 # Comma-separated list of pubkeys allowed to publish calendar events. If unset,
 # a local cache file specified by IDENTITIES_CACHE (default 'azure_identities.json')
@@ -229,7 +235,8 @@ register_ticket_routes(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    pubkey = SERVER_WALLET_PUBKEY
+    return render_template('index.html', serverWalletPubkey=pubkey)
 
 @app.route('/', subdomain='fuzzedguitars')
 def guitars_redirect():
