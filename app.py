@@ -19,6 +19,7 @@ from nostr_client import (
     Filter,
     FiltersList,
     derive_public_key_hex,
+    nsec_to_hex,
 )
 
 def nip19_decode(value: str):
@@ -79,7 +80,16 @@ PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
 RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
 DISABLE_TLS_VERIFY = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
 
-WALLET_PRIVKEY_HEX = os.getenv("WALLET_PRIVKEY_HEX", "").strip()
+_privkey_env = os.getenv("WALLET_PRIVKEY_HEX", "").strip()
+if _privkey_env.startswith("nsec"):
+    try:
+        WALLET_PRIVKEY_HEX = nsec_to_hex(_privkey_env)
+    except Exception:
+        logger.error("Invalid nsec key provided for WALLET_PRIVKEY_HEX")
+        WALLET_PRIVKEY_HEX = ""
+else:
+    WALLET_PRIVKEY_HEX = _privkey_env
+
 SERVER_WALLET_PUBKEY = (
     derive_public_key_hex(WALLET_PRIVKEY_HEX) if WALLET_PRIVKEY_HEX else ""
 )

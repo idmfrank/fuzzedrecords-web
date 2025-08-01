@@ -67,6 +67,14 @@ def npub_to_hex(value: str) -> str:
     decoded = bech32.convertbits(data, 5, 8, False)
     return bytes(decoded).hex()
 
+def nsec_to_hex(value: str) -> str:
+    """Decode a bech32 ``nsec`` string into a hex private key."""
+    hrp, data = bech32.bech32_decode(value)
+    if hrp != "nsec" or data is None:
+        raise ValueError("Invalid nsec")
+    decoded = bech32.convertbits(data, 5, 8, False)
+    return bytes(decoded).hex()
+
 # --- Event and Filters ---
 
 class EventKind:
