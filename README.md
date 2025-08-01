@@ -160,6 +160,12 @@ Set the following environment variables to configure the application:
    - Run `python relay_checker.py` periodically to update `good-relays.txt`.
    - On startup the app loads relays from `good-relays.txt` if present, falling back to `relays.txt` or the `RELAY_URLS` environment variable.
   - Users can contribute relays via the `/update-relays` endpoint; submitted URLs are merged in-memory and written back to `relays.txt`.
+8. **Build and Run with Docker**:
+   ```bash
+   docker build -t fuzzedrecords .
+   docker run --rm -p 8000:8000 fuzzedrecords
+   ```
+   The app will be available at http://localhost:8000.
 
 ---
 
