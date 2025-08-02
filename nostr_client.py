@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import websockets
 import bech32
-from cryptography.hazmat.primitives.asymmetric import ec, utils
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hashes, padding
@@ -18,6 +18,7 @@ from nacl.bindings import (
     crypto_aead_xchacha20poly1305_ietf_encrypt,
     crypto_aead_xchacha20poly1305_ietf_decrypt,
 )
+import secp256k1
 
 logger = logging.getLogger(__name__)
 
@@ -118,15 +119,11 @@ class Event:
         self.id = digest.hex()
 
         priv_int = int(privkey_hex, 16)
-        key = ec.derive_private_key(priv_int, ec.SECP256K1())
-        if key.public_key().public_numbers().y % 2 == 1:
+        key = secp256k1.PrivateKey(priv_int.to_bytes(32, "big"), raw=True)
+        if key.pubkey.serialize(compressed=True)[0] == 0x03:
             priv_int = (_N - priv_int) % _N
-            key = ec.derive_private_key(priv_int, ec.SECP256K1())
-        priv_key = key
-        signature = priv_key.sign(
-            digest,
-            ec.ECDSA(utils.Prehashed(hashes.SHA256())),
-        )
+            key = secp256k1.PrivateKey(priv_int.to_bytes(32, "big"), raw=True)
+        signature = key.schnorr_sign(digest, b"", raw=True)
         self.sig = signature.hex()
 
     def verify(self) -> bool:
@@ -141,13 +138,10 @@ class Event:
             return False
 
         try:
-            pub_key = _pubkey_from_hex(self.public_key)
-            pub_key.verify(
-                bytes.fromhex(self.sig),
-                digest,
-                ec.ECDSA(utils.Prehashed(hashes.SHA256())),
-            )
-            return True
+            pub_bytes = b"\x02" + bytes.fromhex(self.public_key)
+            pub = secp256k1.PublicKey()
+            pub.deserialize(pub_bytes)
+            return pub.schnorr_verify(digest, bytes.fromhex(self.sig), b"", raw=True)
         except Exception:
             return False
 
