@@ -291,7 +291,12 @@ from ticket_utils import register_ticket_routes
 import nostr_utils  # registers Nostr routes
 
 register_resources(api)
-register_wavlake_routes(app)
+register_wavlake_routes(
+    app,
+    base_url=WAVLAKE_API_BASE,
+    search_term=SEARCH_TERM,
+    error_handler=error_response,
+)
 register_ticket_routes(app)
 
 @app.route('/')

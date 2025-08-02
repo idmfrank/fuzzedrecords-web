@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+
 class DummyResponse:
     def __init__(self, data):
         self._data = data
@@ -15,19 +16,13 @@ class DummyResponse:
 
 
 def test_build_music_library(monkeypatch):
-    monkeypatch.setenv('SEARCH_TERM', ' by Fuzzed Records')
-    search_term = os.getenv('SEARCH_TERM', ' by Fuzzed Records')
-
-    # Provide a minimal stub for the app module to avoid circular imports
-    stub_app = type('app', (), {
-        'WAVLAKE_API_BASE': 'https://wavlake.com/api/v1',
-        'SEARCH_TERM': search_term,
-        'error_response': lambda msg, code: None,
-    })()
-    monkeypatch.setitem(sys.modules, 'app', stub_app)
+    base_url = 'https://wavlake.com/api/v1'
+    search_term = ' by Fuzzed Records'
+    monkeypatch.setenv('WAVLAKE_API_BASE', base_url)
+    monkeypatch.setenv('SEARCH_TERM', search_term)
 
     import importlib
-    wavlake_utils = importlib.import_module('wavlake_utils')
+    wavlake_utils = importlib.reload(importlib.import_module('wavlake_utils'))
 
     artists = [{"id": "artist1", "name": "Test Artist"}]
     albums = [{"id": "album1", "title": "Test Album"}]
