@@ -26,8 +26,8 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
 - **Prices in USD and Sats**: Event listings display prices in both dollars and satoshis.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
-- **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend.
-- **CORS Configuration**: Allowed origins can be customized via environment variable.
+- **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
+- **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
 - **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
 - **Fuzzed Guitars**: Boutique gear prototypes can be viewed in the Gear section (`/#gear`), via the `fuzzedguitars` subdomain, or using the `/fuzzedguitars` path.
 
@@ -48,7 +48,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
   - NIP-05 verification for admin access
 - **Hosting**:
   - Microsoft Azure
-  - Gunicorn as WSGI server
+  - Hypercorn ASGI server
 
 ---
 
