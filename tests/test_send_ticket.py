@@ -7,6 +7,7 @@ import ticket_utils
 import app
 import nostr_client
 import asyncio
+from contextlib import asynccontextmanager
 
 
 class DummyEvent:
@@ -34,9 +35,13 @@ class DummyRelayManager:
 
 def test_send_ticket_as_dm(monkeypatch):
     mgr = DummyRelayManager()
-    monkeypatch.setattr(ticket_utils, "initialize_client", lambda: mgr)
-    monkeypatch.setattr(app, "initialize_client", lambda: mgr)
+    @asynccontextmanager
+    async def dummy_cm():
+        yield mgr
+    monkeypatch.setattr(ticket_utils, "relay_manager", dummy_cm)
+    monkeypatch.setattr(app, "relay_manager", dummy_cm)
     monkeypatch.setattr(app, "RelayManager", DummyRelayManager)
+    monkeypatch.setattr(app, "_pool_started", True)
 
     called = {}
     def fake_encrypt(priv, pub, text):
@@ -50,7 +55,6 @@ def test_send_ticket_as_dm(monkeypatch):
     ))
 
     assert mgr.publish_count == 1
-    assert mgr.prepared
     assert mgr.last_event.kind == nostr_client.EventKind.EPHEMERAL_DM
     assert called["args"][0] == "11" * 32
     assert called["args"][1] == "recip_pubkey"
@@ -62,7 +66,10 @@ def test_send_ticket_as_dm(monkeypatch):
 
 def test_publish_signed_ticket_dm(monkeypatch):
     mgr = DummyRelayManager()
-    monkeypatch.setattr(ticket_utils, "initialize_client", lambda: mgr)
+    @asynccontextmanager
+    async def dummy_cm():
+        yield mgr
+    monkeypatch.setattr(ticket_utils, "relay_manager", dummy_cm)
 
     event_data = {
         "id": "123",

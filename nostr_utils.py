@@ -5,7 +5,7 @@ from app import (
     error_response,
     get_cached_item,
     set_cached_item,
-    initialize_client,
+    relay_manager,
     logger,
     REQUIRED_DOMAIN,
     ACTIVE_RELAYS,
@@ -67,51 +67,42 @@ async def fetch_profile():
         nprof = nprofile_encode(pubkey_hex, ACTIVE_RELAYS)
     except Exception as e:
         logger.warning("nprofile encode failed: %s", e)
-    mgr = initialize_client()
-    logger.debug("Initializing RelayManager for profile fetch of %s", pubkey_hex)
-    # Asynchronously connect to relays
-    try:
-        logger.debug("Preparing relay connections via prepare_relays()")
-        await mgr.prepare_relays()
-        logger.debug("RelayManager connections prepared")
-    except Exception as e:
-        logger.error("Error preparing relay connections: %s", e)
+    async with relay_manager() as mgr:
+        logger.debug("Initializing RelayManager for profile fetch of %s", pubkey_hex)
+        statuses = getattr(mgr, "connection_statuses", {})
+        if statuses and not any(statuses.values()):
+            logger.error("Unable to connect to any Nostr relays: %s", statuses)
+            return error_response("Unable to connect to Nostr relays", 503)
+        filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
+        sub_id = f"fetch_{pubkey_hex}"
+        await mgr.add_subscription_on_all_relays(sub_id, filt)
+        logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
 
-    statuses = getattr(mgr, "connection_statuses", {})
-    if statuses and not any(statuses.values()):
-        logger.error("Unable to connect to any Nostr relays: %s", statuses)
-        return error_response("Unable to connect to Nostr relays", 503)
-    filt = FiltersList([Filters(authors=[pubkey_hex], kinds=[EventKind.SET_METADATA], limit=1)])
-    sub_id = f"fetch_{pubkey_hex}"
-    await mgr.add_subscription_on_all_relays(sub_id, filt)
-    logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
-
-    profile_data = {}
-    start = time.time()
-    while time.time() - start < PROFILE_FETCH_TIMEOUT:
-        if mgr.message_pool.has_events():
-            msg = mgr.message_pool.get_event()
-            if msg.subscription_id == sub_id:
-                ev = msg.event
-                logger.debug("fetch_profile received event: %s", ev)
-                try:
-                    content = json.loads(ev.content)
-                except Exception as e:
-                    logger.error("Error parsing event content: %s", e)
-                    content = None
-                if content is not None:
-                    profile_data = {"id": ev.id, "pubkey": ev.public_key, "content": content}
-                    if nprof:
-                        profile_data["nprofile"] = nprof
-                    logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
-                break
-        if mgr.message_pool.has_eose_notices():
-            notice = mgr.message_pool.get_eose_notice()
-            if notice.subscription_id == sub_id:
-                # Ignore EOSE and continue waiting
-                continue
-        await asyncio.sleep(0.05)
-    await mgr.close_connections()
+        profile_data = {}
+        start = time.time()
+        while time.time() - start < PROFILE_FETCH_TIMEOUT:
+            if mgr.message_pool.has_events():
+                msg = mgr.message_pool.get_event()
+                if msg.subscription_id == sub_id:
+                    ev = msg.event
+                    logger.debug("fetch_profile received event: %s", ev)
+                    try:
+                        content = json.loads(ev.content)
+                    except Exception as e:
+                        logger.error("Error parsing event content: %s", e)
+                        content = None
+                    if content is not None:
+                        profile_data = {"id": ev.id, "pubkey": ev.public_key, "content": content}
+                        if nprof:
+                            profile_data["nprofile"] = nprof
+                        logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
+                    break
+            if mgr.message_pool.has_eose_notices():
+                notice = mgr.message_pool.get_eose_notice()
+                if notice.subscription_id == sub_id:
+                    # Ignore EOSE and continue waiting
+                    continue
+            await asyncio.sleep(0.05)
     if profile_data:
         if nprof and "nprofile" not in profile_data:
             profile_data["nprofile"] = nprof
@@ -131,24 +122,21 @@ async def fetch_and_validate_profile(pubkey, required_domain):
         domain = nip05.split("@", 1)[1]
         return domain == required_domain
 
-    mgr = initialize_client()
-    # Establish WebSocket connections before subscribing
-    await mgr.prepare_relays()
-    filt = FiltersList([
-        Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)
-    ])
-    await mgr.add_subscription_on_all_relays(f"val_{pubkey}", filt)
-    await asyncio.sleep(1)
+    async with relay_manager() as mgr:
+        filt = FiltersList([
+            Filters(authors=[pubkey], kinds=[EventKind.SET_METADATA], limit=1)
+        ])
+        await mgr.add_subscription_on_all_relays(f"val_{pubkey}", filt)
+        await asyncio.sleep(1)
 
-    profile_data = {}
-    for msg in mgr.message_pool.get_all_events():
-        ev = msg.event
-        try:
-            profile_data = json.loads(ev.content)
-        except Exception:
-            continue
-        break
-    await mgr.close_connections()
+        profile_data = {}
+        for msg in mgr.message_pool.get_all_events():
+            ev = msg.event
+            try:
+                profile_data = json.loads(ev.content)
+            except Exception:
+                continue
+            break
 
     if not profile_data:
         return False
@@ -199,11 +187,9 @@ def _create_event():
     logger.debug("Created event for publish: %s", ev.to_dict())
 
     async def publish_event():
-        mgr = initialize_client()
-        await mgr.prepare_relays()
-        await mgr.publish_event(ev)
-        await asyncio.sleep(0.5)
-        await mgr.close_connections()
+        async with relay_manager() as mgr:
+            await mgr.publish_event(ev)
+            await asyncio.sleep(0.5)
 
     asyncio.run(publish_event())
     return jsonify({"message": "Event successfully broadcasted", "id": ev.id})
@@ -270,9 +256,7 @@ async def _send_dm():
                recipient_pubkey=data['to_pubkey'])
     ev = dm.to_event()
     ev.sign(data['sender_privkey'])
-    mgr = initialize_client()
-    await mgr.prepare_relays()
-    await mgr.publish_event(ev)
-    await asyncio.sleep(0.5)
-    await mgr.close_connections()
+    async with relay_manager() as mgr:
+        await mgr.publish_event(ev)
+        await asyncio.sleep(0.5)
     return jsonify({"message":"DM sent successfully"})

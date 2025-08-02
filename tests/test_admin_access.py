@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import nostr_utils
 import app
+from contextlib import asynccontextmanager
 
 class DummyMgr:
     def __init__(self):
@@ -41,7 +42,11 @@ def _basic_event_data():
 
 def test_create_event_requires_valid_admin(monkeypatch):
     mgr = DummyMgr()
-    monkeypatch.setattr(nostr_utils, "initialize_client", lambda: mgr)
+    @asynccontextmanager
+    async def dummy_cm():
+        yield mgr
+    monkeypatch.setattr(nostr_utils, "relay_manager", dummy_cm)
+    monkeypatch.setattr(app, "_pool_started", True)
     monkeypatch.setattr(nostr_utils.Event, "verify", lambda self: True)
     class DummyEK(int):
         SET_METADATA = 0
@@ -65,7 +70,6 @@ def test_create_event_requires_valid_admin(monkeypatch):
         resp = client.post("/create_event", json=data)
         assert resp.status_code == 200
         assert mgr.published
-        assert mgr.prepared
         resp_data = resp.get_json()
         assert resp_data["id"] == data["id"]
 

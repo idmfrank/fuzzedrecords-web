@@ -9,8 +9,33 @@ def test_relay_connect_timeout_env(monkeypatch):
     importlib.reload(app_module)
 
     assert app_module.RELAY_CONNECT_TIMEOUT == 6.0
-    mgr = app_module.initialize_client()
-    assert all(r.timeout == 6.0 for r in mgr.relays.values())
+
+    class DummyRelay:
+        def __init__(self, url, timeout):
+            self.url = url
+            self.timeout = timeout
+
+    class DummyRelayManager:
+        def __init__(self, timeout=None):
+            self.timeout = timeout
+            self.relays = {}
+
+        def add_relay(self, url):
+            self.relays[url] = DummyRelay(url, self.timeout)
+
+        async def prepare_relays(self):
+            pass
+
+        async def close_connections(self):
+            pass
+
+    monkeypatch.setattr(app_module, "RelayManager", DummyRelayManager)
+
+    mgr = asyncio.run(app_module.get_relay_manager())
+    try:
+        assert all(r.timeout == 6.0 for r in mgr.relays.values())
+    finally:
+        asyncio.run(app_module.release_relay_manager(mgr))
 
 
 def test_tls_disable_warning(monkeypatch, caplog):
@@ -38,3 +63,4 @@ def test_tls_disable_warning(monkeypatch, caplog):
     asyncio.run(mgr.prepare_relays())
 
     assert any("TLS verification is disabled" in rec.message for rec in caplog.records)
+

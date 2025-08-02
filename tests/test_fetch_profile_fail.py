@@ -5,16 +5,19 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import nostr_utils
 from app import app
+from contextlib import asynccontextmanager
 
 class DummyMgr:
-    async def prepare_relays(self):
+    connection_statuses = {"r1": False, "r2": False}
+    async def add_subscription_on_all_relays(self, *args, **kwargs):
         pass
-    @property
-    def connection_statuses(self):
-        return {"r1": False, "r2": False}
+    message_pool = type("MP", (), {"has_events": lambda self: False, "has_eose_notices": lambda self: False})()
 
 def test_fetch_profile_returns_503(monkeypatch):
-    monkeypatch.setattr(nostr_utils, "initialize_client", lambda: DummyMgr())
+    @asynccontextmanager
+    async def dummy_cm():
+        yield DummyMgr()
+    monkeypatch.setattr(nostr_utils, "relay_manager", dummy_cm)
     with app.test_client() as client:
         resp = client.post("/fetch-profile", json={"pubkey": "abc"})
         assert resp.status_code == 503
