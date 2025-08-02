@@ -20,13 +20,15 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 
 - **Music Library**: Browse and play songs hosted on Wavlake. The library includes detailed artist and album information.
 - **User Profiles**: Authenticate using Nostr Wallet to view and manage your profile, leveraging Nostr NIP-07 for login.
- - **Admin Panel**: Create and publish events (visible when your NIP-05 address ends with `fuzzedrecords.com`).
+- **NIP-19 Profile Lookup**: Retrieve metadata using Nostr `nprofile` strings.
+- **Admin Panel**: Create and publish events (visible when your NIP-05 address ends with `fuzzedrecords.com`).
 - **Decentralized Authentication**: Uses Nostr Wallet for secure, decentralized user authentication.
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
 - **Prices in USD and Sats**: Event listings display prices in both dollars and satoshis.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
+- **Relay Management**: Users can add relay URLs through the `/update-relays` endpoint.
 - **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
 - **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
 - **Fuzzed Guitars**: Boutique gear prototypes can be viewed in the Gear section (`/#gear`), via the `fuzzedguitars` subdomain, or using the `/fuzzedguitars` path.
@@ -66,10 +68,10 @@ Set the following environment variables to configure the application:
 - Rate-limit keys are percent-encoded before being stored in Azure Table Storage.
 - RATELIMIT_STORAGE_URI: Alternate limiter storage URI (default: memory://)
 - WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
-- HTTP_TIMEOUT: Timeout in seconds for each Wavlake API request (default: 5)
+- HTTP_TIMEOUT: Timeout in seconds for external API requests such as Wavlake and Azure Graph (default: 5)
 - TRACK_CACHE_TIMEOUT: Seconds to cache the music library before background refresh (default: 300)
 - SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
-- PROFILE_FETCH_TIMEOUT: Seconds to wait for a user profile event when handling `/fetch-profile` or `/validate-profile` (default: 5)
+- PROFILE_FETCH_TIMEOUT: Seconds to wait for a user profile event when handling `/fetch-profile`, `/fetch-nprofile`, or `/validate-profile` (default: 5)
 - RELAY_CONNECT_TIMEOUT: Seconds allowed to establish each WebSocket connection to a relay (default: 2)
 - DISABLE_TLS_VERIFY: Set to 1 to disable TLS certificate verification when connecting to relays (default: 0). **Insecure - only use for testing; a warning is logged when enabled.**
 - WALLET_PRIVKEY_HEX: Private key for the server wallet. May be provided as a hex
@@ -213,7 +215,20 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
                "about":"user_bio" }}
   ```
 
-### 2. Fetch Music Library
+### 2. Fetch Metadata by Nprofile (NIP-19)
+- **Endpoint**: `/fetch-nprofile`
+- **Method**: `POST`
+- **Description**: Decodes a Nostr `nprofile` string to derive the pubkey and relays, then retrieves metadata from those relays.
+- **Request Body**:
+  ```json
+  {"nprofile": "nprofile_string"}
+  ```
+- **Response**:
+  ```json
+  {"pubkey": "hex_pubkey", "metadata": {...}}
+  ```
+
+### 3. Fetch Music Library
 - **Endpoint**: `/tracks`
 - **Method**: `GET`
 - **Description**: Retrieves the aggregated music library from Wavlake.
@@ -231,7 +246,7 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
   ]}
   ```
 
-### 3. Create Event (Admin Only)
+### 4. Create Event (Admin Only)
 - **Endpoint**: `/create_event`
 - **Method**: `POST`
 - **Description**: Publishes a signed Kind=1 (text note) or calendar event (NIP-52) to relays.
@@ -248,14 +263,14 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
   {"message":"Event successfully broadcasted"}
   ```
 
-### 4. Validate Profile (NIP-05)
+### 5. Validate Profile (NIP-05)
 - **Endpoint**: `/validate-profile`
 - **Method**: `POST`
 - **Description**: Confirms a public key’s NIP-05 identifier matches your domain.
 - **Request Body**: `{ "pubkey":"user_pubkey" }`
 - **Response**: `{"status":"valid"}` or `403` error
 
-### 5. Fetch Fuzzed Events
+### 6. Fetch Fuzzed Events
 - **Endpoint**: `/fuzzed_events`
 - **Method**: `GET`
 - **Description**: Retrieves Kind=31922 events from verified accounts.
@@ -266,14 +281,13 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
                "content":"...","tags":[],"created_at":...},...]}
   ```
 
-### 6. Send Ephemeral DM (NIP-17)
+### 7. Send Ephemeral DM (NIP-17)
 - **Endpoint**: `/send_dm`
 - **Method**: `POST`
 - **Description**: Encrypts and sends a direct message as Kind=23194. The
   message content is encrypted using NIP‑17's AES‑GCM flow with the sender's
   private key and recipient's public key. Ephemeral DMs are not persisted by
-  relays, but the backend may optionally save a copy so recipients can fallback
-  to retrieve it later.
+  relays.
 - **Required Fields**: `pubkey`, `kind`, `created_at`, `tags=[['p',
   recipient_pubkey]]`, and encrypted `content`.
 - **Request Body**:
@@ -282,7 +296,7 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
    "sender_privkey":"..."}
   ```
 
-### 7. Send Ticket via DM (NIP-47)
+### 8. Send Ticket via DM (NIP-47)
 - **Endpoint**: `/send_ticket`
 - **Method**: `POST`
 - **Description**: Accepts a NIP‑47 wallet request event. The event's `content`
@@ -309,7 +323,7 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
 {"result":"ok","id":"<req_id>"}
 ```
 
-### 8. Update Relays
+### 9. Update Relays
 - **Endpoint**: `/update-relays`
 - **Method**: `POST`
 - **Description**: Merges relay URLs into the active list and persists them to `relays.txt`.
