@@ -52,10 +52,9 @@ def test_key_sanitization(monkeypatch):
     assert limiter.incr(key, expiry=60) == 2
     assert limiter.get(key) == 2
 
-    sanitized = limiter._sanitize_key(key)
-    assert sanitized in {
-        ent[0] for ent in limiter.client.entities.keys()
-    }
+    partition, row = limiter._get_partition_and_row(key)
+    assert partition in {ent[0] for ent in limiter.client.entities.keys()}
+    assert row in {ent[1] for ent in limiter.client.entities.keys()}
 
     limiter.clear(key)
     assert limiter.get(key) == 0
