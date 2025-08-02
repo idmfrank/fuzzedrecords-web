@@ -15,10 +15,13 @@ class DummyResponse:
 
 
 def test_build_music_library(monkeypatch):
+    monkeypatch.setenv('SEARCH_TERM', ' by Fuzzed Records')
+    search_term = os.getenv('SEARCH_TERM', ' by Fuzzed Records')
+
     # Provide a minimal stub for the app module to avoid circular imports
     stub_app = type('app', (), {
         'WAVLAKE_API_BASE': 'https://wavlake.com/api/v1',
-        'SEARCH_TERM': ' by Fuzzed Records',
+        'SEARCH_TERM': search_term,
         'error_response': lambda msg, code: None,
     })()
     monkeypatch.setitem(sys.modules, 'app', stub_app)
@@ -31,14 +34,14 @@ def test_build_music_library(monkeypatch):
     tracks = [
         {
             "id": "track1",
-            "artist": "Test Artist by Fuzzed Records",
+            "artist": f"Test Artist{search_term}",
             "albumTitle": "Test Album",
             "title": "Track One",
             "mediaUrl": "url1",
         },
         {
             "id": "track2",
-            "artist": "Test Artist by Fuzzed Records",
+            "artist": f"Test Artist{search_term}",
             "albumTitle": "Test Album",
             "title": "Track Two",
             "mediaUrl": "url2",

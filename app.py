@@ -75,7 +75,7 @@ REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
 # Base URL for Wavlake API; can be overridden via environment
 # Default updated to use wavlake.com domain as per API docs
 WAVLAKE_API_BASE = os.getenv("WAVLAKE_API_BASE", "https://wavlake.com/api/v1")
-SEARCH_TERM = " by Fuzzed Records"
+SEARCH_TERM = os.getenv("SEARCH_TERM", " by Fuzzed Records")
 PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
 RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
 DISABLE_TLS_VERIFY = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
