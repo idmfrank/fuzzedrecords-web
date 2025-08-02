@@ -12,16 +12,19 @@ async function purchaseTicket(eventData) {
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Failed to create invoice');
-    if (window.webln) {
-      try {
-        await window.webln.enable?.();
-        await window.webln.sendPayment(data.invoice);
-      } catch (err) {
-        console.error('Payment failed', err);
-        alert('Payment failed');
-        return;
-      }
+    if (!window.webln) {
+      alert('Lightning wallet not available');
+      return;
     }
+    try {
+      await window.webln.enable?.();
+      await window.webln.sendPayment(data.invoice);
+    } catch (err) {
+      console.error('Payment failed', err);
+      alert('Payment failed');
+      return;
+    }
+
     const confirmResp = await fetch('/confirm-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
