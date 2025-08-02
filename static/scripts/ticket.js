@@ -1,77 +1,88 @@
 // ticket.js
-// Handles ticket generation, QR display, and sending via Nostr Wallet Connect
-import { getTagValue } from './utils.js';
+// Handles Lightning ticket purchase and receipt via ephemeral Nostr messages
 
-// Server wallet pubkey should be exposed on the window object
-const SERVER_WALLET_PUBKEY = window.serverWalletPubkey || '';
+const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
 
-// Generate ticket payload, display QR, and send DM
-export async function generateTicketWithQRCode(eventData) {
-  const ticketId = crypto.randomUUID();
-  const eventId = eventData.id;
-  const eventName = getTagValue(eventData.tags, 'title');
-  const ticketData = {
-    ticket_id: ticketId,
-    event_id: eventId,
-    pubkey: sessionStorage.getItem('pubkey'),
-    event_name: eventName
-  };
+async function purchaseTicket(eventData) {
+  try {
+    const resp = await fetch('/generate-ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_id: eventData.id, pubkey: sessionStorage.getItem('pubkey') })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Failed to create invoice');
+    if (window.webln) {
+      try {
+        await window.webln.enable?.();
+        await window.webln.sendPayment(data.invoice);
+      } catch (err) {
+        console.error('Payment failed', err);
+        alert('Payment failed');
+        return;
+      }
+    }
+    await fetch('/confirm-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoice: data.invoice })
+    });
+    alert('Payment sent. Awaiting ticket...');
+  } catch (err) {
+    console.error('Ticket generation failed', err);
+    alert('Failed to generate ticket');
+  }
+}
+
+function displayTicket(payload) {
   const qrContainer = document.getElementById('qr-code');
   if (qrContainer) {
     qrContainer.innerHTML = '';
-    new QRCode(qrContainer, { text: JSON.stringify(ticketData), width: 256, height: 256 });
+    const img = document.createElement('img');
+    img.src = payload.qr_code;
+    img.alt = 'Ticket QR';
+    qrContainer.appendChild(img);
+    const info = document.createElement('p');
+    info.textContent = payload.note || '';
+    qrContainer.appendChild(info);
   }
-  await sendTicketViaNostrRequest(ticketData);
+  sessionStorage.setItem('ticket', JSON.stringify(payload));
 }
 
-// Encrypt and send ticket via NIP-47 wallet request
-async function sendTicketViaNostrRequest(ticketData) {
-  if (!window.nostr) {
-    console.error('Nostr wallet not available.');
+function subscribeForTickets() {
+  const pubkey = sessionStorage.getItem('pubkey');
+  if (!pubkey || !window.nostr?.nip44?.decrypt) {
+    setTimeout(subscribeForTickets, 1000);
     return;
   }
-  const payload = {
-    method: 'ticket.create',
-    params: ticketData,
-    id: crypto.randomUUID()
-  };
-  const content = JSON.stringify(payload);
-  try {
-    let encrypted = content;
-    if (window.nostr.nip44?.encrypt) {
-      encrypted = await window.nostr.nip44.encrypt(SERVER_WALLET_PUBKEY, content);
-    } else if (window.nostr.nip04?.encrypt) {
-      encrypted = await window.nostr.nip04.encrypt(SERVER_WALLET_PUBKEY, content);
-    }
-    const reqEvent = {
-      kind: 23194,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: [['p', SERVER_WALLET_PUBKEY]],
-      content: encrypted,
-      pubkey: sessionStorage.getItem('pubkey')
+  RELAYS.forEach(url => {
+    const ws = new WebSocket(url);
+    ws.onopen = () => {
+      ws.send(JSON.stringify(['REQ', 'ticket-sub', { kinds: [24133], '#p': [pubkey] }]));
     };
-    const signed = await window.nostr.signEvent(reqEvent);
-    const resp = await fetch('/send_ticket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(signed)
-    });
-    const result = await resp.json();
-    if (result.status === 'sent') {
-      alert('Success! Check your Nostr DMs for your event ticket.');
-    } else {
-      alert('Failed to send ticket. Please try again.');
-    }
-  } catch (err) {
-    console.error('Error sending ticket request:', err);
-    alert('Error sending ticket.');
-  }
+    ws.onmessage = async msg => {
+      try {
+        const data = JSON.parse(msg.data);
+        if (data[0] === 'EVENT' && data[1] === 'ticket-sub') {
+          const ev = data[2];
+          const decrypted = await window.nostr.nip44.decrypt(ev.pubkey, ev.content);
+          const payload = JSON.parse(decrypted);
+          displayTicket(payload);
+        }
+      } catch (err) {
+        console.error('Failed to process ticket event', err);
+      }
+    };
+  });
 }
 
-// Attach click handler for ticket buttons
 document.addEventListener('click', async e => {
   if (e.target.classList.contains('generate-ticket-btn')) {
     const data = JSON.parse(e.target.getAttribute('data-event'));
-    await generateTicketWithQRCode(data);
+    await purchaseTicket(data);
   }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  subscribeForTickets();
 });
