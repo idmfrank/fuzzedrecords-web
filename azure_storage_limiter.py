@@ -43,6 +43,20 @@ class AzureTableStorage(Storage):
         """Return a version of ``key`` safe for Azure Table Storage."""
         return quote(key, safe="")
 
+    def _get_partition_and_row(self, key: str) -> tuple[str, str]:
+        """Return a tuple of (PartitionKey, RowKey) for a given limiter ``key``.
+
+        The PartitionKey groups related keys together (for example by IP address)
+        while the RowKey stores the fully sanitized key value.
+        """
+        sanitized = self._sanitize_key(key)
+        parts = key.split("/", 2)
+        if len(parts) > 1:
+            partition = self._sanitize_key(parts[1])
+        else:
+            partition = sanitized
+        return partition, sanitized
+
     def incr(
         self,
         key: str,
@@ -52,8 +66,7 @@ class AzureTableStorage(Storage):
     ) -> int:
         """Increment the count for ``key`` by ``amount`` and set expiry."""
         now = int(time.time())
-        partition_key = self._sanitize_key(key)
-        row_key = partition_key
+        partition_key, row_key = self._get_partition_and_row(key)
         try:
             entity = self.client.get_entity(partition_key, row_key)
             count = entity.get("count", 0)
@@ -86,8 +99,7 @@ class AzureTableStorage(Storage):
     def get(self, key: str) -> int:
         """Return the current count for a key, or 0 if non-existent/expired."""
         now = int(time.time())
-        partition_key = self._sanitize_key(key)
-        row_key = partition_key
+        partition_key, row_key = self._get_partition_and_row(key)
         try:
             entity = self.client.get_entity(partition_key, row_key)
             expire_at = entity.get("expire_at", 0)
@@ -99,8 +111,7 @@ class AzureTableStorage(Storage):
 
     def clear(self, key: str) -> None:
         """Reset the count for a key by deleting the entity."""
-        partition_key = self._sanitize_key(key)
-        row_key = partition_key
+        partition_key, row_key = self._get_partition_and_row(key)
         try:
             self.client.delete_entity(partition_key, row_key)
         except AzureError:
