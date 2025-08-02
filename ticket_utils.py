@@ -1,4 +1,4 @@
-import time, json, asyncio, os, binascii
+import time, json, asyncio, os, binascii, base64, re
 from io import BytesIO
 import qrcode
 from flask import request, jsonify
@@ -104,6 +104,14 @@ def register_ticket_routes(app):
         wallet_priv = wallet_priv_hex
         if not wallet_priv:
             return error_response("Server wallet not configured", 500)
+
+        if not re.fullmatch(r"[0-9a-fA-F]{64}", sender_pub):
+            return error_response("Invalid pubkey", 400)
+
+        try:
+            base64.b64decode(cipher, validate=True)
+        except (ValueError, binascii.Error):
+            return error_response("Invalid encrypted payload", 400)
 
         try:
             plain = nip44_decrypt(wallet_priv, sender_pub, cipher)
