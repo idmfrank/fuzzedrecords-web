@@ -1,4 +1,4 @@
-import time, json, asyncio, os, binascii, base64, re
+import time, json, asyncio, os, binascii, base64, re, uuid
 from io import BytesIO
 import qrcode
 from flask import request, jsonify
@@ -13,11 +13,15 @@ error_response = None
 logger = None
 limiter = None
 wallet_priv_hex = None
+
+_invoices = {}
 from nostr_client import (
     EncryptedDirectMessage,
     EventKind,
     Event,
     nip44_decrypt,
+    nip44_encrypt,
+    derive_public_key_hex,
     build_nip47_response,
 )
 
@@ -60,6 +64,31 @@ async def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
                recipient_pubkey=recipient_pubkey_hex)
     ev = dm.to_event()
     ev.sign(sender_privkey_hex)
+    async with relay_manager() as mgr:
+        await mgr.publish_event(ev)
+    return ev.id
+
+
+async def send_ephemeral_ticket(recipient_pubkey_hex: str, ticket_id: str, event_id: str, note: str = "Thanks, here's your ticket!") -> str:
+    """Send an ephemeral encrypted ticket to the recipient."""
+    _load_app_dependencies()
+    if not wallet_priv_hex:
+        raise ValueError("Server wallet not configured")
+    payload = {
+        "ticket_id": ticket_id,
+        "event_id": event_id,
+        "qr_code": f"https://fuzzedrecords.com/tickets/{ticket_id}.png",
+        "note": note,
+    }
+    content = nip44_encrypt(wallet_priv_hex, recipient_pubkey_hex, json.dumps(payload))
+    ev = Event(
+        public_key=derive_public_key_hex(wallet_priv_hex),
+        content=content,
+        kind=EventKind.EPHEMERAL_ENCRYPTED,
+        tags=[["p", recipient_pubkey_hex]],
+        created_at=int(time.time()),
+    )
+    ev.sign(wallet_priv_hex)
     async with relay_manager() as mgr:
         await mgr.publish_event(ev)
     return ev.id
@@ -147,3 +176,39 @@ def register_ticket_routes(app):
         except Exception as e:
             logger.error(f"Error in send_ticket_endpoint: {e}")
             return error_response(str(e), 500)
+
+    @app.route("/generate-ticket", methods=["POST"])
+    @limiter.limit("5 per minute")
+    def generate_ticket_endpoint():
+        data = request.json or {}
+        event_id = data.get("event_id")
+        pubkey = data.get("pubkey")
+        if not event_id or not pubkey:
+            return error_response("Missing fields", 400)
+        ticket_id = f"ticket_{uuid.uuid4().hex[:6]}"
+        invoice = base64.b64encode(os.urandom(32)).decode()
+        _invoices[invoice] = {"ticket_id": ticket_id, "event_id": event_id, "pubkey": pubkey}
+        return jsonify({"invoice": invoice, "ticket_id": ticket_id, "event_id": event_id})
+
+    @app.route("/confirm-payment", methods=["POST"])
+    @limiter.limit("5 per minute")
+    def confirm_payment_endpoint():
+        data = request.json or {}
+        invoice = data.get("invoice")
+        info = _invoices.pop(invoice, None)
+        if not invoice or not info:
+            return error_response("Unknown invoice", 400)
+        asyncio.run(send_ephemeral_ticket(info["pubkey"], info["ticket_id"], info["event_id"]))
+        return jsonify({"status": "sent"})
+
+    @app.route("/send-ephemeral-ticket", methods=["POST"])
+    @limiter.limit("10 per minute")
+    def send_ephemeral_ticket_endpoint():
+        data = request.json or {}
+        pubkey = data.get("pubkey")
+        ticket_id = data.get("ticket_id")
+        event_id = data.get("event_id")
+        if not (pubkey and ticket_id and event_id):
+            return error_response("Missing fields", 400)
+        asyncio.run(send_ephemeral_ticket(pubkey, ticket_id, event_id))
+        return jsonify({"status": "sent"})
