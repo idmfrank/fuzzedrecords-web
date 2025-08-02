@@ -321,10 +321,17 @@ class RelayManager:
                     await r.ws.close()
                 except Exception:
                     pass
+        alive_tasks = []
         for task in self._recv_tasks:
             task.cancel()
-        if self._recv_tasks:
-            await asyncio.gather(*self._recv_tasks, return_exceptions=True)
+            try:
+                if task.get_loop().is_closed():
+                    continue
+            except Exception:
+                continue
+            alive_tasks.append(task)
+        if alive_tasks:
+            await asyncio.gather(*alive_tasks, return_exceptions=True)
         self._recv_tasks.clear()
 
 _P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
