@@ -90,9 +90,9 @@ async def publish_signed_ticket_dm(event_data: dict) -> str:
 
 def register_ticket_routes(app):
     _load_app_dependencies()
-    @app.route('/send_ticket', methods=['POST'])
+    @app.route("/send_ticket", methods=["POST"])
     @limiter.limit("10 per minute")
-    async def send_ticket_endpoint():
+    def send_ticket_endpoint():
         data = request.json or {}
 
         req_id = data.get("id")
@@ -130,18 +130,21 @@ def register_ticket_routes(app):
             if not event_name:
                 return error_response("Missing event_name", 400)
 
-            await send_ticket_as_dm(event_name, recipient_pub, wallet_priv, timestamp)
+            asyncio.run(send_ticket_as_dm(event_name, recipient_pub, wallet_priv, timestamp))
 
             resp_payload = {"result": "ok", "id": resp_id}
             resp_event = build_nip47_response(wallet_priv, sender_pub, resp_payload)
             resp_event.tags.append(["e", req_id])
 
-            mgr = initialize_client()
-            try:
-                await mgr.prepare_relays()
-                await mgr.publish_event(resp_event)
-            finally:
-                await mgr.close_connections()
+            async def publish_response():
+                mgr = initialize_client()
+                try:
+                    await mgr.prepare_relays()
+                    await mgr.publish_event(resp_event)
+                finally:
+                    await mgr.close_connections()
+
+            asyncio.run(publish_response())
 
             return jsonify({"status": "sent", "event_id": resp_event.id})
         except (ValueError, binascii.Error, CryptoError) as e:

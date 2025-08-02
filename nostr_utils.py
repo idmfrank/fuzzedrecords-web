@@ -31,19 +31,22 @@ EVENTS_PUBKEY_HEX = npub_to_hex(EVENTS_NPUB)
 
 def require_nip05_verification(required_domain):
     from functools import wraps
+
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):
             data = request.json or {}
-            pubkey = data.get('pubkey')
+            pubkey = data.get("pubkey")
             if not pubkey:
-                return jsonify({"error":"Missing pubkey"}), 400
-            valid = await fetch_and_validate_profile(pubkey, required_domain)
+                return jsonify({"error": "Missing pubkey"}), 400
+            valid = asyncio.run(fetch_and_validate_profile(pubkey, required_domain))
             if not valid:
                 logger.warning(f"NIP-05 failed for {pubkey}")
-                return jsonify({"error":"NIP-05 verification failed"}), 403
-            return await func(*args, **kwargs)
+                return jsonify({"error": "NIP-05 verification failed"}), 403
+            return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 async def fetch_profile():
@@ -158,9 +161,9 @@ async def fetch_and_validate_profile(pubkey, required_domain):
     domain = nip05.split("@", 1)[1]
     return domain == required_domain
 
-@app.route('/fetch-profile', methods=['POST'])
-async def _fetch_profile():
-    return await fetch_profile()
+@app.route("/fetch-profile", methods=["POST"])
+def _fetch_profile():
+    return asyncio.run(fetch_profile())
 
 @app.route('/validate-profile', methods=['POST'])
 def _validate_profile():
@@ -173,76 +176,87 @@ def _validate_profile():
         return jsonify({"status":"valid"})
     return jsonify({"error":"Profile validation failed"}), 403
 
-@app.route('/create_event', methods=['POST'])
+@app.route("/create_event", methods=["POST"])
 @require_nip05_verification(REQUIRED_DOMAIN)
-async def _create_event():
+def _create_event():
     data = request.json or {}
-    kind_val = data.get('kind', EventKind.TEXT_NOTE)
+    kind_val = data.get("kind", EventKind.TEXT_NOTE)
     try:
         kind_val = int(kind_val)
     except (TypeError, ValueError):
         kind_val = EventKind.TEXT_NOTE
     ev = Event(
-        public_key=data.get('pubkey'),
-        content=data.get('content', ''),
+        public_key=data.get("pubkey"),
+        content=data.get("content", ""),
         kind=kind_val,
-        tags=data.get('tags', []),
-        created_at=data.get('created_at', int(time.time())),
+        tags=data.get("tags", []),
+        created_at=data.get("created_at", int(time.time())),
     )
-    ev.sig = data.get('sig')
-    ev.id = data.get('id')
+    ev.sig = data.get("sig")
+    ev.id = data.get("id")
     if not ev.verify():
         return error_response("Invalid signature", 403)
     logger.debug("Created event for publish: %s", ev.to_dict())
-    mgr = initialize_client()
-    await mgr.prepare_relays()
-    await mgr.publish_event(ev)
-    await asyncio.sleep(0.5)
-    await mgr.close_connections()
-    return jsonify({"message":"Event successfully broadcasted", "id": ev.id})
 
-@app.route('/fuzzed_events', methods=['GET'])
-async def _get_fuzzed_events():
-    mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
-    relays = []
-    try:
-        with open("good-relays.txt") as f:
-            relays = [l.strip() for l in f if l.strip()]
-    except FileNotFoundError:
-        relays = [EVENTS_RELAY]
-    if not relays:
-        relays = [EVENTS_RELAY]
-    for url in relays:
-        mgr.add_relay(url)
-    await mgr.prepare_relays()
-    statuses = getattr(mgr, "connection_statuses", {})
-    if statuses and not any(statuses.values()):
-        logger.error("Unable to connect to Nostr relay: %s", statuses)
-        return error_response("Unable to connect to Nostr relays", 503)
+    async def publish_event():
+        mgr = initialize_client()
+        await mgr.prepare_relays()
+        await mgr.publish_event(ev)
+        await asyncio.sleep(0.5)
+        await mgr.close_connections()
 
-    filt = FiltersList([
-        Filters(authors=[EVENTS_PUBKEY_HEX], kinds=[EventKind.CALENDAR_EVENT])
-    ])
-    await mgr.add_subscription_on_all_relays('fuzzed', filt)
-    await asyncio.sleep(1)
+    asyncio.run(publish_event())
+    return jsonify({"message": "Event successfully broadcasted", "id": ev.id})
 
-    results = []
-    seen_ids = set()
-    for msg in mgr.message_pool.get_all_events():
-        if msg.event.id in seen_ids:
-            continue
-        seen_ids.add(msg.event.id)
-        results.append({
-            'id': msg.event.id,
-            'pubkey': msg.event.public_key,
-            'content': msg.event.content,
-            'tags': msg.event.tags,
-            'created_at': msg.event.created_at,
-            'relay': msg.relay_url,
-        })
+@app.route("/fuzzed_events", methods=["GET"])
+def _get_fuzzed_events():
 
-    await mgr.close_connections()
-    return jsonify({'events': results})
+    async def gather_events():
+        mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
+        relays = []
+        try:
+            with open("good-relays.txt") as f:
+                relays = [l.strip() for l in f if l.strip()]
+        except FileNotFoundError:
+            relays = [EVENTS_RELAY]
+        if not relays:
+            relays = [EVENTS_RELAY]
+        for url in relays:
+            mgr.add_relay(url)
+        await mgr.prepare_relays()
+        statuses = getattr(mgr, "connection_statuses", {})
+        if statuses and not any(statuses.values()):
+            logger.error("Unable to connect to Nostr relay: %s", statuses)
+            await mgr.close_connections()
+            return error_response("Unable to connect to Nostr relays", 503)
+
+        filt = FiltersList([
+            Filters(authors=[EVENTS_PUBKEY_HEX], kinds=[EventKind.CALENDAR_EVENT])
+        ])
+        await mgr.add_subscription_on_all_relays("fuzzed", filt)
+        await asyncio.sleep(1)
+
+        results = []
+        seen_ids = set()
+        for msg in mgr.message_pool.get_all_events():
+            if msg.event.id in seen_ids:
+                continue
+            seen_ids.add(msg.event.id)
+            results.append(
+                {
+                    "id": msg.event.id,
+                    "pubkey": msg.event.public_key,
+                    "content": msg.event.content,
+                    "tags": msg.event.tags,
+                    "created_at": msg.event.created_at,
+                    "relay": msg.relay_url,
+                }
+            )
+
+        await mgr.close_connections()
+        return jsonify({"events": results})
+
+    return asyncio.run(gather_events())
 
 @app.route('/send_dm', methods=['POST'])
 async def _send_dm():
