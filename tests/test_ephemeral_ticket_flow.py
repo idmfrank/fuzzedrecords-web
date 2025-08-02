@@ -28,7 +28,10 @@ def test_generate_and_confirm_ticket(monkeypatch):
 
         resp2 = client.post("/confirm-payment", json={"invoice": invoice})
         assert resp2.status_code == 200
-        assert resp2.get_json()["status"] == "sent"
+        data2 = resp2.get_json()
+        assert data2["status"] == "sent"
+        assert "ticket" in data2
+        assert data2["ticket"]["ticket_id"] == resp.get_json()["ticket_id"]
         assert called["args"][1] == resp.get_json()["ticket_id"]
 
         resp3 = client.post("/confirm-payment", json={"invoice": invoice})

@@ -198,8 +198,23 @@ def register_ticket_routes(app):
         info = _invoices.pop(invoice, None)
         if not invoice or not info:
             return error_response("Unknown invoice", 400)
-        asyncio.run(send_ephemeral_ticket(info["pubkey"], info["ticket_id"], info["event_id"]))
-        return jsonify({"status": "sent"})
+
+        # Build the ticket payload so the client can display it immediately
+        ticket_payload = {
+            "ticket_id": info["ticket_id"],
+            "event_id": info["event_id"],
+            "qr_code": f"https://fuzzedrecords.com/tickets/{info['ticket_id']}.png",
+            "note": "Thanks, here's your ticket!",
+        }
+
+        # Send the ticket over Nostr in the background while responding
+        asyncio.run(
+            send_ephemeral_ticket(
+                info["pubkey"], info["ticket_id"], info["event_id"], ticket_payload["note"]
+            )
+        )
+
+        return jsonify({"status": "sent", "ticket": ticket_payload})
 
     @app.route("/send-ephemeral-ticket", methods=["POST"])
     @limiter.limit("10 per minute")
