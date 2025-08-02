@@ -22,11 +22,19 @@ async function purchaseTicket(eventData) {
         return;
       }
     }
-    await fetch('/confirm-payment', {
+    const confirmResp = await fetch('/confirm-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ invoice: data.invoice })
     });
+    let confirmData = {};
+    try {
+      confirmData = await confirmResp.json();
+    } catch (_) {}
+    if (confirmResp.ok && confirmData.ticket) {
+      displayTicket(confirmData.ticket);
+      return;
+    }
     alert('Payment sent. Awaiting ticket...');
   } catch (err) {
     console.error('Ticket generation failed', err);
