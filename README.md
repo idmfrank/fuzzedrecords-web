@@ -183,6 +183,8 @@ If dependencies are missing, tests will fail with import errors similar to the o
 
 ## API Endpoints
 
+All backend routes are now synchronous Flask handlers. Asynchronous Nostr operations are executed internally using `asyncio.run()`, so clients interact with a standard blocking HTTP API.
+
 ### 0. Nostr Discovery JSON
 - **Endpoint**: `/.well-known/nostr.json`
 - **Method**: `GET`
