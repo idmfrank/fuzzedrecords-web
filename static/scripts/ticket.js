@@ -84,6 +84,14 @@ function subscribeForTickets() {
         console.error('Failed to process ticket event', err);
       }
     };
+    ws.onerror = err => {
+      console.error('Ticket relay websocket error', url, err);
+      if (typeof alert === 'function') alert('Ticket relay connection error. Retrying...');
+    };
+    ws.onclose = evt => {
+      console.error('Ticket relay websocket closed', url, evt);
+      setTimeout(subscribeForTickets, 5000);
+    };
   });
 }
 
