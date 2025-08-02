@@ -8,7 +8,7 @@ from nacl.exceptions import CryptoError
 # during testing. Import them lazily inside the functions that require them.
 from flask import current_app
 
-initialize_client = None
+relay_manager = None
 error_response = None
 logger = None
 limiter = None
@@ -24,16 +24,16 @@ from nostr_client import (
 
 def _load_app_dependencies():
     """Lazy import objects from app to avoid circular imports during testing."""
-    global initialize_client, error_response, logger, limiter, wallet_priv_hex
-    if initialize_client is None:
+    global relay_manager, error_response, logger, limiter, wallet_priv_hex
+    if relay_manager is None:
         from app import (
-            initialize_client as ic,
+            relay_manager as rm,
             error_response as er,
             logger as lg,
             limiter as lm,
             WALLET_PRIVKEY_HEX as wph,
         )
-        initialize_client = ic
+        relay_manager = rm
         error_response = er
         logger = lg
         limiter = lm
@@ -60,12 +60,8 @@ async def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
                recipient_pubkey=recipient_pubkey_hex)
     ev = dm.to_event()
     ev.sign(sender_privkey_hex)
-    mgr = initialize_client()
-    try:
-        await mgr.prepare_relays()
+    async with relay_manager() as mgr:
         await mgr.publish_event(ev)
-    finally:
-        await mgr.close_connections()
     return ev.id
 
 async def publish_signed_ticket_dm(event_data: dict) -> str:
@@ -80,12 +76,8 @@ async def publish_signed_ticket_dm(event_data: dict) -> str:
         sig=event_data.get("sig", ""),
         id=event_data.get("id", ""),
     )
-    mgr = initialize_client()
-    try:
-        await mgr.prepare_relays()
+    async with relay_manager() as mgr:
         await mgr.publish_event(ev)
-    finally:
-        await mgr.close_connections()
     return ev.id
 
 def register_ticket_routes(app):
@@ -137,12 +129,8 @@ def register_ticket_routes(app):
             resp_event.tags.append(["e", req_id])
 
             async def publish_response():
-                mgr = initialize_client()
-                try:
-                    await mgr.prepare_relays()
+                async with relay_manager() as mgr:
                     await mgr.publish_event(resp_event)
-                finally:
-                    await mgr.close_connections()
 
             asyncio.run(publish_response())
 

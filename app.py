@@ -147,7 +147,9 @@ ACTIVE_RELAYS = load_relays_from_file()
 # Utilities: error responses, caching, and Nostr relay client
 import time
 from flask import jsonify
-from nostr_client import RelayManager, Filter
+import asyncio
+from contextlib import asynccontextmanager
+from nostr_client import RelayManager, Filter, MessagePool
 
 # Protect in-memory cache access
 _cache_lock = threading.Lock()
@@ -173,12 +175,61 @@ def set_cached_item(key, value):
 def error_response(message, status_code):
     return jsonify({'error': message}), status_code
 
-def initialize_client():
-    # Initialize Nostr RelayManager and add configured relays
-    mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
-    for url in ACTIVE_RELAYS:
-        mgr.add_relay(url)
-    return mgr
+# Relay manager pool
+_manager_pool = []
+_pool_lock = asyncio.Lock()
+
+async def get_relay_manager():
+    """Borrow a RelayManager from the pool, creating it on first use."""
+    async with _pool_lock:
+        if _manager_pool:
+            return _manager_pool.pop()
+        mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
+        for url in ACTIVE_RELAYS:
+            mgr.add_relay(url)
+        await mgr.prepare_relays()
+        return mgr
+
+async def release_relay_manager(mgr):
+    """Return ``mgr`` to the pool without closing its connections."""
+    if mgr is None:
+        return
+    # Reset message pool so subsequent users start clean
+    mgr.message_pool = MessagePool()
+    async with _pool_lock:
+        _manager_pool.append(mgr)
+
+@asynccontextmanager
+async def relay_manager():
+    mgr = await get_relay_manager()
+    try:
+        yield mgr
+    finally:
+        await release_relay_manager(mgr)
+
+async def close_relay_managers():
+    """Close all RelayManager connections and clear the pool."""
+    async with _pool_lock:
+        managers = list(_manager_pool)
+        _manager_pool.clear()
+    for mgr in managers:
+        await mgr.close_connections()
+
+_pool_started = False
+
+@app.before_request
+def _startup_pool():
+    global _pool_started
+    if not _pool_started:
+        mgr = asyncio.run(get_relay_manager())
+        asyncio.run(release_relay_manager(mgr))
+        _pool_started = True
+
+import atexit
+
+@atexit.register
+def _shutdown_pool():
+    asyncio.run(close_relay_managers())
 
 # Helper to fetch a profile event (kind 0) by pubkey from given relays
 def fetch_profile_by_pubkey(pubkey, relays):
