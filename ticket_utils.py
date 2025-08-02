@@ -61,9 +61,11 @@ async def send_ticket_as_dm(event_name: str, recipient_pubkey_hex: str,
     ev = dm.to_event()
     ev.sign(sender_privkey_hex)
     mgr = initialize_client()
-    await mgr.prepare_relays()
-    await mgr.publish_event(ev)
-    await mgr.close_connections()
+    try:
+        await mgr.prepare_relays()
+        await mgr.publish_event(ev)
+    finally:
+        await mgr.close_connections()
     return ev.id
 
 async def publish_signed_ticket_dm(event_data: dict) -> str:
@@ -79,9 +81,11 @@ async def publish_signed_ticket_dm(event_data: dict) -> str:
         id=event_data.get("id", ""),
     )
     mgr = initialize_client()
-    await mgr.prepare_relays()
-    await mgr.publish_event(ev)
-    await mgr.close_connections()
+    try:
+        await mgr.prepare_relays()
+        await mgr.publish_event(ev)
+    finally:
+        await mgr.close_connections()
     return ev.id
 
 def register_ticket_routes(app):
@@ -125,9 +129,11 @@ def register_ticket_routes(app):
             resp_event.tags.append(["e", req_id])
 
             mgr = initialize_client()
-            await mgr.prepare_relays()
-            await mgr.publish_event(resp_event)
-            await mgr.close_connections()
+            try:
+                await mgr.prepare_relays()
+                await mgr.publish_event(resp_event)
+            finally:
+                await mgr.close_connections()
 
             return jsonify({"status": "sent", "event_id": resp_event.id})
         except (ValueError, binascii.Error, CryptoError) as e:
