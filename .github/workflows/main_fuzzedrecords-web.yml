@@ -28,6 +28,11 @@ jobs:
           source antenv/bin/activate
           echo "PYTHONPATH=$(pwd)/antenv/lib/python3.11/site-packages" >> $GITHUB_ENV
 
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
       - name: Install dependencies
         run: |
           source antenv/bin/activate
