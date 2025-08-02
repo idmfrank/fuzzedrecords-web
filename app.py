@@ -180,21 +180,37 @@ _manager_pool = []
 _pool_lock = asyncio.Lock()
 
 async def get_relay_manager():
-    """Borrow a RelayManager from the pool, creating it on first use."""
+    """Borrow a RelayManager from the pool.
+
+    Websocket connections in ``RelayManager`` instances are bound to the
+    event loop that created them.  Previous changes reused managers across
+    ``asyncio.run`` calls which each spin up a new loop, leaving those
+    connections unusable.  To ensure we always have connections tied to the
+    current loop, relays are (re)prepared every time a manager is borrowed
+    from the pool, even if it was previously returned.
+    """
+
     async with _pool_lock:
         if _manager_pool:
-            return _manager_pool.pop()
-        mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
+            mgr = _manager_pool.pop()
+        else:
+            mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
         for url in ACTIVE_RELAYS:
-            mgr.add_relay(url)
-        await mgr.prepare_relays()
-        return mgr
+            if url not in mgr.relays:
+                mgr.add_relay(url)
+    await mgr.prepare_relays()
+    return mgr
 
 async def release_relay_manager(mgr):
-    """Return ``mgr`` to the pool without closing its connections."""
+    """Return ``mgr`` to the pool, closing any open connections.
+
+    Closing the websocket connections avoids reusing them across different
+    event loops which previously resulted in dead relays and missing profile
+    data.  Each borrow will reconnect as needed.
+    """
     if mgr is None:
         return
-    # Reset message pool so subsequent users start clean
+    await mgr.close_connections()
     mgr.message_pool = MessagePool()
     async with _pool_lock:
         _manager_pool.append(mgr)

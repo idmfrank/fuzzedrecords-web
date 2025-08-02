@@ -34,7 +34,10 @@ def test_manager_reuse(monkeypatch):
         mgr2 = await app.get_relay_manager()
         await app.release_relay_manager(mgr2)
         assert mgr1 is mgr2
-        assert mgr1.prepare_count == 1
+        # Each borrow prepares relays, so count increments twice.
+        assert mgr1.prepare_count == 2
+        # Connections should be closed when released back to the pool.
+        assert mgr1.closed
 
     asyncio.run(run_test())
 
