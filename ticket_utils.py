@@ -1,7 +1,8 @@
-import time, json, asyncio, os
+import time, json, asyncio, os, binascii
 from io import BytesIO
 import qrcode
 from flask import request, jsonify
+from nacl.exceptions import CryptoError
 
 # These imports create circular dependencies when this module is imported
 # during testing. Import them lazily inside the functions that require them.
@@ -129,6 +130,15 @@ def register_ticket_routes(app):
             await mgr.close_connections()
 
             return jsonify({"status": "sent", "event_id": resp_event.id})
+        except (ValueError, binascii.Error, CryptoError) as e:
+            logger.warning(
+                "Invalid encrypted payload: id=%s pubkey=%s ip=%s error=%s",
+                req_id,
+                sender_pub,
+                request.remote_addr,
+                e,
+            )
+            return error_response("Invalid encrypted payload", 400)
         except Exception as e:
             logger.error(f"Error in send_ticket_endpoint: {e}")
             return error_response(str(e), 500)
