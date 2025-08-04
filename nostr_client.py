@@ -18,7 +18,7 @@ from nacl.bindings import (
     crypto_aead_xchacha20poly1305_ietf_encrypt,
     crypto_aead_xchacha20poly1305_ietf_decrypt,
 )
-import secp256k1
+from coincurve import PrivateKey, PublicKeyXOnly
 
 logger = logging.getLogger(__name__)
 
@@ -119,11 +119,11 @@ class Event:
         self.id = digest.hex()
 
         priv_int = int(privkey_hex, 16)
-        key = secp256k1.PrivateKey(priv_int.to_bytes(32, "big"), raw=True)
-        if key.pubkey.serialize(compressed=True)[0] == 0x03:
+        key = PrivateKey.from_int(priv_int)
+        if key.public_key.format(compressed=True)[0] == 0x03:
             priv_int = (_N - priv_int) % _N
-            key = secp256k1.PrivateKey(priv_int.to_bytes(32, "big"), raw=True)
-        signature = key.schnorr_sign(digest, b"", raw=True)
+            key = PrivateKey.from_int(priv_int)
+        signature = key.sign_schnorr(digest, aux_randomness=b"")
         self.sig = signature.hex()
 
     def verify(self) -> bool:
@@ -138,10 +138,8 @@ class Event:
             return False
 
         try:
-            pub_bytes = b"\x02" + bytes.fromhex(self.public_key)
-            pub = secp256k1.PublicKey()
-            pub.deserialize(pub_bytes)
-            return pub.schnorr_verify(digest, bytes.fromhex(self.sig), b"", raw=True)
+            pub = PublicKeyXOnly(bytes.fromhex(self.public_key))
+            return pub.verify(bytes.fromhex(self.sig), digest)
         except Exception:
             return False
 
