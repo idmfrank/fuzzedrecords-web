@@ -217,6 +217,41 @@ footer {
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 }
 
+.gear-submenu {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px auto;
+}
+
+.gear-submenu button {
+    padding: 10px 15px;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.gear-submenu button:hover {
+    background-color: #777;
+}
+
+.gear-submenu button.active {
+    background-color: #999;
+}
+
+#gear-items .gear-item {
+    display: none;
+    margin-top: 15px;
+}
+
+#gear-items .gear-item.active {
+    display: block;
+}
+
 /* Profile section styling */
 #profile-section {
     border: 1px solid #ddd;
