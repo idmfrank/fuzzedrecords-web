@@ -269,11 +269,50 @@ footer {
     margin: 10px auto;
 }
 
+.gear-gallery {
+    max-width: 300px;
+    width: 100%;
+    margin: 10px auto;
+    position: relative;
+}
+
+.gear-gallery img {
+    display: none;
+}
+
+.gear-gallery img.active {
+    display: block;
+}
+
+.gallery-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.gallery-controls button {
+    padding: 5px 10px;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.gallery-controls button:hover {
+    background-color: #777;
+}
+
 .gear-photo {
     width: 100%;
     height: auto;
     object-fit: contain;
     display: block;
+}
+
+.gear-caption {
+    margin: 10px auto;
 }
 
 @media (min-width: 768px) {
@@ -283,6 +322,9 @@ footer {
     }
 
     .gear-container {
+        max-width: 350px;
+    }
+    .gear-gallery {
         max-width: 350px;
     }
 }
