@@ -30,6 +30,10 @@ from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
 import logging
 
+# Logging setup (must be defined before any logger usage)
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
+logger = logging.getLogger(__name__)
+
 # App init
 app = Flask(__name__)
 # Limit request payload size (e.g. default 1MB)
@@ -118,10 +122,6 @@ def load_valid_pubkeys():
     return []
 
 VALID_PUBKEYS = load_valid_pubkeys()
-
-# Logging setup
-logging.basicConfig(level=os.getenv('LOG_LEVEL', 'DEBUG'))
-logger = logging.getLogger(__name__)
 
 # Active relay list loaded from files/environment
 RELAYS_LOCK = threading.Lock()
