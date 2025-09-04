@@ -46,7 +46,7 @@ def test_key_sanitization(monkeypatch):
     monkeypatch.setattr(azure_storage_limiter, "TableServiceClient", DummyService)
     limiter = azure_storage_limiter.AzureTableStorage(connection_string="conn")
 
-    key = "LIMITER/169.254.130.1/send_ticket_endpoint/10/1/minute"
+    key = "LIMITER/169.254.130.1/generic_endpoint/10/1/minute"
 
     assert limiter.incr(key, expiry=60) == 1
     assert limiter.incr(key, expiry=60) == 2
