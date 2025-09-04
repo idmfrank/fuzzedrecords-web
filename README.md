@@ -1,6 +1,6 @@
 # Fuzzed Records
 
-Fuzzed Records is a modern music platform that integrates decentralized authentication with music streaming. It allows users to explore a library of songs, manage their profiles, and (for admins) create events. The platform leverages **Nostr Wallet** for decentralized authentication and **Wavlake** for music distribution by Fuzzed Records.
+Fuzzed Records is a modern music platform that integrates decentralized authentication with music streaming. It allows users to explore a library of songs and manage their profiles. The platform leverages **Nostr Wallet** for decentralized authentication and **Wavlake** for music distribution by Fuzzed Records.
 
 ---
 
@@ -21,11 +21,8 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **Music Library**: Browse and play songs hosted on Wavlake. The library includes detailed artist and album information.
 - **User Profiles**: Authenticate using Nostr Wallet to view and manage your profile, leveraging Nostr NIP-07 for login.
 - **NIP-19 Profile Lookup**: Retrieve metadata using Nostr `nprofile` strings.
-- **Admin Panel**: Create and publish events (visible when your NIP-05 address ends with `fuzzedrecords.com`).
 - **Decentralized Authentication**: Uses Nostr Wallet for secure, decentralized user authentication.
 - **Responsive Design**: Optimized for both desktop and mobile devices.
-- **QR Code Ticketing**: Generate QR code tickets for live music events, sent via Nostr DM to users.
-- **Prices in USD and Sats**: Event listings display prices in both dollars and satoshis.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
 - **Relay Management**: Users can add relay URLs through the `/update-relays` endpoint.
@@ -77,7 +74,6 @@ Set the following environment variables to configure the application:
 - WALLET_PRIVKEY_HEX: Private key for the server wallet. May be provided as a hex
   string or NIP-19 `nsec` value. The corresponding public key is derived automatically
   and exposed to the frontend as `serverWalletPubkey`.
-- VALID_PUBKEYS: Comma-separated list of pubkeys allowed for fuzzed events. If unset, the app loads from the local file specified by IDENTITIES_CACHE (default: azure_identities.json)
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
@@ -93,9 +89,8 @@ Set the following environment variables to configure the application:
 ├── app.py                    # Top-level Flask router (imports modular routes)
 ├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
 ├── azure_storage_limiter.py  # Azure Table Storage backend for rate limiting (keys percent-encoded)
-├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile, events
+├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile
 ├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
-├── ticket_utils.py           # Ticket generation & /send_ticket endpoint
 ├── relay_checker.py          # Relay maintenance script
 ├── requirements.txt          # Python dependencies
 ├── startup.sh                # Deployment script for Azure
@@ -107,8 +102,6 @@ Set the following environment variables to configure the application:
     └── scripts/
         ├── auth.js           # Frontend NIP-07 authentication logic
         ├── tracks.js         # Frontend music library display logic
-        ├── events.js         # Frontend events & admin form logic
-        ├── ticket.js         # Frontend ticket generation & DM logic
         └── utils.js          # Shared JavaScript helper functions
 ```
 
@@ -246,42 +239,14 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
   ]}
   ```
 
-### 4. Create Event (Admin Only)
-- **Endpoint**: `/create_event`
-- **Method**: `POST`
-- **Description**: Publishes a signed Kind=1 (text note) or calendar event (NIP-52) to relays.
-- **Request Body**:
-  ```json
-  {"pubkey":"...","sig":"...","kind":1,"created_at":timestamp,
-   "tags":[["title","event_title"],...],"content":"event_description"}
-  ```
-- **NIP-52 Tags**: For `kind` `31922`, include tags like `['d', 'id']`, `['title','name']`,
-  `['summary','summary']`, `['location','venue']`, `['starts','unix_ts']`,
-  `['ends','unix_ts']` and optionally `['price','amount']`, `['category','type']`.
-- **Response**:
-  ```json
-  {"message":"Event successfully broadcasted"}
-  ```
-
-### 5. Validate Profile (NIP-05)
+### 4. Validate Profile (NIP-05)
 - **Endpoint**: `/validate-profile`
 - **Method**: `POST`
 - **Description**: Confirms a public key’s NIP-05 identifier matches your domain.
 - **Request Body**: `{ "pubkey":"user_pubkey" }`
 - **Response**: `{"status":"valid"}` or `403` error
 
-### 6. Fetch Fuzzed Events
-- **Endpoint**: `/fuzzed_events`
-- **Method**: `GET`
-- **Description**: Retrieves Kind=31922 events from verified accounts.
-- **NIP-52 Tags**: Returned events contain tags defined above (e.g. `['title']`, `['location']`, `['starts']`, `['ends']`).
-- **Response**:
-  ```json
-  {"events":[{"id":"...","pubkey":"...",
-               "content":"...","tags":[],"created_at":...},...]}
-  ```
-
-### 7. Send Ephemeral DM (NIP-17)
+### 5. Send Ephemeral DM (NIP-17)
 - **Endpoint**: `/send_dm`
 - **Method**: `POST`
 - **Description**: Encrypts and sends a direct message as Kind=23194. The
@@ -296,34 +261,7 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
    "sender_privkey":"..."}
   ```
 
-### 8. Send Ticket via DM (NIP-47)
-- **Endpoint**: `/send_ticket`
-- **Method**: `POST`
-- **Description**: Accepts a NIP‑47 wallet request event. The event's `content`
-  must be encrypted using NIP‑44 (or legacy NIP‑04). The decrypted JSON should
-  invoke the `ticket.create` method so the server can deliver the ticket via DM.
-- **NIP-47 Request Event**:
-```json
-{
-  "id": "<req_id>",
-  "pubkey": "<sender_pubkey>",
-  "kind": 23194,
-  "created_at": <timestamp>,
-  "tags": [["p", "<server_wallet_pubkey>"]],
-  "content": "<nip44_or_nip04_ciphertext>"
-}
-```
-- **Decrypted Payload**:
-```json
-{"method":"ticket.create","params":{"event_name":"...","pubkey":"...","timestamp":...},"id":"<req_id>"}
-```
-- **Server Response Event**: On success the server replies with a Kind=23195
-  event encrypted back to the requester. Decryption yields:
-```json
-{"result":"ok","id":"<req_id>"}
-```
-
-### 9. Update Relays
+### 6. Update Relays
 - **Endpoint**: `/update-relays`
 - **Method**: `POST`
 - **Description**: Merges relay URLs into the active list and persists them to `relays.txt`.
@@ -348,16 +286,8 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
    - Users click the "Profile" button and authenticate with their Nostr Wallet using NIP-07.
    - The backend fetches and validates their profile data.
 
-3. **Admin Actions**:
-   - Users whose NIP-05 identifier ends with `fuzzedrecords.com` are treated as admins.
-   - The Admin menu becomes visible after login and allows creating events.
-   - Events are published to Nostr relays.
-
-4. **Music Library**:
+3. **Music Library**:
    - Songs are fetched from Wavlake and displayed in the Library section.
-
-5. **QR Code and Messaging**:
-   - QR code tickets for events are generated and sent via Nostr DM to users.
 
 ---
 
