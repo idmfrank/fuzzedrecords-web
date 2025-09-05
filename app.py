@@ -320,6 +320,12 @@ def index():
     pubkey = SERVER_WALLET_PUBKEY
     return render_template('index.html', serverWalletPubkey=pubkey)
 
+@app.route('/shop')
+def shop():
+    """Render the shop page."""
+    # Authentication/authorization checks (if any) would occur here
+    return render_template('shop.html')
+
 @app.route('/', subdomain='fuzzedguitars')
 def guitars_redirect():
     return redirect('https://fuzzedrecords.com/#gear', code=301)
