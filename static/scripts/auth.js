@@ -116,10 +116,19 @@ export async function authenticateWithNostr() {
   }
 }
 
+// Clear session data when the user explicitly logs out
+export function logout() {
+  sessionStorage.clear();
+  userProfile = null;
+  const menuProfile = document.getElementById('menu-profile');
+  if (menuProfile) {
+    menuProfile.textContent = 'Profile';
+    delete menuProfile.dataset.loggedIn;
+  }
+}
+
 // Initialization: menu buttons
 document.addEventListener('DOMContentLoaded', () => {
-  // Clear session data on reload
-  sessionStorage.removeItem('pubkey');
   document.getElementById('menu-library')
     .addEventListener('click', () => showSection('library'));
   document.getElementById('menu-gear')
