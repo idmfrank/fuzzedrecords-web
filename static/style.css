@@ -59,14 +59,8 @@ body {
     background-color: #999; /* Highlight active button */
 }
 
-.admin-only {
-    display: none;
-}
-
 #library-section,
 #profile-section,
-#events-section,
-#admin-section,
 #gear-section {
     display: none;
     padding: 20px;
@@ -74,8 +68,6 @@ body {
 
 #library-section.active,
 #profile-section.active,
-#events-section.active,
-#admin-section.active,
 #gear-section.active {
     display: block;
 }

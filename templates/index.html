@@ -21,9 +21,6 @@
         <button id="menu-gear" class="nav-btn">Gear</button>
         <!-- Profile button is always visible so the user can trigger login -->
         <button id="menu-profile" class="nav-btn">Nostr Login</button>
-        <!-- Events and Admin remain hidden until authentication -->
-        <button id="menu-events" class="nav-btn" style="display: none;">Events</button>
-        <button id="menu-admin" class="nav-btn admin-only" style="display: none;">Admin</button>
     </nav>
 
     <main>
@@ -118,53 +115,6 @@
             </div>
         </section>
 
-        <!-- Events Section (shown only when authenticated) -->
-        <section id="events-section" class="content-section">
-            <h2>Events</h2>
-            <div id="events-section-content">
-                <div id="qr-code"></div>
-                <p>Events will appear here once you log in.</p>
-            </div>
-        </section>
-
-        <section id="admin-section">
-            <h2>Admin</h2>
-            <form id="event-form">
-                <div class="form-group">
-                    <label for="event-title">Title:</label>
-                    <input type="text" id="event-title" name="event-title" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-summary">Summary:</label>
-                    <input type="text" id="event-summary" name="event-summary" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-location">Location:</label>
-                    <input type="text" id="event-location" name="event-location" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-start">Start Time:</label>
-                    <input type="datetime-local" id="event-start" name="event-start" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-end">End Time:</label>
-                    <input type="datetime-local" id="event-end" name="event-end" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-price">Price:</label>
-                    <input type="number" id="event-price" name="event-price">
-                </div>
-                <div class="form-group">
-                    <label for="event-category">Category:</label>
-                    <input type="text" id="event-category" name="event-category">
-                </div>
-                <div class="form-group">
-                    <label for="event-description">Description:</label>
-                    <textarea id="event-description" name="event-description" required></textarea>
-                </div>
-                <button type="submit">Create Event</button>
-            </form>
-        </section>
     </main>
 
     <footer>
@@ -173,12 +123,10 @@
 
       <script type="module" src="/static/scripts/auth.js"></script>
       <script type="module" src="/static/scripts/tracks.js"></script>
-      <script type="module" src="/static/scripts/events.js"></script>
       <script type="module" src="/static/scripts/gear.js"></script>
       <script>
         window.serverWalletPubkey = "{{ serverWalletPubkey }}";
       </script>
-      <script type="module" src="/static/scripts/ticket.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 
