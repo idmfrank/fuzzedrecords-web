@@ -1,6 +1,6 @@
 // auth.js
 // Handles navigation and Nostr authentication (NIP-07) logic
-import { showSection, isAdmin } from './utils.js';
+import { showSection } from './utils.js';
 
 // Global profile state
 let userProfile = null;
@@ -10,20 +10,6 @@ function renderProfileWhenReady(profileData) {
     document.addEventListener('DOMContentLoaded', () => displayProfile(profileData), { once: true });
   } else {
     displayProfile(profileData);
-  }
-}
-
-async function validateProfile(pubkey) {
-  try {
-    const resp = await fetch('/validate-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pubkey })
-    });
-    return resp.ok;
-  } catch (err) {
-    console.error('Validation error:', err);
-    return false;
   }
 }
 
@@ -110,12 +96,6 @@ export async function authenticateWithNostr() {
     }
     userProfile = profileData;
     renderProfileWhenReady(profileData);
-  const adminStatus = await validateProfile(pubkey);
-  sessionStorage.setItem('isAdmin', adminStatus ? 'true' : 'false');
-  const adminBtn = document.getElementById('menu-admin');
-  if (adminBtn) {
-    adminBtn.style.display = adminStatus ? 'inline-block' : 'none';
-  }
   if (window.nostr.getRelays) {
       try {
         const info = await window.nostr.getRelays();
@@ -138,9 +118,8 @@ export async function authenticateWithNostr() {
 
 // Initialization: menu buttons
 document.addEventListener('DOMContentLoaded', () => {
-  // Clear session data so admin UI requires fresh login each reload
+  // Clear session data on reload
   sessionStorage.removeItem('pubkey');
-  sessionStorage.removeItem('isAdmin');
   document.getElementById('menu-library')
     .addEventListener('click', () => showSection('library'));
   document.getElementById('menu-gear')
@@ -151,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
       menuProfile.textContent = 'Signing in...';
       await authenticateWithNostr();
       menuProfile.textContent = 'Profile';
-      document.getElementById('menu-events').style.display = 'inline-block';
       menuProfile.dataset.loggedIn = 'true';
     }
     showSection('profile');
@@ -159,13 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Allow linking directly to a section via URL hash (e.g., /#gear)
   const hash = window.location.hash.replace('#', '');
-  const sections = ['library', 'profile', 'events', 'admin', 'gear'];
+  const sections = ['library', 'profile', 'gear'];
   if (sections.includes(hash)) {
     showSection(hash);
-  }
-
-  const adminBtn = document.getElementById('menu-admin');
-  if (adminBtn) {
-    adminBtn.style.display = isAdmin() ? 'inline-block' : 'none';
   }
 });
