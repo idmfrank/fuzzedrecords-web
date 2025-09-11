@@ -41,7 +41,7 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **Backend**:
   - Flask (Python)
   - Flask-RESTful for API endpoints
-  - Pynostr for Nostr relay interactions
+  - Custom `nostr_client.py` for Nostr relay interactions (no Pynostr dependency)
 - **Authentication**:
   - Nostr Wallet for decentralized authentication
   - NIP-07 compatible wallet integration for user login
@@ -78,6 +78,8 @@ Set the following environment variables to configure the application:
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
+- VALID_PUBKEYS: Comma-separated list of hex pubkeys authorized to publish calendar events
+- IDENTITIES_CACHE: Path to JSON file used when `VALID_PUBKEYS` is unset (default: azure_identities.json)
 - (Optional) LOG_LEVEL: Python log level for application logging (default: DEBUG)
 - (Optional) FLASK_DEBUG: Set to 1 or true for debug mode when running locally
 
@@ -90,20 +92,25 @@ Set the following environment variables to configure the application:
 ├── app.py                    # Top-level Flask router (imports modular routes)
 ├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
 ├── azure_storage_limiter.py  # Azure Table Storage backend for rate limiting (keys percent-encoded)
+├── nostr_client.py           # Custom Nostr relay client
 ├── nostr_utils.py            # Nostr endpoints: /fetch-profile, /validate-profile
+├── ticket_utils.py           # Ticketing endpoints and Lightning helpers
 ├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
 ├── relay_checker.py          # Relay maintenance script
 ├── requirements.txt          # Python dependencies
 ├── startup.sh                # Deployment script for Azure
 ├── templates/
-│   └── index.html            # Main HTML file for the website
+│   ├── index.html            # Main HTML file for the website
+│   └── shop.html             # Guitar shop page
 └── static/
     ├── style.css             # CSS for styling the website (committed)
     ├── images/               # Site images and icons
     └── scripts/
         ├── auth.js           # Frontend NIP-07 authentication logic
         ├── tracks.js         # Frontend music library display logic
-        └── utils.js          # Shared JavaScript helper functions
+        ├── utils.js          # Shared JavaScript helper functions
+        ├── gear.js           # Gear section interactions
+        └── shop.js           # Shop purchasing logic
 ```
 
 ---
@@ -273,6 +280,58 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
 - **Response**:
   ```json
   {"status":"updated","count":2}
+  ```
+
+### 7. Send Ticket
+- **Endpoint**: `/send_ticket`
+- **Method**: `POST`
+- **Description**: Accepts a NIP-47 `ticket.create` request and replies with a signed DM.
+- **Request Body**:
+  ```json
+  {"id":"...","pubkey":"...","content":"base64_cipher"}
+  ```
+- **Response**:
+  ```json
+  {"status":"sent","event_id":"..."}
+  ```
+
+### 8. Generate Ticket
+- **Endpoint**: `/generate-ticket`
+- **Method**: `POST`
+- **Description**: Issues an invoice and ticket ID for a Lightning purchase.
+- **Request Body**:
+  ```json
+  {"event_id":"...","pubkey":"..."}
+  ```
+- **Response**:
+  ```json
+  {"invoice":"...","ticket_id":"...","event_id":"..."}
+  ```
+
+### 9. Confirm Payment
+- **Endpoint**: `/confirm-payment`
+- **Method**: `POST`
+- **Description**: Verifies an invoice and sends the ticket over Nostr.
+- **Request Body**:
+  ```json
+  {"invoice":"..."}
+  ```
+- **Response**:
+  ```json
+  {"status":"sent","ticket":{...}}
+  ```
+
+### 10. Send Ephemeral Ticket
+- **Endpoint**: `/send-ephemeral-ticket`
+- **Method**: `POST`
+- **Description**: Sends an ephemeral encrypted ticket directly to a pubkey.
+- **Request Body**:
+  ```json
+  {"pubkey":"...","ticket_id":"...","event_id":"..."}
+  ```
+- **Response**:
+  ```json
+  {"status":"sent"}
   ```
 
 ---
