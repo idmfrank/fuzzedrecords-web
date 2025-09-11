@@ -88,7 +88,6 @@ class EventKind:
     WALLET_REQUEST = 23194
     WALLET_RESPONSE = 23195
     WALLET_NOTIFICATION = 23197
-    CALENDAR_EVENT = 31922  # NIP-52 calendar events
 
 @dataclass
 class Event:
