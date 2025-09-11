@@ -78,8 +78,6 @@ Set the following environment variables to configure the application:
 - TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
 - CLIENT_ID: Azure AD Application (client) ID
 - CLIENT_SECRET: Azure AD Application client secret
-- VALID_PUBKEYS: Comma-separated list of hex pubkeys authorized to publish calendar events
-- IDENTITIES_CACHE: Path to JSON file used when `VALID_PUBKEYS` is unset (default: azure_identities.json)
 - (Optional) LOG_LEVEL: Python log level for application logging (default: DEBUG)
 - (Optional) FLASK_DEBUG: Set to 1 or true for debug mode when running locally
 
