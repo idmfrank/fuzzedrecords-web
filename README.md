@@ -29,7 +29,6 @@ Fuzzed Records is a modern music platform that integrates decentralized authenti
 - **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
 - **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
 - **Fuzzed Guitars**: Boutique gear prototypes can be viewed in the Gear section (`/#gear`), via the `fuzzedguitars` subdomain, or using the `/fuzzedguitars` path.
-- **Shop**: After Nostr login, visit `/shop` to browse custom guitars and pay via Lightning.
 
 ---
 
@@ -98,8 +97,7 @@ Set the following environment variables to configure the application:
 ├── requirements.txt          # Python dependencies
 ├── startup.sh                # Deployment script for Azure
 ├── templates/
-│   ├── index.html            # Main HTML file for the website
-│   └── shop.html             # Guitar shop page
+│   └── index.html            # Main HTML file for the website
 └── static/
     ├── style.css             # CSS for styling the website (committed)
     ├── images/               # Site images and icons
@@ -108,7 +106,6 @@ Set the following environment variables to configure the application:
         ├── tracks.js         # Frontend music library display logic
         ├── utils.js          # Shared JavaScript helper functions
         ├── gear.js           # Gear section interactions
-        └── shop.js           # Shop purchasing logic
 ```
 
 ---

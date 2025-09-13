@@ -311,22 +311,3 @@ footer {
     }
 }
 
-/* Shop page styling */
-.shop-item {
-    margin: 20px auto;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    max-width: 500px;
-    background: #f9f9f9;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.lightning-payment {
-    margin: 20px auto;
-    max-width: 500px;
-}
-
-#lightning-qr {
-    margin: 20px auto;
-}
