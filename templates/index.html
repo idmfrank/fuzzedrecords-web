@@ -7,7 +7,8 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-</head>
+    <script defer src="/static/scripts/webln.js"></script>
+    </head>
 
 <body>
     <header>
@@ -16,12 +17,17 @@
         </div>
     </header>
 
-    <nav class="menu">
-        <button id="menu-library" class="nav-btn active">Library</button>
-        <button id="menu-gear" class="nav-btn">Gear</button>
-        <!-- Profile button is always visible so the user can trigger login -->
-        <button id="menu-profile" class="nav-btn">Nostr Login</button>
-    </nav>
+      <nav class="menu">
+          <button id="menu-library" class="nav-btn active">Library</button>
+          <button id="menu-gear" class="nav-btn">Gear</button>
+          <!-- Profile button is always visible so the user can trigger login -->
+          <button id="menu-profile" class="nav-btn">Nostr Login</button>
+      </nav>
+
+      <section id="alby-mvp" style="margin:1rem 0;">
+          <button id="btn-connect-alby" style="display:none;">Connect Alby</button>
+          <button id="btn-pay-test" style="display:none;">Pay Test Invoice (100 sats)</button>
+      </section>
 
     <main>
 
@@ -123,11 +129,49 @@
 
       <script type="module" src="/static/scripts/auth.js"></script>
       <script type="module" src="/static/scripts/tracks.js"></script>
-      <script type="module" src="/static/scripts/gear.js"></script>
-      <script>
-        window.serverWalletPubkey = "{{ serverWalletPubkey }}";
-      </script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-</body>
+        <script type="module" src="/static/scripts/gear.js"></script>
+        <script>
+          window.serverWalletPubkey = "{{ serverWalletPubkey }}";
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <script>
+          (async () => {
+            const btnConnect = document.getElementById("btn-connect-alby");
+            const btnPay     = document.getElementById("btn-pay-test");
 
-</html>
+            if (!window.WebLNHelper || !window.WebLNHelper.isAvailable()) {
+              // No WebLN; keep buttons hidden and exit silently.
+              return;
+            }
+
+            // Show connect button when WebLN exists.
+            btnConnect.style.display = "inline-block";
+
+            btnConnect.onclick = async () => {
+              try {
+                await window.WebLNHelper.enable();
+                // After enabling, show the pay button.
+                btnPay.style.display = "inline-block";
+                alert("Alby connected!");
+              } catch (e) {
+                console.warn("Alby connect failed:", e);
+                alert("Could not connect Alby (user cancelled or not available).");
+              }
+            };
+
+            btnPay.onclick = async () => {
+              try {
+                const inv = await window.WebLNHelper.makeInvoice(100, "Fuzzed Records test");
+                const pr = inv?.paymentRequest || inv; // support wallets returning either shape
+                await window.WebLNHelper.sendPayment(pr);
+                alert("Payment sent! Check your wallet.");
+              } catch (e) {
+                console.error("Payment error:", e);
+                alert("Payment failed or was cancelled.");
+              }
+            };
+          })();
+        </script>
+  </body>
+
+  </html>
