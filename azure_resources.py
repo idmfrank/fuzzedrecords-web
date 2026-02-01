@@ -15,11 +15,10 @@ def _build_token_error_response(token):
     status_code = 502
     message = "Authentication failed. Check TENANT_ID, CLIENT_ID, and CLIENT_SECRET."
     if error == "invalid_client":
-        status_code = 401
         if "expired" in description.lower():
-            message = "CLIENT_SECRET expired. Update it in Azure and redeploy."
+            message = "Authentication failed. CLIENT_SECRET expired. Update it in Azure and redeploy."
         else:
-            message = "Invalid client credentials. Verify CLIENT_ID and CLIENT_SECRET."
+            message = "Authentication failed. Invalid client credentials. Verify CLIENT_ID and CLIENT_SECRET."
     return {
         "error": message,
         "code": error or "unknown_error",
