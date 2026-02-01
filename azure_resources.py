@@ -8,6 +8,23 @@ logger = logging.getLogger(__name__)
 # Timeout for HTTP requests (seconds)
 HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "5"))
 
+def _build_token_error_response(token):
+    error = token.get("error")
+    description = token.get("error_description", "")
+    logger.error("Failed to acquire token: %s %s", error, description)
+    status_code = 502
+    message = "Authentication failed. Check TENANT_ID, CLIENT_ID, and CLIENT_SECRET."
+    if error == "invalid_client":
+        status_code = 401
+        if "expired" in description.lower():
+            message = "CLIENT_SECRET expired. Update it in Azure and redeploy."
+        else:
+            message = "Invalid client credentials. Verify CLIENT_ID and CLIENT_SECRET."
+    return {
+        "error": message,
+        "code": error or "unknown_error",
+    }, status_code
+
 class Main(Resource):
     def post(self):
         return {"message": "Welcome to the Fuzzed Records Flask REST App"}
@@ -45,14 +62,7 @@ class NostrJson(Resource):
         )
         token = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
         if "access_token" not in token:
-            logger.error(
-                "Failed to acquire token: %s %s",
-                token.get("error"),
-                token.get("error_description"),
-            )
-            return {
-                "error": "Authentication failed. Check TENANT_ID, CLIENT_ID, and CLIENT_SECRET.",
-            }, 502
+            return _build_token_error_response(token)
         access_token = token["access_token"]
         # Fetch groups
         try:
