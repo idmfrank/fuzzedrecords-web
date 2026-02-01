@@ -22,6 +22,21 @@ class NostrJson(Resource):
         tenant_id = os.getenv("TENANT_ID")
         client_id = os.getenv("CLIENT_ID")
         client_secret = os.getenv("CLIENT_SECRET")
+        missing = [
+            name
+            for name, value in {
+                "TENANT_ID": tenant_id,
+                "CLIENT_ID": client_id,
+                "CLIENT_SECRET": client_secret,
+            }.items()
+            if not value
+        ]
+        if missing:
+            logger.error("Missing Entra ID configuration: %s", ", ".join(missing))
+            return {
+                "error": "Missing Entra ID configuration",
+                "missing": missing,
+            }, 500
         authority = f"https://login.microsoftonline.com/{tenant_id}"
         graph_api_base = "https://graph.microsoft.com/v1.0"
 
@@ -30,8 +45,14 @@ class NostrJson(Resource):
         )
         token = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
         if "access_token" not in token:
-            logger.error("Failed to acquire token")
-            return {"error": "Authentication failed"}, 500
+            logger.error(
+                "Failed to acquire token: %s %s",
+                token.get("error"),
+                token.get("error_description"),
+            )
+            return {
+                "error": "Authentication failed. Check TENANT_ID, CLIENT_ID, and CLIENT_SECRET.",
+            }, 502
         access_token = token["access_token"]
         # Fetch groups
         try:
