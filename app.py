@@ -1,6 +1,7 @@
 # Standard library
 import threading
 from flask import Flask, jsonify, render_template, send_from_directory, redirect, request
+from asgiref.wsgi import WsgiToAsgi
 from flask_restful import Api
 # CORS configuration
 from flask_cors import CORS
@@ -65,6 +66,7 @@ limiter = Limiter(
     storage_options=storage_options,
 )
 api = Api(app)
+asgi_app = WsgiToAsgi(app)
 
 # Configuration
 RELAY_URLS = [
