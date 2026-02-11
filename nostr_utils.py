@@ -154,19 +154,32 @@ def _validate_profile():
         return jsonify({"status":"valid"})
     return jsonify({"error":"Profile validation failed"}), 403
  
-@app.route('/send_dm', methods=['POST'])
-async def _send_dm():
-    data = request.json or {}
-    required = ['to_pubkey','content','sender_privkey']
-    if not all(k in data for k in required):
-        return error_response("Missing DM fields", 400)
+async def _send_dm_async(to_pubkey: str, content: str, sender_privkey: str):
     dm = EncryptedDirectMessage()
-    dm.encrypt(private_key_hex=data['sender_privkey'],
-               cleartext_content=data['content'],
-               recipient_pubkey=data['to_pubkey'])
+    dm.encrypt(
+        private_key_hex=sender_privkey,
+        cleartext_content=content,
+        recipient_pubkey=to_pubkey,
+    )
     ev = dm.to_event()
-    ev.sign(data['sender_privkey'])
+    ev.sign(sender_privkey)
     async with relay_manager() as mgr:
         await mgr.publish_event(ev)
         await asyncio.sleep(0.5)
-    return jsonify({"message":"DM sent successfully"})
+
+
+@app.route('/send_dm', methods=['POST'])
+def _send_dm():
+    data = request.json or {}
+    required = ['to_pubkey', 'content', 'sender_privkey']
+    if not all(k in data for k in required):
+        return error_response("Missing DM fields", 400)
+
+    asyncio.run(
+        _send_dm_async(
+            to_pubkey=data['to_pubkey'],
+            content=data['content'],
+            sender_privkey=data['sender_privkey'],
+        )
+    )
+    return jsonify({"message": "DM sent successfully"})
