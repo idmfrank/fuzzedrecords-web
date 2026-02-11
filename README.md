@@ -121,8 +121,8 @@ Set the following environment variables to configure the application:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo/fuzzedrecords.git
-   cd fuzzedrecords
+   git clone <your-fork-or-repo-url>
+   cd fuzzedrecords-web
    ```
 
 2. **Set Up Virtual Environment**:
@@ -170,18 +170,16 @@ Set the following environment variables to configure the application:
 
 ## Testing
 
-Install the required packages and run the test suite:
+Install dependencies and run the test suite:
 
 ```bash
 pip install -r requirements.txt
-pytest
+pytest -q
 ```
-
-If dependencies are missing, tests will fail with import errors similar to the ones observed when `flask` or `websockets` are not installed.
 
 ## API Endpoints
 
-All backend routes are now synchronous Flask handlers. Asynchronous Nostr operations are executed internally using `asyncio.run()`, so clients interact with a standard blocking HTTP API.
+Backend routes are synchronous Flask handlers. Async Nostr operations are executed internally using `asyncio.run()`, so clients interact with a standard blocking HTTP API.
 
 ### 0. Nostr Discovery JSON
 - **Endpoint**: `/.well-known/nostr.json`
@@ -252,16 +250,16 @@ All backend routes are now synchronous Flask handlers. Asynchronous Nostr operat
 ### 5. Send Ephemeral DM (NIP-17)
 - **Endpoint**: `/send_dm`
 - **Method**: `POST`
-- **Description**: Encrypts and sends a direct message as Kind=23194. The
-  message content is encrypted using NIP‑17's AES‑GCM flow with the sender's
-  private key and recipient's public key. Ephemeral DMs are not persisted by
-  relays.
-- **Required Fields**: `pubkey`, `kind`, `created_at`, `tags=[['p',
-  recipient_pubkey]]`, and encrypted `content`.
+- **Description**: Encrypts and sends an ephemeral direct message to a recipient pubkey.
+- **Required Fields**: `to_pubkey`, `content`, and `sender_privkey`.
 - **Request Body**:
   ```json
   {"to_pubkey":"...","content":"...",
    "sender_privkey":"..."}
+  ```
+- **Response**:
+  ```json
+  {"message":"DM sent successfully"}
   ```
 
 ### 6. Update Relays
