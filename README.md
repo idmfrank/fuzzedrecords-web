@@ -63,7 +63,10 @@ Set the following environment variables to configure the application:
   enable credentialed cross-origin requests; there is no wildcard fallback.
 - AZURE_TABLES_CONNECTION_STRING: Azure connection string for rate-limit storage
 - RATELIMIT_TABLE_NAME: Azure table name for rate-limit counters (default: RateLimit)
-- Rate-limit keys are percent-encoded before being stored in Azure Table Storage.
+- RATELIMIT_DEFAULT: Semicolon-separated default per-route rate limits applied to routes without their own decorator (default: `60 per minute`)
+- RATELIMIT_APPLICATION: Optional semicolon-separated app-wide shared rate limits that apply across all routes for the same client key
+- RATELIMIT_AZURE_RETRIES: Number of optimistic-concurrency retries for Azure Table Storage counter updates (default: 5)
+- Rate-limit keys are percent-encoded before being stored in Azure Table Storage, and counter writes use ETag-based retries to avoid lost updates under concurrent traffic.
 - RATELIMIT_STORAGE_URI: Alternate limiter storage URI (default: memory://)
 - WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
 - HTTP_TIMEOUT: Timeout in seconds for external API requests such as Wavlake and Azure Graph (default: 5)
