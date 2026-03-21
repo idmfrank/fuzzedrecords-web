@@ -208,15 +208,9 @@ async def close_relay_managers():
     for mgr in managers:
         await mgr.close_connections()
 
-_pool_started = False
-
-@app.before_request
-def _startup_pool():
-    global _pool_started
-    if not _pool_started:
-        mgr = asyncio.run(get_relay_manager())
-        asyncio.run(release_relay_manager(mgr))
-        _pool_started = True
+# Relay managers are initialized lazily inside request/worker event loops.
+# Avoid eager warm-up in ``before_request`` because ASGI servers such as
+# Hypercorn already have a running event loop at request time.
 
 import atexit
 

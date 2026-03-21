@@ -1,4 +1,4 @@
-import json, time, asyncio
+import json, time, asyncio, inspect
 from flask import request, jsonify
 from app import (
     app,
@@ -24,16 +24,19 @@ def require_nip05_verification(required_domain):
 
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             data = request.json or {}
             pubkey = data.get("pubkey")
             if not pubkey:
                 return jsonify({"error": "Missing pubkey"}), 400
-            valid = asyncio.run(fetch_and_validate_profile(pubkey, required_domain))
+            valid = await fetch_and_validate_profile(pubkey, required_domain)
             if not valid:
                 logger.warning(f"NIP-05 failed for {pubkey}")
                 return jsonify({"error": "NIP-05 verification failed"}), 403
-            return func(*args, **kwargs)
+            response = func(*args, **kwargs)
+            if inspect.isawaitable(response):
+                return await response
+            return response
 
         return wrapper
 
@@ -140,16 +143,16 @@ async def fetch_and_validate_profile(pubkey, required_domain):
     return domain == required_domain
 
 @app.route("/fetch-profile", methods=["POST"])
-def _fetch_profile():
-    return asyncio.run(fetch_profile())
+async def _fetch_profile():
+    return await fetch_profile()
 
 @app.route('/validate-profile', methods=['POST'])
-def _validate_profile():
+async def _validate_profile():
     data = request.json or {}
     pubkey = data.get('pubkey')
     if not pubkey:
         return jsonify({"error":"Missing pubkey"}), 400
-    valid = asyncio.run(fetch_and_validate_profile(pubkey, REQUIRED_DOMAIN))
+    valid = await fetch_and_validate_profile(pubkey, REQUIRED_DOMAIN)
     if valid:
         return jsonify({"status":"valid"})
     return jsonify({"error":"Profile validation failed"}), 403
@@ -169,17 +172,15 @@ async def _send_dm_async(to_pubkey: str, content: str, sender_privkey: str):
 
 
 @app.route('/send_dm', methods=['POST'])
-def _send_dm():
+async def _send_dm():
     data = request.json or {}
     required = ['to_pubkey', 'content', 'sender_privkey']
     if not all(k in data for k in required):
         return error_response("Missing DM fields", 400)
 
-    asyncio.run(
-        _send_dm_async(
-            to_pubkey=data['to_pubkey'],
-            content=data['content'],
-            sender_privkey=data['sender_privkey'],
-        )
+    await _send_dm_async(
+        to_pubkey=data['to_pubkey'],
+        content=data['content'],
+        sender_privkey=data['sender_privkey'],
     )
     return jsonify({"message": "DM sent successfully"})
