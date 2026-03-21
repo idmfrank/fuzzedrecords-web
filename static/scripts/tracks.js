@@ -10,10 +10,18 @@ export async function fetchTracks() {
       data.tracks.forEach(track => {
         const trackElement = document.createElement('div');
         trackElement.classList.add('song-item');
-        trackElement.innerHTML = `
-          <h3>${track.title} by ${track.artist}</h3>
-          <iframe src="https://embed.wavlake.com/track/${track.track_id}" width="100%" height="380" frameborder="0"></iframe>
-        `;
+
+        const heading = document.createElement('h3');
+        heading.textContent = `${track.title} by ${track.artist}`;
+
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://embed.wavlake.com/track/${encodeURIComponent(track.track_id)}`;
+        iframe.width = '100%';
+        iframe.height = '380';
+        iframe.frameBorder = '0';
+
+        trackElement.appendChild(heading);
+        trackElement.appendChild(iframe);
         songsSection.appendChild(trackElement);
       });
     } else {
