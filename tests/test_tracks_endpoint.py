@@ -29,3 +29,37 @@ def test_tracks_first_request_builds_library(monkeypatch):
         assert resp.status_code == 200
         assert resp.get_json() == {"tracks": sample}
 
+
+
+def test_tracks_first_request_offloads_library_build(monkeypatch):
+    import app as app_module
+    import wavlake_utils
+    importlib.reload(app_module)
+    importlib.reload(wavlake_utils)
+
+    sample = [{
+        "artist": "A",
+        "album": "B",
+        "title": "T",
+        "media_url": "url",
+        "track_id": "1",
+    }]
+
+    wavlake_utils._track_cache = {"library": None, "ts": 0}
+
+    def fake_build():
+        raise AssertionError("build_music_library should be called via asyncio.to_thread")
+
+    async def fake_to_thread(func, *args, **kwargs):
+        assert func is fake_build
+        assert args == ()
+        assert kwargs == {}
+        return sample
+
+    monkeypatch.setattr(wavlake_utils, "build_music_library", fake_build)
+    monkeypatch.setattr(wavlake_utils.asyncio, "to_thread", fake_to_thread)
+
+    with app_module.app.test_client() as client:
+        resp = client.get("/tracks")
+        assert resp.status_code == 200
+        assert resp.get_json() == {"tracks": sample}

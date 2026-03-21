@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -129,17 +130,17 @@ def register_wavlake_routes(app, base_url=None, search_term=None, error_handler=
     SEARCH_TERM = search_term or os.getenv("SEARCH_TERM", SEARCH_TERM)
     _error_handler = error_handler or _default_error_handler
     @app.route('/tracks', methods=['GET'])
-    def get_tracks():
+    async def get_tracks():
         """Return the music library, building it on-demand if missing."""
         global _updating
         now = time.time()
         cached = _track_cache.get('library')
 
         if cached is None:
-            # No library yet - build synchronously so the first request has data
-            logger.info("Cache empty, building music library synchronously")
+            # No library yet - build off the event loop so the first request still gets data
+            logger.info("Cache empty, building music library in a worker thread")
             try:
-                library = build_music_library()
+                library = await asyncio.to_thread(build_music_library)
             except Exception as e:
                 logger.error(f"Failed to build music library: {e}")
                 return _error_handler("Failed to load library", 500)
