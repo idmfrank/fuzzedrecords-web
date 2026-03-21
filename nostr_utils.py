@@ -19,6 +19,16 @@ from nostr_client import (
     EncryptedDirectMessage,
 )
 
+POLL_INITIAL_INTERVAL = 0.05
+POLL_MAX_INTERVAL = 0.5
+
+
+def _next_poll_interval(current_interval):
+    """Return the next bounded poll interval for relay message polling."""
+    if current_interval <= 0:
+        return POLL_INITIAL_INTERVAL
+    return min(current_interval * 2, POLL_MAX_INTERVAL)
+
 def require_nip05_verification(required_domain):
     from functools import wraps
 
@@ -72,6 +82,7 @@ async def fetch_profile():
         logger.debug("Awaiting profile event for pubkey %s", pubkey_hex)
 
         profile_data = {}
+        poll_interval = POLL_INITIAL_INTERVAL
         start = time.time()
         while time.time() - start < PROFILE_FETCH_TIMEOUT:
             if mgr.message_pool.has_events():
@@ -90,12 +101,20 @@ async def fetch_profile():
                             profile_data["nprofile"] = nprof
                         logger.info("Profile data parsed for pubkey %s: %s", pubkey_hex, content)
                     break
+                poll_interval = POLL_INITIAL_INTERVAL
+                continue
             if mgr.message_pool.has_eose_notices():
                 notice = mgr.message_pool.get_eose_notice()
                 if notice.subscription_id == sub_id:
+                    poll_interval = POLL_INITIAL_INTERVAL
                     # Ignore EOSE and continue waiting
                     continue
-            await asyncio.sleep(0.05)
+            elapsed = time.time() - start
+            remaining = PROFILE_FETCH_TIMEOUT - elapsed
+            if remaining <= 0:
+                break
+            await asyncio.sleep(min(poll_interval, remaining))
+            poll_interval = _next_poll_interval(poll_interval)
     if profile_data:
         if nprof and "nprofile" not in profile_data:
             profile_data["nprofile"] = nprof
