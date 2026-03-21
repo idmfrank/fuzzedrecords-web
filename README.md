@@ -59,7 +59,8 @@ Set the following environment variables to configure the application:
 - CACHE_TIMEOUT: Seconds to cache fetched user profiles (default: 300)
 - REQUIRED_DOMAIN: Domain for NIP-05 profile verification (default: fuzzedrecords.com)
 - MAX_CONTENT_LENGTH: Max request payload size in bytes (default: 1048576)
-- FRONTEND_ORIGINS: Comma-separated list of allowed CORS origins (default: '*')
+- FRONTEND_ORIGINS: Comma-separated list of allowed CORS origins. Required to
+  enable credentialed cross-origin requests; there is no wildcard fallback.
 - AZURE_TABLES_CONNECTION_STRING: Azure connection string for rate-limit storage
 - RATELIMIT_TABLE_NAME: Azure table name for rate-limit counters (default: RateLimit)
 - Rate-limit keys are percent-encoded before being stored in Azure Table Storage.
@@ -141,6 +142,9 @@ Set the following environment variables to configure the application:
    pytest
    ```
    All tests should pass before deployment.
+   If your frontend is hosted on a different origin than the backend, set
+   `FRONTEND_ORIGINS` to an explicit comma-separated allowlist before starting
+   the app. Credentialed CORS is disabled when this variable is unset.
 5. **Run the Application Locally**:
    ```bash
    python app.py
