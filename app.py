@@ -69,6 +69,22 @@ def configure_cors(flask_app):
 
 
 ALLOWED_CORS_ORIGINS, CORS_CREDENTIALS_ENABLED = configure_cors(app)
+
+
+def parse_rate_limit_config(env_var: str, default: str | None = None) -> list[str] | None:
+    """Parse a semicolon-delimited rate-limit config from the environment."""
+
+    raw_value = os.getenv(env_var, "").strip()
+    if raw_value:
+        limits = [item.strip() for item in raw_value.split(";") if item.strip()]
+        if limits:
+            return limits
+    return [default] if default else None
+
+
+DEFAULT_RATE_LIMITS = parse_rate_limit_config("RATELIMIT_DEFAULT", "60 per minute")
+APPLICATION_RATE_LIMITS = parse_rate_limit_config("RATELIMIT_APPLICATION")
+
 # Rate limiting (IP-based)
 # Configure Flask-Limiter storage backend via URI and options
 storage_options = {}
@@ -85,6 +101,8 @@ else:
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
+    default_limits=DEFAULT_RATE_LIMITS,
+    application_limits=APPLICATION_RATE_LIMITS,
     storage_uri=storage_uri,
     storage_options=storage_options,
 )
@@ -177,6 +195,7 @@ def error_response(message, status_code):
 
 # Relay manager pool
 _manager_pool = []
+_pool_started = False
 _pool_lock = asyncio.Lock()
 
 async def get_relay_manager():
