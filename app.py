@@ -39,13 +39,36 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 # Limit request payload size (e.g. default 1MB)
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("MAX_CONTENT_LENGTH", 1048576))
-# Configure CORS origins from environment (comma-separated). Fallback to '*' if not set.
-origins_env = os.getenv("FRONTEND_ORIGINS", "").strip()
-if origins_env:
-    origins = [o.strip() for o in origins_env.split(",") if o.strip()]
-else:
-    origins = ["*"]
-CORS(app, origins=origins, supports_credentials=True)
+
+
+def configure_cors(flask_app):
+    """Configure CORS with an explicit allowlist for credentialed requests.
+
+    Credentialed cross-origin requests are only allowed when
+    ``FRONTEND_ORIGINS`` is set to a comma-separated list of trusted
+    origins. If the variable is unset, cross-origin credentialed requests are
+    disabled entirely instead of falling back to a wildcard.
+    """
+
+    origins_env = os.getenv("FRONTEND_ORIGINS", "").strip()
+    if origins_env:
+        origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+        CORS(flask_app, origins=origins, supports_credentials=True)
+        logger.info(
+            "Credentialed CORS enabled for %d configured origin(s).",
+            len(origins),
+        )
+        return origins, True
+
+    logger.warning(
+        "FRONTEND_ORIGINS is not set; credentialed cross-origin requests are "
+        "disabled. Set FRONTEND_ORIGINS to explicit trusted origins."
+    )
+    CORS(flask_app, origins=[], supports_credentials=False)
+    return [], False
+
+
+ALLOWED_CORS_ORIGINS, CORS_CREDENTIALS_ENABLED = configure_cors(app)
 # Rate limiting (IP-based)
 # Configure Flask-Limiter storage backend via URI and options
 storage_options = {}
