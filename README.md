@@ -366,3 +366,16 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 For more information, visit [Fuzzed Records](https://fuzzedrecords.com).
+
+## Spark Payment Layer (MVP)
+
+New Flask endpoints provide a Spark-oriented wallet and payment abstraction without Nostr dependencies:
+
+- `POST /api/wallets` create wallet (`user_id`, `username`)
+- `GET /api/wallets/<user_id>/balances` fetch BTC/USDC/USDB balances
+- `POST /api/transfers/internal` internal user transfer
+- `POST /api/transfers/lightning` Lightning invoice payout
+- `GET /.well-known/lnurlp/<username>` LNURL-pay identity resolution
+- `GET /pay/<username>?amount=...` LNURL-pay callback invoice response
+
+Implementation lives in `spark_layer.py` and is designed to be replaced by a Spark SDK adapter.
