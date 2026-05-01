@@ -2,7 +2,6 @@ Flask[async]>=3.0.4
 Flask-RESTful>=0.3.10
 flask-cors>=4.0.2
 asgiref>=3.7.2
-bech32>=1.2.0
 requests>=2.32.0
 msal>=1.22.0
 flask-limiter>=2.0.0
@@ -10,7 +9,3 @@ qrcode==7.4.2
 hypercorn>=0.14.4
 azure-data-tables>=12.6.0
 pytest>=7.4
-websockets>=15.0
-cryptography>=42.0
-PyNaCl>=1.5
-coincurve>=21.0.0

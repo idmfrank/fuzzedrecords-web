@@ -1,5 +1,4 @@
 # Standard library
-import threading
 from flask import Flask, jsonify, render_template, send_from_directory, redirect, request
 from asgiref.wsgi import WsgiToAsgi
 from flask_restful import Api
@@ -12,20 +11,7 @@ from flask_limiter.util import get_remote_address
 # Custom storage schemes (register AzureTableStorage)
 import azure_storage_limiter
 
-# NIP-19 helpers provided by our minimal Nostr client implementation
-from nostr_client import (
-    nprofile_decode,
-    nprofile_encode,
-    RelayManager,
-    Filter,
-    FiltersList,
-    derive_public_key_hex,
-    nsec_to_hex,
-)
-
-def nip19_decode(value: str):
-    """Alias for ``nprofile_decode`` to match prior API."""
-    return nprofile_decode(value)
+from spark_layer import InMemorySparkLayer, lnurlp_response
 # HTTP exception handling
 from werkzeug.exceptions import RequestEntityTooLarge, BadRequest, HTTPException
 import os
@@ -109,193 +95,17 @@ limiter = Limiter(
 api = Api(app)
 asgi_app = WsgiToAsgi(app)
 
-# Configuration
-RELAY_URLS = [
-    u.strip()
-    for u in os.getenv(
-        "RELAY_URLS",
-        "wss://relay.damus.io,wss://relay.primal.net,wss://relay.nostr.pub,wss://nos.lol",
-    ).split(",")
-]
-CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
 REQUIRED_DOMAIN = os.getenv("REQUIRED_DOMAIN", "fuzzedrecords.com")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.fuzzedrecords.com")
 # Base URL for Wavlake API; can be overridden via environment
 # Default updated to use wavlake.com domain as per API docs
 WAVLAKE_API_BASE = os.getenv("WAVLAKE_API_BASE", "https://wavlake.com/api/v1")
 SEARCH_TERM = os.getenv("SEARCH_TERM", " by Fuzzed Records")
-PROFILE_FETCH_TIMEOUT = float(os.getenv("PROFILE_FETCH_TIMEOUT", "5"))
-RELAY_CONNECT_TIMEOUT = float(os.getenv("RELAY_CONNECT_TIMEOUT", "2"))
-DISABLE_TLS_VERIFY = os.getenv("DISABLE_TLS_VERIFY", "0").lower() in {"1", "true", "yes"}
-
-_privkey_env = os.getenv("WALLET_PRIVKEY_HEX", "").strip()
-if _privkey_env.startswith("nsec"):
-    try:
-        WALLET_PRIVKEY_HEX = nsec_to_hex(_privkey_env)
-    except Exception:
-        logger.error("Invalid nsec key provided for WALLET_PRIVKEY_HEX")
-        WALLET_PRIVKEY_HEX = ""
-else:
-    WALLET_PRIVKEY_HEX = _privkey_env
-
-SERVER_WALLET_PUBKEY = (
-    derive_public_key_hex(WALLET_PRIVKEY_HEX) if WALLET_PRIVKEY_HEX else ""
-)
-
-# Active relay list loaded from files/environment
-RELAYS_LOCK = threading.Lock()
-
-def load_relays_from_file():
-    """Load relay URLs from good-relays.txt, relays.txt or RELAY_URLS env."""
-    for fname in ("good-relays.txt", "relays.txt"):
-        if os.path.exists(fname):
-            with open(fname) as f:
-                rels = [l.strip() for l in f if l.strip()]
-            if rels:
-                return rels
-    # Fallback to the module constant if the environment variable isn't set
-    return [
-        u.strip()
-        for u in os.getenv("RELAY_URLS", ",".join(RELAY_URLS)).split(",")
-        if u.strip()
-    ]
-
-# Initialize at startup
-ACTIVE_RELAYS = load_relays_from_file()
-
-# Utilities: error responses, caching, and Nostr relay client
-import time
-from flask import jsonify
-import asyncio
-from contextlib import asynccontextmanager
-from nostr_client import RelayManager, Filter, MessagePool
-
-# Protect in-memory cache access
-_cache_lock = threading.Lock()
-
-# Simple in-memory cache for user profiles
-_cache = {}
-def get_cached_item(key):
-    with _cache_lock:
-        item = _cache.get(key)
-    if not item:
-        return None
-    value, ts = item
-    if time.time() - ts > CACHE_TIMEOUT:
-        with _cache_lock:
-            del _cache[key]
-        return None
-    return value
-
-def set_cached_item(key, value):
-    with _cache_lock:
-        _cache[key] = (value, time.time())
+spark = InMemorySparkLayer(REQUIRED_DOMAIN)
 
 def error_response(message, status_code):
     return jsonify({'error': message}), status_code
 
-# Relay manager pool
-_manager_pool = []
-_pool_started = False
-_pool_lock = asyncio.Lock()
-
-async def get_relay_manager():
-    """Borrow a RelayManager from the pool.
-
-    Websocket connections in ``RelayManager`` instances are bound to the
-    event loop that created them.  Previous changes reused managers across
-    ``asyncio.run`` calls which each spin up a new loop, leaving those
-    connections unusable.  To ensure we always have connections tied to the
-    current loop, relays are (re)prepared every time a manager is borrowed
-    from the pool, even if it was previously returned.
-    """
-
-    async with _pool_lock:
-        if _manager_pool:
-            mgr = _manager_pool.pop()
-        else:
-            mgr = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
-        for url in ACTIVE_RELAYS:
-            if url not in mgr.relays:
-                mgr.add_relay(url)
-    await mgr.prepare_relays()
-    return mgr
-
-async def release_relay_manager(mgr):
-    """Return ``mgr`` to the pool, closing any open connections.
-
-    Closing the websocket connections avoids reusing them across different
-    event loops which previously resulted in dead relays and missing profile
-    data.  Each borrow will reconnect as needed.
-    """
-    if mgr is None:
-        return
-    await mgr.close_connections()
-    mgr.message_pool = MessagePool()
-    async with _pool_lock:
-        _manager_pool.append(mgr)
-
-@asynccontextmanager
-async def relay_manager():
-    mgr = await get_relay_manager()
-    try:
-        yield mgr
-    finally:
-        await release_relay_manager(mgr)
-
-async def close_relay_managers():
-    """Close all RelayManager connections and clear the pool."""
-    async with _pool_lock:
-        managers = list(_manager_pool)
-        _manager_pool.clear()
-    for mgr in managers:
-        await mgr.close_connections()
-
-# Relay managers are initialized lazily inside request/worker event loops.
-# Avoid eager warm-up in ``before_request`` because ASGI servers such as
-# Hypercorn already have a running event loop at request time.
-
-import atexit
-
-@atexit.register
-def _shutdown_pool():
-    asyncio.run(close_relay_managers())
-
-# Helper to fetch a profile event (kind 0) by pubkey from given relays
-def fetch_profile_by_pubkey(pubkey, relays):
-    import json
-    import asyncio
-
-    manager = RelayManager(timeout=RELAY_CONNECT_TIMEOUT)
-    for r in relays:
-        manager.add_relay(r)
-
-    async def _run():
-        await manager.prepare_relays()
-        sub_id = "profile_sub"
-        await manager.add_subscription_on_all_relays(sub_id, FiltersList([Filter(authors=[pubkey], kinds=[0])]))
-        profile = None
-        start = time.time()
-        try:
-            while time.time() - start < PROFILE_FETCH_TIMEOUT:
-                if manager.message_pool.has_events():
-                    msg = manager.message_pool.get_event()
-                    if msg.subscription_id == sub_id:
-                        try:
-                            profile = json.loads(msg.event.content)
-                        except Exception:
-                            profile = None
-                        break
-                if manager.message_pool.has_eose_notices():
-                    notice = manager.message_pool.get_eose_notice()
-                    if notice.subscription_id == sub_id:
-                        continue
-                await asyncio.sleep(0.1)
-        finally:
-            await manager.close_connections()
-        return profile
-
-    return asyncio.run(_run())
- 
 # Centralized error handlers
 @app.errorhandler(RequestEntityTooLarge)
 def handle_payload_too_large(e):
@@ -317,7 +127,6 @@ def handle_unexpected_error(e):
 from azure_resources import register_resources
 from wavlake_utils import register_wavlake_routes
 from ticket_utils import register_ticket_routes
-import nostr_utils  # registers Nostr routes
 
 register_resources(api)
 register_wavlake_routes(
@@ -330,8 +139,7 @@ register_ticket_routes(app)
 
 @app.route('/')
 def index():
-    pubkey = SERVER_WALLET_PUBKEY
-    return render_template('index.html', serverWalletPubkey=pubkey)
+    return render_template('index.html', serverWalletPubkey="")
 
 @app.route('/', subdomain='fuzzedguitars')
 def guitars_redirect():
@@ -357,57 +165,72 @@ def favicon():
     )
 
 
-@app.route('/update-relays', methods=['POST'])
-def update_relays():
+@app.route("/api/wallets", methods=["POST"])
+def create_wallet():
     data = request.get_json() or {}
-    relays = data.get('relays')
-    if not relays or not isinstance(relays, list):
-        return jsonify({'error': 'Invalid relays'}), 400
-    relays = [r.strip() for r in relays if isinstance(r, str) and r.strip()]
-    from urllib.parse import urlparse
-    for url in relays:
-        parsed = urlparse(url)
-        if parsed.scheme not in ('ws', 'wss'):
-            return jsonify({'error': f'Invalid relay URL: {url}'}), 400
-    with RELAYS_LOCK:
-        merged = set(ACTIVE_RELAYS)
-        merged.update(relays)
-        ACTIVE_RELAYS[:] = sorted(merged)
-        with open('relays.txt', 'w') as f:
-            for url in ACTIVE_RELAYS:
-                f.write(url + '\n')
-
-    return jsonify({'status': 'updated', 'count': len(ACTIVE_RELAYS)})
+    user_id = data.get("user_id")
+    username = data.get("username")
+    if not user_id or not username:
+        return jsonify({"error": "user_id and username are required"}), 400
+    wallet = spark.create_wallet(user_id, username)
+    return jsonify({"user_id": wallet.user_id, "spark_address": wallet.spark_address}), 201
 
 
-# Endpoint to fetch metadata by nprofile (NIP-19)
-@app.route('/fetch-nprofile', methods=['POST'])
-def fetch_nprofile():
-    data = request.get_json()
-    nprofile = data.get('nprofile') if data else None
-
-    if not nprofile:
-        return jsonify({'error': 'Missing nprofile'}), 400
-
+@app.route("/api/wallets/<user_id>/balances", methods=["GET"])
+def get_balance(user_id):
     try:
-        default_relays = [
-            'wss://relay.damus.io',
-            'wss://nos.lol',
-            'wss://relay.nostr.band'
-        ]
+        return jsonify(spark.get_balance(user_id))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 404
 
-        type_, data = nip19_decode(nprofile)
-        if type_ != 'nprofile':
-            return jsonify({'error': 'Invalid nprofile type'}), 400
-        pubkey = data['pubkey']
-        relays = data.get('relays', default_relays)
 
-        metadata = fetch_profile_by_pubkey(pubkey, relays)
+@app.route("/api/transfers/internal", methods=["POST"])
+def internal_transfer():
+    data = request.get_json() or {}
+    try:
+        tx = spark.transfer(
+            sender_id=data["sender_user_id"],
+            receiver_username=data["receiver_username"],
+            amount_sats=int(data["amount_sats"]),
+            idempotency_key=data.get("idempotency_key"),
+        )
+        return jsonify(tx), 201
+    except (KeyError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
 
-        return jsonify({'pubkey': pubkey, 'metadata': metadata})
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route("/api/transfers/lightning", methods=["POST"])
+def pay_lightning():
+    data = request.get_json() or {}
+    try:
+        tx = spark.pay_lightning_invoice(
+            sender_id=data["sender_user_id"],
+            invoice=data["invoice"],
+            amount_sats=int(data["amount_sats"]),
+            max_fee_sats=int(data.get("max_fee_sats", 10)),
+        )
+        return jsonify(tx), 201
+    except (KeyError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/.well-known/lnurlp/<username>", methods=["GET"])
+def lnurlp(username):
+    if not spark.get_wallet_by_username(username):
+        return jsonify({"status": "ERROR", "reason": "User not found"}), 404
+    return jsonify(lnurlp_response(API_BASE_URL, username))
+
+
+@app.route("/pay/<username>", methods=["GET"])
+def pay_callback(username):
+    amount = int(request.args.get("amount", "0"))
+    wallet = spark.get_wallet_by_username(username)
+    if not wallet:
+        return jsonify({"status": "ERROR", "reason": "User not found"}), 404
+    if amount <= 0:
+        return jsonify({"status": "ERROR", "reason": "Invalid amount"}), 400
+    invoice = f"lnbc{amount}n1p{username}mockinvoice"
+    return jsonify({"pr": invoice, "routes": []})
 
 
 if __name__ == '__main__':
