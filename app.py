@@ -126,7 +126,6 @@ def handle_unexpected_error(e):
 # Register modular routes
 from azure_resources import register_resources
 from wavlake_utils import register_wavlake_routes
-from ticket_utils import register_ticket_routes
 
 register_resources(api)
 register_wavlake_routes(
@@ -135,7 +134,6 @@ register_wavlake_routes(
     search_term=SEARCH_TERM,
     error_handler=error_response,
 )
-register_ticket_routes(app)
 
 @app.route('/')
 def index():
