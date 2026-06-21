@@ -217,7 +217,16 @@ h2 {
     margin-bottom: 6px;
 }
 
-.track-artist,
+.track-artwork {
+    border-radius: 12px;
+    display: block;
+    height: auto;
+    margin: 0 auto 14px;
+    max-width: min(100%, 320px);
+    width: 100%;
+}
+
+.track-meta,
 .fallback-copy {
     color: var(--muted);
     line-height: 1.6;

@@ -1,20 +1,13 @@
 // utils.js - shared helper functions
 const PUBLIC_SECTIONS = ['listen', 'bands', 'submit', 'support', 'about'];
 
-// Highlight the active public navigation link and optionally scroll to a section.
-export function showSection(section) {
+// Highlight the active public navigation link without hiding content or replacing anchor behavior.
+export function highlightSection(section) {
   const targetSection = PUBLIC_SECTIONS.includes(section) ? section : 'listen';
   PUBLIC_SECTIONS.forEach(sec => {
-    const el = document.getElementById(sec);
     const btn = document.getElementById(`menu-${sec}`);
-    if (el) el.classList.toggle('active', sec === targetSection);
     if (btn) btn.classList.toggle('active', sec === targetSection);
   });
-
-  const el = document.getElementById(targetSection);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 }
 
 export function getPublicSections() {
