@@ -18,7 +18,7 @@ Fuzzed Records is a simple independent music hub for noisy, guitar-driven bands.
 
 ## Features
 
-- **Music Hub**: Stream featured Fuzzed Records tracks using SoundCloud and Wavlake where appropriate.
+- **Music Hub**: Stream featured Fuzzed Records tracks through a simple SoundCloud-first homepage experience.
 - **Direct Support**: Link listeners to Wavlake tracks for boosts and direct artist support.
 - **Band Submissions**: Provide a simple path for future bands to contact or submit music.
 - **Nostr / Lightning**: Keep advanced identity and payment features available where useful, but not as the primary public journey.
@@ -26,7 +26,7 @@ Fuzzed Records is a simple independent music hub for noisy, guitar-driven bands.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
 - **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
-- **Section Links**: Use URL hashes like `/#listen`, `/#bands`, `/#submit`, `/#support`, and `/#about` to open public sections directly.
+- **Section Links**: Use URL hashes like `/#listen`, `/#bands`, `/#submit`, `/#support`, and `/#about` to open public sections directly. Legacy `/fuzzedguitars` traffic redirects to the homepage.
 
 ---
 
