@@ -18,7 +18,7 @@ Fuzzed Records is a simple independent music hub for noisy, guitar-driven bands.
 
 ## Features
 
-- **Music Hub**: Stream featured Fuzzed Records tracks through a simple SoundCloud-first homepage experience pointed at the Fuzzed Favorites set.
+- **Music Hub**: Stream featured Fuzzed Records tracks through a simple SoundCloud-first homepage experience.
 - **Direct Support**: Link listeners to Wavlake tracks for boosts and direct artist support.
 - **Band Submissions**: Provide a simple path for future bands to contact or submit music.
 - **Nostr / Lightning**: Keep advanced identity and payment features available where useful, but not as the primary public journey.
