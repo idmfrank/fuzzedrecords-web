@@ -1,6 +1,6 @@
 # Fuzzed Records
 
-Fuzzed Records is a modern music platform that integrates Wavlake-powered music discovery with Azure AD-backed NIP-05 discovery/validation. It allows users to explore a library of songs and manage their profiles. The platform focuses on **Wavlake** for music distribution and a scoped **NIP-05** discovery endpoint via Azure AD.
+Fuzzed Records is a simple independent music hub for noisy, guitar-driven bands. The public site emphasizes low-friction listening on **SoundCloud**, direct artist support through **Wavlake** where appropriate, band submissions, and a scoped **NIP-05** discovery endpoint via Azure AD for advanced identity use cases.
 
 ---
 
@@ -18,13 +18,15 @@ Fuzzed Records is a modern music platform that integrates Wavlake-powered music 
 
 ## Features
 
-- **Music Library**: Browse and play songs hosted on Wavlake. The library includes detailed artist and album information.
+- **Music Hub**: Stream featured Fuzzed Records tracks using SoundCloud and Wavlake where appropriate.
+- **Direct Support**: Link listeners to Wavlake tracks for boosts and direct artist support.
+- **Band Submissions**: Provide a simple path for future bands to contact or submit music.
+- **Nostr / Lightning**: Keep advanced identity and payment features available where useful, but not as the primary public journey.
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
 - **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
-- **Section Links**: Use URL hashes like `/#gear` to open a specific section directly.
-- **Fuzzed Guitars**: Boutique gear prototypes can be viewed in the Gear section (`/#gear`), via the `fuzzedguitars` subdomain, or using the `/fuzzedguitars` path.
+- **Section Links**: Use URL hashes like `/#listen`, `/#bands`, `/#submit`, `/#support`, and `/#about` to open public sections directly.
 
 ---
 
@@ -32,6 +34,7 @@ Fuzzed Records is a modern music platform that integrates Wavlake-powered music 
 
 - **Frontend**:
   - HTML, CSS, JavaScript
+  - SoundCloud profile embed
   - Embedded Wavlake player
 - **Backend**:
   - Flask (Python)
@@ -90,7 +93,7 @@ Set the following environment variables to configure the application:
     └── scripts/
         ├── tracks.js         # Frontend music library display logic
         ├── utils.js          # Shared JavaScript helper functions
-        ├── gear.js           # Gear section interactions
+        ├── auth.js           # Navigation and advanced Nostr authentication logic
 ```
 
 ---

@@ -6,172 +6,154 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script defer src="/static/scripts/webln.js"></script>
-    </head>
+</head>
 
 <body>
-    <header>
+    <header class="site-header">
         <div class="logo-container">
             <img id="header-logo" src="/static/images/fuzzedrecords.png" alt="Fuzzed Records Logo" class="logo">
         </div>
+        <nav class="menu" aria-label="Primary navigation">
+            <a id="menu-listen" class="nav-btn active" href="#listen">Listen</a>
+            <a id="menu-bands" class="nav-btn" href="#bands">Bands</a>
+            <a id="menu-submit" class="nav-btn" href="#submit">Submit</a>
+            <a id="menu-support" class="nav-btn" href="#support">Support</a>
+            <a id="menu-about" class="nav-btn" href="#about">About</a>
+        </nav>
     </header>
 
-      <nav class="menu">
-          <button id="menu-library" class="nav-btn active">Library</button>
-          <button id="menu-gear" class="nav-btn">Gear</button>
-          <!-- Profile button is always visible so the user can trigger login -->
-          <button id="menu-profile" class="nav-btn">Nostr Login</button>
-      </nav>
-
-      <section id="alby-mvp" style="margin:1rem 0;">
-          <button id="btn-connect-alby" style="display:none;">Connect Alby</button>
-          <button id="btn-pay-test" style="display:none;">Pay Test Invoice (100 sats)</button>
-      </section>
-
     <main>
-
-        <section id="library-section" class="content-section active">
-            <h2>
-                Songs in our Library at:
-                <a href="https://wavlake.com" target="_blank">
-                    <img src="https://wavlake.com/favicon.ico" alt="Wavlake Logo" class="external-logo">
-                    Wavlake
-                </a>
-            </h2>
-            <div id="songs-section">
-                <p>Loading songs...</p>
+        <section class="hero" aria-labelledby="hero-title">
+            <p class="eyebrow">Independent music from the edges</p>
+            <h1 id="hero-title">Fuzzed Records</h1>
+            <p class="hero-subtitle">Independent, noisy, guitar-driven music from the edges.</p>
+            <p class="hero-copy">Listen to the archive, follow future releases, submit your band, and support artists directly.</p>
+            <div class="cta-row">
+                <a class="button primary" href="#listen">Listen Now</a>
+                <a class="button" href="#submit">Submit Your Band</a>
+                <a class="button" href="#support">Support Artists</a>
             </div>
         </section>
 
-        <section id="gear-section" class="content-section">
-            <p>Boutique gear crafted for experimental sound.</p>
-            <nav class="gear-submenu">
-                <button class="gear-btn active" data-target="gear-elf">Fuzzed Elf 0.2</button>
-                <button class="gear-btn" data-target="gear-jaguar">Fuzzed Jaguar</button>
-                <button class="gear-btn" data-target="gear-alpha">Fuzzed Alpha 0.1</button>
-            </nav>
-            <div id="gear-items">
-                <div id="gear-elf" class="gear-item active">
-                    <div class="gear-gallery">
-                        <img src="/static/images/fuzzed-elf-0.5-initial-build.jpg" alt="Initial build of Fuzzed Elf 0.2" class="gear-photo">
-                        <img src="/static/images/fuzzed-beta-prototyping1.jpg" alt="Early prototyping on the workbench" class="gear-photo">
-                        <img src="/static/images/template-beta05-body.jfif" alt="Poplar and Template ready to go…" class="gear-photo">
-                        <img src="/static/images/silhouette-beta05.jfif" alt="The Idea and inspiration" class="gear-photo">
-                        <div class="gallery-controls">
-                            <button class="prev">❮</button>
-                            <button class="next">❯</button>
-                        </div>
-                    </div>
-                    <p class="gear-caption"></p>
-                </div>
-                <div id="gear-jaguar" class="gear-item">
-                    <div class="gear-gallery">
-                        <img src="/static/images/fuzzed-jaguar-final.jfif" alt="Final build" class="gear-photo">
-                        <img src="/static/images/jaguar.jfif" alt="It is coming together…" class="gear-photo">
-                        <img src="/static/images/fuzzed-jaguar-body-painted.jfif" alt="Body painted" class="gear-photo">
-                        <img src="/static/images/fuzzed-jaguar-body-routed.jfif" alt="Body routed" class="gear-photo">
-                        <img src="/static/images/fuzzed-jaguar-neck-truss.jfif" alt="Neck truss install" class="gear-photo">
-                        <div class="gallery-controls">
-                            <button class="prev">❮</button>
-                            <button class="next">❯</button>
-                        </div>
-                    </div>
-                    <p class="gear-caption"></p>
-                </div>
-                <div id="gear-alpha" class="gear-item">
-                    <div class="gear-gallery">
-                        <img src="/static/images/almost-alpha01.jfif" alt="Almost there…" class="gear-photo">
-                        <img src="/static/images/pre-alpha01.jfif" alt="restoration project as the alpha for a custom project." class="gear-photo">
-                        <div class="gallery-controls">
-                            <button class="prev">❮</button>
-                            <button class="next">❯</button>
-                        </div>
-                    </div>
-                    <p class="gear-caption"></p>
+        <section id="listen" class="content-section active" aria-labelledby="listen-title">
+            <div class="section-heading">
+                <p class="eyebrow">Listen</p>
+                <h2 id="listen-title">Start with SoundCloud</h2>
+                <p>SoundCloud is the fastest way to hear Fuzzed Records now. Wavlake stays here for tracks where direct boosts and Bitcoin-native support are available.</p>
+            </div>
+            <div class="soundcloud-card">
+                <iframe title="Fuzzed Records on SoundCloud" width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/fuzzedrecords&color=%23ff5500&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe>
+                <a class="button primary" href="https://soundcloud.com/fuzzedrecords" target="_blank" rel="noopener noreferrer">Open Fuzzed Records on SoundCloud</a>
+            </div>
+
+            <div class="wavlake-block">
+                <h3>
+                    Direct-support tracks on
+                    <a href="https://wavlake.com" target="_blank" rel="noopener noreferrer">
+                        <img src="https://wavlake.com/favicon.ico" alt="" class="external-logo">
+                        Wavlake
+                    </a>
+                </h3>
+                <p class="section-copy">When Wavlake tracks are available, use the embedded players below to listen and support artists directly.</p>
+                <div id="songs-section" aria-live="polite">
+                    <p class="fallback-copy">Checking Wavlake for direct-support tracks. If nothing loads, you can still listen on SoundCloud.</p>
                 </div>
             </div>
         </section>
 
-
-        <section id="profile-section">
-            <h2>Profile Details</h2>
-            <div id="profile-container">
-                <div>
-                    <p class="empty-profile">
-                        No profile information available. Please authenticate with a Nostr NIP-07 capable wallet such as
-                        <a href="https://getalby.com/products/browser-extension" target="_blank"
-                            rel="noopener noreferrer">
-                            <img src="/static/images/thumb_Alby-logo-figure-400.png" alt="Alby Logo"
-                                class="inline-icon">
-                            Alby
-                        </a>
-                        after you create a Nostr account using one of the many clients such as
-                        <a href="https://damus.io" target="_blank" rel="noopener noreferrer">
-                            <img src="/static/images/damus.png" alt="Damus Logo" class="inline-icon">
-                            Damus (for iOS)
-                        </a> or
-                        <a href="https://primal.net" target="_blank" rel="noopener noreferrer">
-                            <img src="/static/images/primal_400x400.png" alt="Primal Logo" class="inline-icon">
-                            Primal (for iOS or Android or Desktop)
-                        </a>.
-                    </p>
-
-                </div>
+        <section id="bands" class="content-section" aria-labelledby="bands-title">
+            <div class="section-heading">
+                <p class="eyebrow">Bands</p>
+                <h2 id="bands-title">What fits here</h2>
             </div>
+            <p>Fuzzed Records is looking for noisy, melodic, guitar-driven music with attitude, hooks, and a clear identity. Send demos, rehearsal recordings, live clips, or finished tracks.</p>
         </section>
 
+        <section id="submit" class="content-section" aria-labelledby="submit-title">
+            <div class="section-heading">
+                <p class="eyebrow">Submit</p>
+                <h2 id="submit-title">Submit Your Band</h2>
+            </div>
+            <p>Send a short note, links to your music, where you are based, and what you are looking for.</p>
+            <a class="button primary" href="mailto:idmfrank@gmail.com?subject=Fuzzed%20Records%20band%20submission">Email a submission</a>
+        </section>
+
+        <section id="support" class="content-section" aria-labelledby="support-title">
+            <div class="section-heading">
+                <p class="eyebrow">Support</p>
+                <h2 id="support-title">Support artists directly</h2>
+            </div>
+            <p>Fuzzed Records uses Wavlake where it makes sense so listeners can boost tracks directly and help independent artists earn outside the normal streaming model.</p>
+            <p>Start by listening. If a Wavlake support link is available on a track, use it to send value straight to the music you care about.</p>
+        </section>
+
+        <section id="about" class="content-section" aria-labelledby="about-title">
+            <div class="section-heading">
+                <p class="eyebrow">About</p>
+                <h2 id="about-title">About Fuzzed Records</h2>
+            </div>
+            <p>Fuzzed Records is an independent music project focused on noisy, guitar-driven bands, direct artist support, and simple ways for listeners to discover new music.</p>
+        </section>
+
+        <section id="advanced" class="content-section advanced-section" aria-labelledby="advanced-title">
+            <details>
+                <summary id="advanced-title">Creator Login / Advanced</summary>
+                <div id="alby-mvp" class="advanced-controls">
+                    <button id="btn-connect-alby" style="display:none;">Connect Alby</button>
+                    <button id="btn-pay-test" style="display:none;">Pay Test Invoice (100 sats)</button>
+                </div>
+                <button id="menu-profile" class="text-button">Nostr Login</button>
+                <section id="profile-section">
+                    <h2>Profile Details</h2>
+                    <div id="profile-container">
+                        <p class="empty-profile">No profile information available. Authenticate with a Nostr NIP-07 capable wallet if you need creator or identity features.</p>
+                    </div>
+                </section>
+            </details>
+        </section>
     </main>
 
     <footer>
-        <p>© 2025 Fuzzed Records. All rights reserved.</p>
+        <p>© 2026 Fuzzed Records. All rights reserved.</p>
     </footer>
 
-      <script type="module" src="/static/scripts/auth.js"></script>
-      <script type="module" src="/static/scripts/tracks.js"></script>
-        <script type="module" src="/static/scripts/gear.js"></script>
-        <script>
-          window.serverWalletPubkey = "{{ serverWalletPubkey }}";
-        </script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-        <script>
-          (async () => {
-            const btnConnect = document.getElementById("btn-connect-alby");
-            const btnPay     = document.getElementById("btn-pay-test");
+    <script type="module" src="/static/scripts/auth.js"></script>
+    <script type="module" src="/static/scripts/tracks.js"></script>
+    <script>
+        window.serverWalletPubkey = "{{ serverWalletPubkey }}";
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+      (async () => {
+        const btnConnect = document.getElementById("btn-connect-alby");
+        const btnPay = document.getElementById("btn-pay-test");
+        if (!btnConnect || !btnPay || !window.WebLNHelper || !window.WebLNHelper.isAvailable()) return;
+        btnConnect.style.display = "inline-block";
+        btnConnect.onclick = async () => {
+          try {
+            await window.WebLNHelper.enable();
+            btnPay.style.display = "inline-block";
+            alert("Alby connected!");
+          } catch (e) {
+            console.warn("Alby connect failed:", e);
+            alert("Could not connect Alby (user cancelled or not available).");
+          }
+        };
+        btnPay.onclick = async () => {
+          try {
+            const inv = await window.WebLNHelper.makeInvoice(100, "Fuzzed Records test");
+            const pr = inv?.paymentRequest || inv;
+            await window.WebLNHelper.sendPayment(pr);
+            alert("Payment sent! Check your wallet.");
+          } catch (e) {
+            console.error("Payment error:", e);
+            alert("Payment failed or was cancelled.");
+          }
+        };
+      })();
+    </script>
+</body>
 
-            if (!window.WebLNHelper || !window.WebLNHelper.isAvailable()) {
-              // No WebLN; keep buttons hidden and exit silently.
-              return;
-            }
-
-            // Show connect button when WebLN exists.
-            btnConnect.style.display = "inline-block";
-
-            btnConnect.onclick = async () => {
-              try {
-                await window.WebLNHelper.enable();
-                // After enabling, show the pay button.
-                btnPay.style.display = "inline-block";
-                alert("Alby connected!");
-              } catch (e) {
-                console.warn("Alby connect failed:", e);
-                alert("Could not connect Alby (user cancelled or not available).");
-              }
-            };
-
-            btnPay.onclick = async () => {
-              try {
-                const inv = await window.WebLNHelper.makeInvoice(100, "Fuzzed Records test");
-                const pr = inv?.paymentRequest || inv; // support wallets returning either shape
-                await window.WebLNHelper.sendPayment(pr);
-                alert("Payment sent! Check your wallet.");
-              } catch (e) {
-                console.error("Payment error:", e);
-                alert("Payment failed or was cancelled.");
-              }
-            };
-          })();
-        </script>
-  </body>
-
-  </html>
+</html>

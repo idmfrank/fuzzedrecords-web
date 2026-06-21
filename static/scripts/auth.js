@@ -1,6 +1,6 @@
 // auth.js
 // Handles navigation and Nostr authentication (NIP-07) logic
-import { showSection } from './utils.js';
+import { showSection, getPublicSections } from './utils.js';
 
 // Global profile state
 let userProfile = null;
@@ -129,10 +129,17 @@ export function logout() {
 
 // Initialization: menu buttons
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('menu-library')
-    .addEventListener('click', () => showSection('library'));
-  document.getElementById('menu-gear')
-    .addEventListener('click', () => showSection('gear'));
+  getPublicSections().forEach(section => {
+    const navLink = document.getElementById(`menu-${section}`);
+    if (navLink) {
+      navLink.addEventListener('click', event => {
+        event.preventDefault();
+        history.pushState(null, '', `#${section}`);
+        showSection(section);
+      });
+    }
+  });
+
   const menuProfile = document.getElementById('menu-profile');
   menuProfile.addEventListener('click', async () => {
     if (!menuProfile.dataset.loggedIn) {
@@ -141,13 +148,23 @@ document.addEventListener('DOMContentLoaded', () => {
       menuProfile.textContent = 'Profile';
       menuProfile.dataset.loggedIn = 'true';
     }
-    showSection('profile');
+    const advanced = document.querySelector('#advanced details');
+    if (advanced) {
+      advanced.open = true;
+      document.getElementById('profile-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 
-  // Allow linking directly to a section via URL hash (e.g., /#gear)
+  // Allow linking directly to public sections via URL hash (e.g., /#listen).
   const hash = window.location.hash.replace('#', '');
-  const sections = ['library', 'profile', 'gear'];
-  if (sections.includes(hash)) {
+  if (getPublicSections().includes(hash)) {
     showSection(hash);
   }
+
+  window.addEventListener('hashchange', () => {
+    const nextHash = window.location.hash.replace('#', '');
+    if (getPublicSections().includes(nextHash)) {
+      showSection(nextHash);
+    }
+  });
 });

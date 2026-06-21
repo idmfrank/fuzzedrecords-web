@@ -12,4 +12,4 @@ def test_guitar_path_redirect():
     with app_module.app.test_client() as client:
         resp = client.get('/fuzzedguitars')
         assert resp.status_code in (301, 302)
-        assert resp.headers['Location'] == 'https://fuzzedrecords.com/#gear'
+        assert resp.headers['Location'] == 'https://fuzzedrecords.com/'
