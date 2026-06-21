@@ -1,15 +1,39 @@
+:root {
+    --bg: #fffdf9;
+    --text: #181818;
+    --muted: #5d5d5d;
+    --panel: #f7f2ea;
+    --border: #e1d8cc;
+    --dark: #24201e;
+    --accent: #ff5500;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: "Inter", sans-serif;
     margin: 0;
     padding: 0;
+    color: var(--text);
+    background: var(--bg);
     text-align: center;
-    overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
+    overflow-x: hidden;
+}
+
+.site-header {
+    padding: 20px 16px 0;
 }
 
 .logo-container {
-    max-width: 500px;
-    width: 90%;
-    margin: 20px auto;
+    max-width: 360px;
+    width: min(90%, 500px);
+    margin: 0 auto 20px;
 }
 
 .logo {
@@ -20,67 +44,213 @@ body {
 }
 
 .menu {
-    display: flex; /* Ensure buttons are horizontally aligned */
-    justify-content: center; /* Center align the menu items */
-    flex-wrap: wrap; /* Allow wrapping for small screens */
-    background-color: #333; /* Dark background for the menu */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    background-color: var(--dark);
     padding: 10px;
-    border-radius: 10px; /* Rounded edges for the menu box */
-    max-width: 500px; /* Match the logo's max width */
-    width: 80%; /* Maintain responsiveness */
-    margin: 0 auto 20px auto; /* Center the menu and add spacing below */
-    gap: 10px; /* Spacing between buttons */
-    box-sizing: border-box; /* Ensure padding is included in width calculations */
+    border-radius: 999px;
+    max-width: 720px;
+    width: min(94%, 720px);
+    margin: 0 auto 24px;
+    gap: 8px;
 }
 
+.nav-btn,
 .menu button {
-    flex: none; /* Prevent buttons from growing to fill the space */
-    padding: 10px 15px; /* Adjust padding for better spacing */
-    background-color: #555; /* Default button background */
-    color: white; /* White text color */
-    border: none; /* Remove default button borders */
-    border-radius: 5px; /* Rounded button edges */
-    font-size: 16px; /* Set consistent font size */
-    text-align: center; /* Center text within buttons */
-    cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s ease; /* Smooth hover effect */
-    min-width: 80px; /* Ensure all buttons have a minimum width */
-    max-width: 150px; /* Prevent buttons from getting too wide */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Add a slight shadow for a modern look */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    background-color: #46403c;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    font-size: 15px;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    min-width: 78px;
 }
 
+.nav-btn:hover,
 .menu button:hover {
-    background-color: #777; /* Lighter background on hover */
+    background-color: #6b625c;
+    transform: translateY(-1px);
 }
 
+.nav-btn.active,
 .menu button.active {
-    background-color: #999; /* Highlight active button */
+    background-color: var(--accent);
 }
 
-#library-section,
-#profile-section,
-#gear-section {
-    display: none;
-    padding: 20px;
+main {
+    width: min(1040px, 92%);
+    margin: 0 auto;
 }
 
-#library-section.active,
-#profile-section.active,
-#gear-section.active {
+.hero,
+.content-section {
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background: rgba(247, 242, 234, 0.72);
+    box-shadow: 0 12px 30px rgba(36, 32, 30, 0.08);
+    margin: 22px auto;
+    padding: clamp(24px, 5vw, 56px);
+    scroll-margin-top: 20px;
+}
+
+.hero {
+    background: linear-gradient(135deg, #24201e 0%, #3a302b 58%, #663018 100%);
+    color: white;
+}
+
+.eyebrow {
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+}
+
+.hero .eyebrow {
+    color: #ffb18a;
+}
+
+h1,
+h2,
+h3 {
+    margin-top: 0;
+}
+
+h1 {
+    font-size: clamp(2.8rem, 10vw, 6rem);
+    line-height: 0.95;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    margin-bottom: 12px;
+}
+
+.hero-subtitle {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 600;
+    margin: 0 auto 12px;
+    max-width: 760px;
+}
+
+.hero-copy,
+.section-heading p,
+.content-section > p,
+.section-copy {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 760px;
+}
+
+.hero-copy {
+    color: #f5e9df;
+}
+
+.cta-row,
+.track-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.button,
+.track-links a,
+.text-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--dark);
+    border-radius: 999px;
+    background: white;
+    color: var(--dark);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 12px 18px;
+    text-decoration: none;
+}
+
+.button.primary,
+.track-links a:last-child {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.soundcloud-card,
+.wavlake-block,
+.song-item,
+#profile-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    margin: 22px auto 0;
+    max-width: 760px;
+    padding: 18px;
+}
+
+.soundcloud-card iframe,
+.song-item iframe {
+    border: 0;
+    border-radius: 12px;
     display: block;
-}
-
-.song-item {
-    margin: 20px auto;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    max-width: 500px;
-    background: #f9f9f9;
+    margin: 0 auto 16px;
+    max-width: 100%;
 }
 
 .song-item h3 {
-    margin: 0 0 10px;
+    margin-bottom: 6px;
+}
+
+.track-artist,
+.fallback-copy {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.external-logo,
+.inline-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+    border-radius: 4px;
+}
+
+.advanced-section {
+    background: transparent;
+    box-shadow: none;
+    padding: 12px;
+}
+
+.advanced-section details {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.advanced-section summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.advanced-controls {
+    margin: 1rem 0;
 }
 
 .profile-pic {
@@ -88,18 +258,17 @@ body {
     max-width: 150px;
     width: 80%;
     margin: 10px auto;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     display: block;
 }
 
 .profile-details {
-    border: 1px solid #ddd;
+    border: 1px solid var(--border);
     border-radius: 5px;
     padding: 10px;
     margin: 20px auto;
     max-width: 500px;
     background: #f9f9f9;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .profile-details td {
@@ -118,193 +287,42 @@ body {
     font-style: italic;
     color: #777;
     padding: 20px;
-    border: 1px dashed #ddd;
+    border: 1px dashed var(--border);
     border-radius: 5px;
     max-width: 500px;
     margin: 20px auto;
-}
-
-.external-logo {
-    width: 20px;
-    height: 20px;
-    vertical-align: middle; /* Align icon with text */
-    margin-right: 5px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column; /* Align items vertically */
-    margin-bottom: 15px; /* Add spacing between form fields */
-    max-width: 500px; /* Limit form width */
-    margin-left: auto;
-    margin-right: auto; /* Center the form on the page */
-}
-
-.form-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-.form-group input,
-.form-group textarea {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    width: 100%; /* Make inputs take up full width */
-    box-sizing: border-box; /* Include padding in width calculation */
-}
-
-.inline-icon {
-    width: 18px; /* Adjust size as needed */
-    height: 18px;
-    vertical-align: middle;
-    margin-right: 5px;
-    border-radius: 4px; /* Optional: for rounded logos */
-}
-
-button[type="submit"] {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #555;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-button[type="submit"]:hover {
-    background-color: #777;
 }
 
 footer {
     text-align: center;
-    margin-top: 20px;
+    margin: 28px auto;
     color: #777;
     font-size: 14px;
 }
 
-/* Gear section styling */
-#gear-section {
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    max-width: 500px;
-    width: 80%;
-    margin: 20px auto;
-    background: #f9f9f9;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.gear-submenu {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 10px auto;
-}
-
-.gear-submenu button {
-    padding: 10px 15px;
-    background-color: #555;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.gear-submenu button:hover {
-    background-color: #777;
-}
-
-.gear-submenu button.active {
-    background-color: #999;
-}
-
-#gear-items .gear-item {
-    display: none;
-    margin-top: 15px;
-}
-
-#gear-items .gear-item.active {
-    display: block;
-}
-
-/* Profile section styling */
-#profile-section {
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    max-width: 500px;
-    width: 80%;
-    margin: 20px auto;
-    background: #f9f9f9;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.gear-container {
-    max-width: 300px;
-    width: 100%;
-    margin: 10px auto;
-}
-
-.gear-gallery {
-    max-width: 300px;
-    width: 100%;
-    margin: 10px auto;
-    position: relative;
-}
-
-.gear-gallery img {
-    display: none;
-}
-
-.gear-gallery img.active {
-    display: block;
-}
-
-.gallery-controls {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 5px;
-}
-
-.gallery-controls button {
-    padding: 5px 10px;
-    background-color: #555;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.gallery-controls button:hover {
-    background-color: #777;
-}
-
-.gear-photo {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    display: block;
-}
-
-.gear-caption {
-    margin: 10px auto;
-}
-
-@media (min-width: 768px) {
-    .logo-container {
-        max-width: 350px;
+@media (max-width: 640px) {
+    .site-header {
+        padding-top: 14px;
     }
 
-    .gear-container {
-        max-width: 350px;
+    .menu {
+        border-radius: 20px;
+        width: 94%;
     }
 
-    .gear-gallery {
-        max-width: 350px;
+    .nav-btn {
+        flex: 1 1 40%;
+    }
+
+    .button,
+    .track-links a,
+    .text-button {
+        width: 100%;
+    }
+
+    .hero,
+    .content-section {
+        border-radius: 18px;
+        padding: 22px 16px;
     }
 }

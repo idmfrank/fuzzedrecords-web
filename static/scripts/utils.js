@@ -1,21 +1,24 @@
 // utils.js - shared helper functions
-// Switch between content sections
+const PUBLIC_SECTIONS = ['listen', 'bands', 'submit', 'support', 'about'];
+
+// Highlight the active public navigation link and optionally scroll to a section.
 export function showSection(section) {
-  const sections = ['library', 'profile', 'gear'];
-  sections.forEach(sec => {
-    const el = document.getElementById(`${sec}-section`);
+  const targetSection = PUBLIC_SECTIONS.includes(section) ? section : 'listen';
+  PUBLIC_SECTIONS.forEach(sec => {
+    const el = document.getElementById(sec);
     const btn = document.getElementById(`menu-${sec}`);
-    if (el) el.classList.toggle('active', sec === section);
-    if (btn) btn.classList.toggle('active', sec === section);
+    if (el) el.classList.toggle('active', sec === targetSection);
+    if (btn) btn.classList.toggle('active', sec === targetSection);
   });
-  const logo = document.getElementById('header-logo');
-  if (logo) {
-    if (section === 'gear') {
-      logo.src = '/static/images/fuzzed-guitars-logo.jfif';
-    } else {
-      logo.src = '/static/images/fuzzedrecords.png';
-    }
+
+  const el = document.getElementById(targetSection);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+export function getPublicSections() {
+  return [...PUBLIC_SECTIONS];
 }
 
 // Extract single-letter tag value from event tags
