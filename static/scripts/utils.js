@@ -1,5 +1,5 @@
 // utils.js - shared helper functions
-const PUBLIC_SECTIONS = ['listen', 'bands', 'submit', 'support', 'about'];
+const PUBLIC_SECTIONS = ['listen', 'archive', 'support', 'future-bands', 'about'];
 
 // Highlight the active public navigation link without hiding content or replacing anchor behavior.
 export function highlightSection(section) {

@@ -1,6 +1,6 @@
 # Fuzzed Records
 
-Fuzzed Records is a simple independent music hub for noisy, guitar-driven bands. The public site emphasizes low-friction listening on **SoundCloud**, direct artist support through **Wavlake** where appropriate, band submissions, and a scoped **NIP-05** discovery endpoint via Azure AD for advanced identity use cases.
+Fuzzed Records is a simple independent music hub for noisy, guitar-driven music from the edges. The public site emphasizes low-friction listening on **SoundCloud**, a Wavlake-powered archive and direct-support layer where appropriate, future artist direction without open public submissions, and scoped **NIP-05** discovery via Azure AD for advanced identity use cases.
 
 ---
 
@@ -18,15 +18,16 @@ Fuzzed Records is a simple independent music hub for noisy, guitar-driven bands.
 
 ## Features
 
-- **Music Hub**: Stream featured Fuzzed Records tracks through a simple SoundCloud-first homepage experience.
-- **Direct Support**: Link listeners to Wavlake tracks for boosts and direct artist support.
-- **Band Submissions**: Provide a simple path for future bands to contact or submit music.
+- **Music Hub**: Stream Fuzzed Records through a simple SoundCloud-first homepage experience.
+- **Archive**: Preserve and present Fuzzed Records tracks using the existing Wavlake-powered `/tracks` integration.
+- **Direct Support**: Provide clear Wavlake boost/tip paths and explore direct Lightning tipping where production-ready.
+- **Future Bands**: Explain the future artist direction without opening public submissions yet.
 - **Nostr / Lightning**: Keep advanced identity and payment features available where useful, but not as the primary public journey.
 - **Responsive Design**: Optimized for both desktop and mobile devices.
 - **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
 - **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
 - **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
-- **Section Links**: Use URL hashes like `/#listen`, `/#bands`, `/#submit`, `/#support`, and `/#about` to open public sections directly. Legacy `/fuzzedguitars` traffic redirects to the homepage.
+- **Section Links**: Use URL hashes like `/#listen`, `/#archive`, `/#support`, `/#future-bands`, and `/#about` to jump through the public homepage. Legacy `/fuzzedguitars` traffic redirects to the homepage.
 
 ---
 
