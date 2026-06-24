@@ -7,12 +7,13 @@ function firstPresent(...values) {
 
 function trackSupportUrl(track) {
   return firstPresent(
-    track.url,
-    track.link,
     track.wavlake_url,
     track.wavlakeUrl,
-    track.media_url,
-    track.mediaUrl,
+    track.wavlake_track_url,
+    track.wavlakeTrackUrl,
+    track.url,
+    track.link,
+
   ) || (track.track_id ? `https://wavlake.com/track/${encodeURIComponent(track.track_id)}` : null);
 }
 
@@ -80,7 +81,7 @@ function renderTrack(track) {
     wavlakeLink.href = supportUrl;
     wavlakeLink.target = '_blank';
     wavlakeLink.rel = 'noopener noreferrer';
-    wavlakeLink.textContent = 'Support on Wavlake';
+    wavlakeLink.textContent = 'Boost on Wavlake';
     links.appendChild(wavlakeLink);
     trackElement.appendChild(links);
   }
@@ -92,7 +93,7 @@ export async function fetchTracks() {
   const songsSection = document.getElementById('songs-section');
   if (!songsSection) return;
 
-  songsSection.innerHTML = '<p class="fallback-copy">Loading Wavlake support links…</p>';
+  songsSection.innerHTML = '<p class="fallback-copy">Loading archive and support links…</p>';
 
   try {
     const response = await fetch('/tracks');
@@ -105,11 +106,11 @@ export async function fetchTracks() {
     if (tracks.length > 0) {
       tracks.forEach(track => songsSection.appendChild(renderTrack(track || {})));
     } else {
-      songsSection.innerHTML = '<p class="fallback-copy">No Wavlake tracks are available right now. You can still listen on SoundCloud above.</p>';
+      songsSection.innerHTML = '<p class="fallback-copy">No Wavlake archive tracks are available right now. You can still listen on SoundCloud above.</p>';
     }
   } catch (err) {
     console.error('Error fetching tracks:', err);
-    songsSection.innerHTML = '<p class="fallback-copy">Wavlake support links could not load right now. The SoundCloud player above is still available.</p>';
+    songsSection.innerHTML = '<p class="fallback-copy">Wavlake archive/support links could not load right now. The SoundCloud player above is still available.</p>';
   }
 }
 
