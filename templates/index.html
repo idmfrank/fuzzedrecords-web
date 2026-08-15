@@ -7,7 +7,6 @@
     <title>Fuzzed Records</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <script defer src="/static/scripts/webln.js"></script>
 </head>
 
 <body>
@@ -17,7 +16,6 @@
         </div>
         <nav class="menu" aria-label="Primary navigation">
             <a id="menu-listen" class="nav-btn active" href="#listen">Listen</a>
-            <a id="menu-archive" class="nav-btn" href="#archive">Archive</a>
             <a id="menu-support" class="nav-btn" href="#support">Support</a>
             <a id="menu-future-bands" class="nav-btn" href="#future-bands">Future Bands</a>
             <a id="menu-about" class="nav-btn" href="#about">About</a>
@@ -32,7 +30,7 @@
             <p class="hero-copy">Listen to the archive, follow future releases, and support artists directly.</p>
             <div class="cta-row">
                 <a class="button primary" href="#listen">Listen Now</a>
-                <a class="button" href="#support">Tip / Support</a>
+                <a class="button" href="#support">Support the Artists</a>
                 <a class="button" href="#about">About Fuzzed Records</a>
             </div>
         </section>
@@ -49,42 +47,22 @@
             </div>
         </section>
 
-        <section id="archive" class="content-section" aria-labelledby="archive-title">
-            <div class="section-heading">
-                <p class="eyebrow">Archive / Artists</p>
-                <h2 id="archive-title">Fuzzed Records archive</h2>
-                <p>Wavlake powers the archive and direct-support layer for tracks where embedded playback, boost pages, or Bitcoin-native support links are available.</p>
-            </div>
-            <div class="wavlake-block">
-                <h3>
-                    Archive tracks on
-                    <a href="https://wavlake.com" target="_blank" rel="noopener noreferrer">
-                        <img src="https://wavlake.com/favicon.ico" alt="" class="external-logo">
-                        Wavlake
-                    </a>
-                </h3>
-                <p class="section-copy">Use the embedded players to listen here. When a real Wavlake track page is available, use the track action to boost or support through Wavlake.</p>
-                <div id="songs-section" aria-live="polite">
-                    <p class="fallback-copy">Loading archive and support links…</p>
-                </div>
-            </div>
-        </section>
-
         <section id="support" class="content-section" aria-labelledby="support-title">
             <div class="section-heading">
                 <p class="eyebrow">Support</p>
-                <h2 id="support-title">Tip artists directly</h2>
+                <h2 id="support-title">Support the artists</h2>
             </div>
-            <p>Fuzzed Records uses Wavlake and Lightning where it makes sense so listeners can send small tips, boosts, or direct support to artists outside the normal streaming model.</p>
+            <p>Listen, follow, and share the music. Every play and recommendation helps independent artists reach new listeners.</p>
             <div class="support-options">
                 <article class="support-option">
-                    <h3>Option A: Wavlake Boost</h3>
-                    <p>Open a Wavlake track page from the archive when one is available, then boost or support through Wavlake’s own listener tools.</p>
-                    <a class="button primary" href="#archive">Find Wavlake tracks</a>
+                    <h3>Listen and follow</h3>
+                    <p>Stream the archive and follow Fuzzed Records to hear new releases as they arrive.</p>
+                    <a class="button primary" href="https://soundcloud.com/fuzzedrecords" target="_blank" rel="noopener noreferrer">Follow on SoundCloud</a>
                 </article>
-                <article class="support-option muted-option">
-                    <h3>Option B: Direct Lightning Tip</h3>
-                    <p>Direct Lightning tips are coming soon. Wallet, LNURL, Alby, Spark, and Nostr experiments remain available for future creator tooling, but they are not presented here as a production payment flow yet.</p>
+                <article class="support-option">
+                    <h3>Share the music</h3>
+                    <p>Send a favorite track to a friend or include Fuzzed Records in a playlist. Word of mouth makes a real difference.</p>
+                    <a class="button" href="#listen">Return to the player</a>
                 </article>
             </div>
         </section>
@@ -94,7 +72,7 @@
                 <p class="eyebrow">Future Bands</p>
                 <h2 id="future-bands-title">Future bands</h2>
             </div>
-            <p>Fuzzed Records is building toward future releases and collaborations, but public submissions are not open yet. For now, the focus is the archive, the sound, and the direct-support model.</p>
+            <p>Fuzzed Records is building toward future releases and collaborations, but public submissions are not open yet. For now, the focus is the archive, the sound, and helping listeners discover the artists.</p>
             <p>The direction is noisy, melodic, guitar-driven music with attitude, hooks, and a clear identity.</p>
             <a class="button" href="https://soundcloud.com/fuzzedrecords" target="_blank" rel="noopener noreferrer">Follow for updates</a>
         </section>
@@ -107,49 +85,13 @@
             <p>Fuzzed Records is an independent music project focused on noisy, guitar-driven bands, direct artist support, and simple ways for listeners to discover music.</p>
         </section>
 
-        <section id="advanced" class="content-section advanced-section" aria-labelledby="advanced-title">
-            <details>
-                <summary id="advanced-title">Creator Login / Advanced</summary>
-                <p class="fallback-copy">Advanced wallet and Nostr identity tools are retained for creator workflows and experiments, not as the main public listening path.</p>
-                <div id="alby-mvp" class="advanced-controls">
-                    <button id="btn-connect-alby" style="display:none;">Connect Alby</button>
-                </div>
-                <button id="menu-profile" class="text-button">Nostr Login</button>
-                <section id="profile-section">
-                    <h2>Profile Details</h2>
-                    <div id="profile-container">
-                        <p class="empty-profile">No profile information available. Authenticate with a Nostr NIP-07 capable wallet if you need creator or identity features.</p>
-                    </div>
-                </section>
-            </details>
-        </section>
     </main>
 
     <footer>
         <p>© 2026 Fuzzed Records. All rights reserved.</p>
     </footer>
 
-    <script type="module" src="/static/scripts/auth.js"></script>
-    <script type="module" src="/static/scripts/tracks.js"></script>
-    <script>
-        window.serverWalletPubkey = "{{ serverWalletPubkey }}";
-    </script>
-    <script>
-      (() => {
-        const btnConnect = document.getElementById("btn-connect-alby");
-        if (!btnConnect || !window.WebLNHelper || !window.WebLNHelper.isAvailable()) return;
-        btnConnect.style.display = "inline-block";
-        btnConnect.onclick = async () => {
-          try {
-            await window.WebLNHelper.enable();
-            alert("Alby connected for advanced creator tooling.");
-          } catch (e) {
-            console.warn("Alby connect failed:", e);
-            alert("Could not connect Alby (user cancelled or not available).");
-          }
-        };
-      })();
-    </script>
+    <script type="module" src="/static/scripts/utils.js"></script>
 </body>
 
 </html>

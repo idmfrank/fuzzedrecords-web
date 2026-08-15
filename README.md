@@ -1,316 +1,83 @@
 # Fuzzed Records
 
-Fuzzed Records is a simple independent music hub for noisy, guitar-driven music from the edges. The public site emphasizes low-friction listening on **SoundCloud**, a Wavlake-powered archive and direct-support layer where appropriate, future artist direction without open public submissions, and scoped **NIP-05** discovery via Azure AD for advanced identity use cases.
-
----
-
-## Table of Contents
-1. [Features](#features)
-2. [Technologies Used](#technologies-used)
-3. [File Structure](#file-structure)
-4. [Setup and Deployment](#setup-and-deployment)
-5. [API Endpoints](#api-endpoints)
-6. [Workflow](#workflow)
-7. [License](#license)
-8. [Acknowledgments](#acknowledgments)
-
----
+Fuzzed Records is a simple independent music hub for noisy, guitar-driven music from the edges. The public site offers a low-friction SoundCloud listening experience, project updates, and straightforward ways to help the artists reach more listeners.
 
 ## Features
 
-- **Music Hub**: Stream Fuzzed Records through a simple SoundCloud-first homepage experience.
-- **Archive**: Preserve and present Fuzzed Records tracks using the existing Wavlake-powered `/tracks` integration.
-- **Direct Support**: Provide clear Wavlake boost/tip paths and explore direct Lightning tipping where production-ready.
-- **Future Bands**: Explain the future artist direction without opening public submissions yet.
-- **Nostr / Lightning**: Keep advanced identity and payment features available where useful, but not as the primary public journey.
-- **Responsive Design**: Optimized for both desktop and mobile devices.
-- **Efficient Data Caching**: Utilizes caching for optimizing data retrieval performance.
-- **Rate Limiting**: Protects API endpoints using Flask-Limiter with optional Azure Table Storage backend (ASGI-compatible).
-- **CORS Configuration**: Allowed origins can be customized via environment variable (Flask-CORS works under Hypercorn).
-- **Section Links**: Use URL hashes like `/#listen`, `/#archive`, `/#support`, `/#future-bands`, and `/#about` to jump through the public homepage. Legacy `/fuzzedguitars` traffic redirects to the homepage.
+- Responsive, SoundCloud-first homepage
+- Sections for listening, artist support, future bands, and project information
+- Flask backend served through Hypercorn
+- Configurable CORS allowlist
+- IP-based rate limiting with optional Azure Table Storage persistence
+- Legacy `/fuzzedguitars` redirect
 
----
+## Requirements
 
-## Technologies Used
+- Python 3.11 or newer
+- The packages listed in `requirements.txt`
 
-- **Frontend**:
-  - HTML, CSS, JavaScript
-  - SoundCloud profile embed
-  - Embedded Wavlake player
-- **Backend**:
-  - Flask (Python)
-  - Flask-RESTful for API endpoints
-- **Identity / Discovery**:
-  - Azure AD-backed NIP-05 discovery endpoint (`/.well-known/nostr.json`)
-- **Hosting**:
-  - Microsoft Azure
-  - Hypercorn ASGI server
+## Local setup
 
----
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+On Windows PowerShell, activate the environment with:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+The development server uses Flask's default address. For a production-style local run:
+
+```bash
+hypercorn --bind 0.0.0.0:8000 app:asgi_app
+```
 
 ## Configuration
 
-Set the following environment variables to configure the application:
+- `MAX_CONTENT_LENGTH`: Maximum request payload size in bytes; defaults to `1048576`.
+- `FRONTEND_ORIGINS`: Comma-separated list of trusted origins. Credentialed cross-origin requests are disabled when unset.
+- `AZURE_TABLES_CONNECTION_STRING`: Optional Azure connection string for persistent rate-limit storage.
+- `RATELIMIT_TABLE_NAME`: Azure table name; defaults to `RateLimit`.
+- `RATELIMIT_DEFAULT`: Semicolon-separated default per-route limits; defaults to `60 per minute`.
+- `RATELIMIT_APPLICATION`: Optional semicolon-separated application-wide limits.
+- `RATELIMIT_AZURE_RETRIES`: Retry count for concurrent Azure counter updates; defaults to `5`.
+- `RATELIMIT_STORAGE_URI`: Alternate limiter storage URI; defaults to `memory://`.
+- `LOG_LEVEL`: Application log level; defaults to `DEBUG`.
+- `FLASK_DEBUG`: Set to `1`, `true`, or `yes` to enable local debug mode.
 
-- REQUIRED_DOMAIN: Domain for NIP-05 profile verification (default: fuzzedrecords.com)
-- MAX_CONTENT_LENGTH: Max request payload size in bytes (default: 1048576)
-- FRONTEND_ORIGINS: Comma-separated list of allowed CORS origins. Required to
-  enable credentialed cross-origin requests; there is no wildcard fallback.
-- AZURE_TABLES_CONNECTION_STRING: Azure connection string for rate-limit storage
-- RATELIMIT_TABLE_NAME: Azure table name for rate-limit counters (default: RateLimit)
-- RATELIMIT_DEFAULT: Semicolon-separated default per-route rate limits applied to routes without their own decorator (default: `60 per minute`)
-- RATELIMIT_APPLICATION: Optional semicolon-separated app-wide shared rate limits that apply across all routes for the same client key
-- RATELIMIT_AZURE_RETRIES: Number of optimistic-concurrency retries for Azure Table Storage counter updates (default: 5)
-- Rate-limit keys are percent-encoded before being stored in Azure Table Storage, and counter writes use ETag-based retries to avoid lost updates under concurrent traffic.
-- RATELIMIT_STORAGE_URI: Alternate limiter storage URI (default: memory://)
-- WAVLAKE_API_BASE: Base URL for Wavlake API (default: https://wavlake.com/api/v1)
-- HTTP_TIMEOUT: Timeout in seconds for external API requests such as Wavlake and Azure Graph (default: 5)
-- TRACK_CACHE_TIMEOUT: Seconds to cache the music library before background refresh (default: 300)
-- SEARCH_TERM: Search term used to filter Wavlake artists (default: " by Fuzzed Records")
-- TENANT_ID: Azure AD Tenant ID for discovery JSON endpoint (/.well-known/nostr.json)
-- CLIENT_ID: Azure AD Application (client) ID
-- CLIENT_SECRET: Azure AD Application client secret
-- (Optional) LOG_LEVEL: Python log level for application logging (default: DEBUG)
-- (Optional) FLASK_DEBUG: Set to 1 or true for debug mode when running locally
-
----
-
-## File Structure
-
-```
-./
-├── app.py                    # Top-level Flask router (imports modular routes)
-├── azure_resources.py        # MSAL & Nostr discovery JSON endpoint
-├── azure_storage_limiter.py  # Azure Table Storage backend for rate limiting (keys percent-encoded)
-├── wavlake_utils.py          # Wavlake API helpers and /tracks endpoint
-├── relay_checker.py          # Relay maintenance script
-├── requirements.txt          # Python dependencies
-├── startup.sh                # Deployment script for Azure
-├── templates/
-│   └── index.html            # Main HTML file for the website
-└── static/
-    ├── style.css             # CSS for styling the website (committed)
-    ├── images/               # Site images and icons
-    └── scripts/
-        ├── tracks.js         # Frontend music library display logic
-        ├── utils.js          # Shared JavaScript helper functions
-        ├── auth.js           # Navigation and advanced Nostr authentication logic
-```
-
----
-
-## Setup and Deployment
-
-### Prerequisites
-- Python 3.11 or newer *(older versions fail due to type-hint syntax)*
-- Microsoft Azure account (for deployment)
-
-### Steps
-
-1. **Clone the Repository**:
-   ```bash
-   git clone <your-fork-or-repo-url>
-   cd fuzzedrecords-web
-   ```
-
-2. **Set Up Virtual Environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   > **Note**: `static/style.css` is committed; no Sass/SCSS compilation is required.
-4. **Run Tests**:
-   ```bash
-   pytest
-   ```
-   All tests should pass before deployment.
-   If your frontend is hosted on a different origin than the backend, set
-   `FRONTEND_ORIGINS` to an explicit comma-separated allowlist before starting
-   the app. Credentialed CORS is disabled when this variable is unset.
-5. **Run the Application Locally**:
-   ```bash
-   python app.py
-   ```
-6. **Deploy to Azure**:
-   - Ensure `startup.sh` is executable:
-     ```bash
-     chmod +x startup.sh
-     ```
-   - Create a `runtime.txt` file in the project root containing `python-3.11`
-     so Azure uses the correct Python version.
-   - `startup.sh` installs Python dependencies and then launches the server.
-   - Deploy the app to Azure WebApp using the Azure CLI or portal.
-    > **Note**: The application must be able to establish outbound WebSocket connections to the relays listed in `RELAY_URLS`. Blocked outbound traffic will result in profile fetch failures.
-7. **Maintain Relay Lists**:
-   - Run `python relay_checker.py` periodically to update `good-relays.txt`.
-   - On startup the app loads relays from `good-relays.txt` if present, falling back to `relays.txt` or the `RELAY_URLS` environment variable.
-  - Users can contribute relays via the `/update-relays` endpoint; submitted URLs are merged in-memory and written back to `relays.txt`.
-8. **Build and Run with Docker**:
-   ```bash
-   docker build -t fuzzedrecords .
-   docker run --rm -p 8000:8000 fuzzedrecords
-   ```
-   The app will be available at http://localhost:8000.
-
----
-
-## Testing
-
-Install dependencies and run the test suite:
+## Tests
 
 ```bash
-pip install -r requirements.txt
 pytest -q
 ```
 
-## API Endpoints
+## Container build
 
-Backend routes are synchronous Flask handlers exposed through Flask/Hypercorn.
+```bash
+docker build -t fuzzedrecords .
+docker run --rm -p 8000:8000 fuzzedrecords
+```
 
-### 0. Nostr Discovery JSON
-- **Endpoint**: `/.well-known/nostr.json`
-- **Method**: `GET`
-- **Description**: Returns discovery information for a single administrator. The request must include a `name` query parameter matching the user's display name. If omitted, the endpoint responds with HTTP 400.
-- **Response**:
-  ```json
-  {
-    "names": {"Display Name": "pubkey"},
-    "relays": {"pubkey": ["wss://relay1", ...]}
-  }
-  ```
+The site will be available at `http://localhost:8000`.
 
-### 3. Fetch Music Library
-- **Endpoint**: `/tracks`
-- **Method**: `GET`
-- **Description**: Retrieves the aggregated music library from Wavlake.
-  - Uses `SEARCH_TERM` to filter artists (default: " by Fuzzed Records").
-  - The library is built on-demand if not cached so the first request returns data.
-  - Subsequent requests return cached data immediately; stale caches refresh in the background.
-  - Cache time-to-live is controlled by `TRACK_CACHE_TIMEOUT` (default: 300 seconds).
-  - HTTP timeouts use `HTTP_TIMEOUT` (default: 5 seconds) to avoid long hangs.
-- **Response**:
-  ```json
-  {"tracks":[
-    {"artist":"artist_name","album":"album_title",
-     "title":"track_title","media_url":"track_url",
-     "track_id":"track_id"}
-  ]}
-  ```
+## Project structure
 
-
-
-### 6. Update Relays
-- **Endpoint**: `/update-relays`
-- **Method**: `POST`
-- **Description**: Merges relay URLs into the active list and persists them to `relays.txt`.
-- **Request Body**:
-  ```json
-  {"relays": ["wss://relay1", "wss://relay2"]}
-  ```
-- **Response**:
-  ```json
-  {"status":"updated","count":2}
-  ```
-
-### 7. Send Ticket
-- **Endpoint**: `/send_ticket`
-- **Method**: `POST`
-- **Description**: Accepts a NIP-47 `ticket.create` request and replies with a signed DM.
-- **Request Body**:
-  ```json
-  {"id":"...","pubkey":"...","content":"base64_cipher"}
-  ```
-- **Response**:
-  ```json
-  {"status":"sent","event_id":"..."}
-  ```
-
-### 8. Generate Ticket
-- **Endpoint**: `/generate-ticket`
-- **Method**: `POST`
-- **Description**: Issues an invoice and ticket ID for a Lightning purchase.
-- **Request Body**:
-  ```json
-  {"event_id":"...","pubkey":"..."}
-  ```
-- **Response**:
-  ```json
-  {"invoice":"...","ticket_id":"...","event_id":"..."}
-  ```
-
-### 9. Confirm Payment
-- **Endpoint**: `/confirm-payment`
-- **Method**: `POST`
-- **Description**: Verifies an invoice and sends the ticket over Nostr.
-- **Request Body**:
-  ```json
-  {"invoice":"..."}
-  ```
-- **Response**:
-  ```json
-  {"status":"sent","ticket":{...}}
-  ```
-
-### 10. Send Ephemeral Ticket
-- **Endpoint**: `/send-ephemeral-ticket`
-- **Method**: `POST`
-- **Description**: Sends an ephemeral encrypted ticket directly to a pubkey.
-- **Request Body**:
-  ```json
-  {"pubkey":"...","ticket_id":"...","event_id":"..."}
-  ```
-- **Response**:
-  ```json
-  {"status":"sent"}
-  ```
-
----
-
-## Workflow
-
-1. **User Visits the Site**:
-   - The homepage loads, displaying the music library.
-   - Users can authenticate using their Nostr Wallet to view their profile.
-
-2. **Authentication**:
-   - Users click the "Profile" button and authenticate with their Nostr Wallet using NIP-07.
-   - The backend fetches and validates their profile data.
-
-3. **Music Library**:
-   - Songs are fetched from Wavlake and displayed in the Library section.
-
----
+```text
+app.py                     Flask application and routes
+azure_storage_limiter.py   Azure-backed rate-limit storage
+requirements.txt           Python dependencies
+startup.sh                 Production startup script
+templates/index.html       Homepage markup
+static/style.css           Site styles
+static/scripts/utils.js    Navigation behavior
+tests/                     Automated tests
+```
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-- **Nostr Protocol** for decentralized authentication.
-- **Wavlake** for music streaming integration.
-- **Microsoft Azure** for hosting the application.
-
----
-
-For more information, visit [Fuzzed Records](https://fuzzedrecords.com).
-
-## Spark Payment Layer (MVP)
-
-New Flask endpoints provide a Spark-oriented wallet and payment abstraction without Nostr dependencies:
-
-- `POST /api/wallets` create wallet (`user_id`, `username`)
-- `GET /api/wallets/<user_id>/balances` fetch BTC/USDC/USDB balances
-- `POST /api/transfers/internal` internal user transfer
-- `POST /api/transfers/lightning` Lightning invoice payout
-- `GET /.well-known/lnurlp/<username>` LNURL-pay identity resolution
-- `GET /pay/<username>?amount=...` LNURL-pay callback invoice response
-
-Implementation lives in `spark_layer.py` and is designed to be replaced by a Spark SDK adapter.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
